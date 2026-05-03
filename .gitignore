@@ -1,0 +1,12 @@
+# Bỏ qua các thư mục sinh ra khi biên dịch
+out/
+target/
+*.class
+
+# Bỏ qua các file cấu hình môi trường của IDE
+.idea/
+*.iml
+
+# Bỏ qua file log và OS rác
+*.log
+.DS_Store
