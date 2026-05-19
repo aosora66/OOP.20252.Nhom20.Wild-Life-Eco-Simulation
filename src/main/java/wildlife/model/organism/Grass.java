@@ -1,7 +1,7 @@
 package wildlife.model.organism;
 
+import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
-import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
@@ -9,49 +9,77 @@ import wildlife.util.AppConfig;
 import wildlife.util.CircleBoundary;
 import wildlife.util.Vector2D;
 
+import java.util.List;
+
 
 public class Grass extends Plant{
-
-    private CircleBoundary waterAsorb;
 
     public Grass(String id,
                  String speciesName,
                  Vector2D startPos,
-                 TerrainType startEnv,
+                 Environment startEnv,
                  GrowthComponent growth,
                  SurvivalStatsComponent stats,
                  AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+        photosynthesisRate         = AppConfig.getFloat("plant.grass.photosynthesisRate");
+        lightLevelToPhotosynthesis = AppConfig.getFloat("plant.grass.minLightLevel");
+        nutritionAsorbRadius       = AppConfig.getFloat("plant.grass.nutrientsAsorbRadius");
     }
 
     @Override
     protected void onTick(int currentTick) {
-
+        photosynthesis();
+        absorbNutrients();
     }
 
     @Override
-    public Organism reproduce() {
+    public Grass reproduce() {
         return null;
     }
 
     @Override
     public void photosynthesis() {
+        if (currentEnvironment == null) return;
 
+        // đủ điều kiện ánh sáng để quang hợp
+        float lightLevel = currentEnvironment.getLightLevel();
+        if (lightLevel < lightLevelToPhotosynthesis) {
+            return;
+        }
+
+        // độ ẩm là hệ số quang hợp
+        float humidity = currentEnvironment.getHumidity();
+        float humidityFactor = humidity / AppConfig.getFloat("organism.stats.humidityMax");
+
+        float energy = lightLevel * humidityFactor * photosynthesisRate;
+        float hpGain = energy * AppConfig.getFloat("organism.stats.nutritionToHpRatio");
+        stats.restoreHp(hpGain);
     }
 
     @Override
     public void absorbNutrients() {
+        if (currentEnvironment == null) return;
 
-        // sinh vật sẽ gọi môi trường để quét dưỡng chất gần nhất và trả về
-        //...
+        // Sinh vật gọi môi trường quét dưỡng chất (FoodItem) trong bán kính
+        List<FoodItem> nearby = currentEnvironment.getResources().getFoodNear(position, nutritionAsorbRadius);
 
+        // Chọn dưỡng chất gần nhất
+        FoodItem nutrients = null;
+        float minDistance = Float.MAX_VALUE;
+        for (FoodItem item : nearby) {
+            float dist = item.position().distanceTo(position);
+            if (dist < minDistance) {
+                minDistance = dist;
+                nutrients = item;
+            }
+        }
+        if (nutrients == null) return;
 
-        FoodItem nutrients = new FoodItem(new Vector2D(0,0),0,false,AppConfig.getInt("environment.meat.expiryTicks")); // ví dụ thức ăn tạm thời
-        this.stats.consume(nutrients.nutritionalValue(), nutrients.isWater());
+        stats.consume(nutrients.nutritionalValue(), nutrients.isWater());
 
-        // môi trường xóa dưỡng chất vừa được ăn trên bản đồ
-        //...
-
+        // Môi trường xóa dưỡng chất vừa được hấp thụ khỏi bản đồ
+        currentEnvironment.getResources().consume(nutrients);
     }
 
 }

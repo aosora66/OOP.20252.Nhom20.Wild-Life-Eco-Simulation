@@ -54,7 +54,7 @@ public abstract class Organism {
     protected Organism(String id,
                        String speciesName,
                        Vector2D startPos,
-                       TerrainType startEnv,
+                       Environment startEnv,
                        GrowthComponent growth,
                        SurvivalStatsComponent stats,
                        AdaptabilityComponent adaptability) {
@@ -87,6 +87,12 @@ public abstract class Organism {
         // 2. Logic hành vi riêng của từng loài (nếu sinh vật vẫn còn sống sau khi growUp)
         if (isAlive()) {
             this.onTick(currentTick);
+        // 3. Đói/khát, trao đổi cơ bản và ngưỡng HP (sau khi ăn/uống/quang hợp trong onTick)
+            this.processSurvivalMetabolism();
+        }
+        // cập nhật trạng thái
+        if (stats.checkHpThreshold()) {
+            die();
         }
     }
 
@@ -124,6 +130,52 @@ public abstract class Organism {
             boolean died = stats.reduceHp(DECAY_HP_PENALTY);
             if (died) die();
         }
+    }
+
+    /**
+     * Cập nhật đói/khát và trừ HP mỗi tick — dùng chung cho mọi loài.
+     * Gọi sau {onTick(int)} để hành vi (ăn, quang hợp...) được tính trước.
+     */
+    protected void processSurvivalMetabolism() {
+        if (currentEnvironment == null) return;
+
+        float seasonMultiplier = currentEnvironment.getTime().getSeasonMultiplier();
+        float humidityFactor = currentEnvironment.getHumidity()
+                / AppConfig.getFloat("organism.stats.humidityMax");
+        float thirstMultiplier = seasonMultiplier
+                * (1f + (1f - humidityFactor) * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
+
+        // cập nhật chỉ số đói và chỉ số khát mỗi tick
+        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+
+        // giảm Hp mỗi tick
+        float hpDrain = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
+        float stressPenalty = getEnvironmentalStressHpPenalty();
+        if (stressPenalty > 0f && seasonMultiplier > 1f) {
+            stressPenalty *= seasonMultiplier;
+        }
+        hpDrain += stressPenalty;
+
+        if (stats.reduceHp(hpDrain)) {
+            die();
+            return;
+        }
+    }
+
+    /**
+     * HP phạt thêm khi nhiệt độ ngoài vùng thích nghi (dùng {@link AdaptabilityComponent}).
+     */
+    protected float getEnvironmentalStressHpPenalty() {
+        if (currentEnvironment == null) return 0f;
+
+        float temperature = currentEnvironment.getTemperature();
+        if (adaptability.isLethal(temperature) || !adaptability.canTolerate(temperature)) {
+            return AppConfig.getFloat("organism.stats.lethalStressHpPenalty");
+        }
+        if (!adaptability.isOptimal(temperature)) {
+            return AppConfig.getFloat("organism.stats.suboptimalStressHpPenalty");
+        }
+        return 0f;
     }
 
     /**
@@ -174,13 +226,13 @@ public abstract class Organism {
     public String getSpeciesName()               { return speciesName; }
     public OrganismState getState()              { return state; }
     public Vector2D getPosition()                { return position; }
-    public TerrainType getCurrentEnvironment() { return currentEnvironment; }
+    public Environment getCurrentEnvironment() { return currentEnvironment; }
     public GrowthComponent getGrowth()           { return growth; }
     public SurvivalStatsComponent getStats()     { return stats; }
     public AdaptabilityComponent getAdaptability() { return adaptability; }
 
     public void setPosition(Vector2D pos)                    { this.position = pos; }
-    public void setCurrentEnvironment(TerrainType env)   { this.currentEnvironment = env; }
+    public void setCurrentEnvironment(Environment    env)   { this.currentEnvironment = env; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
 
