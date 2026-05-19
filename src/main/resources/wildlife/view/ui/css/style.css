@@ -1,13 +1,12 @@
-
 .card-panel {
     -fx-background-color: #F8FAFC;
     -fx-background-radius: 24;
-    -fx-effect: dropshadow(gaussian, rgba(45, 52, 54, 0.15), 12, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(45, 52, 54, 0.15), 12, 0, 0, 6);
 }
 
 .title-text {
     -fx-font-family: "Roboto Medium";
-    /*-fx-font-size: 20px;*/
+    -fx-font-size: 20px;
     -fx-text-fill: #2d3436;
 }
 
@@ -19,14 +18,14 @@
 
 .label-text {
     -fx-font-family: "Roboto Medium";
-    /*-fx-font-size: 15px;*/
+    -fx-font-size: 15px;
     -fx-text-fill: #2d3436;
 }
 
 .stat-value-text {
     -fx-font-family: "Roboto Medium";
-    /*-fx-font-size: 24px;*/
-    -fx-text-fill: #F8FAFC;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
 }
 
 .stat-bar-container {
@@ -75,8 +74,5 @@
     -fx-background-radius: 4;
 }
 .tool-item:hover {
-    -fx-min-width: 35;
-    -fx-min-height: 35;
-    -fx-max-width: 35;
-    -fx-max-height: 35;
+    -fx-background-color: #cbd5e1;
 }

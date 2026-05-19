@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-packager-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.wildlife</groupId>
@@ -15,171 +12,95 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <javafx.version>21.0.11</javafx.version>
     </properties>
 
-    <profiles>
-
-        <!-- Windows -->
-        <profile>
-            <id>windows</id>
-
-            <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
-            </activation>
-
-            <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico
-                </app.icon>
-            </properties>
-        </profile>
-
-        <!-- macOS -->
-        <profile>
-            <id>mac</id>
-
-            <activation>
-                <os>
-                    <family>mac</family>
-                </os>
-            </activation>
-
-            <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns
-                </app.icon>
-            </properties>
-        </profile>
-
-        <!-- Linux -->
-        <profile>
-            <id>linux</id>
-
-            <activation>
-                <os>
-                    <family>unix</family>
-                </os>
-            </activation>
-
-            <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.png
-                </app.icon>
-            </properties>
-        </profile>
-
-    </profiles>
-
     <dependencies>
-
-        <!-- JavaFX Controls -->
+        <!-- Source: https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
+            <version>21.0.11</version>
+            <scope>compile</scope>
         </dependency>
 
-        <!-- JavaFX FXML -->
+        <!-- Source: https://mvnrepository.com/artifact/org.openjfx/javafx-fxml -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
+            <version>21.0.11</version>
+            <scope>compile</scope>
         </dependency>
 
     </dependencies>
 
     <build>
         <plugins>
-
-            <!-- Java Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
-
                 <configuration>
                     <source>21</source>
                     <target>21</target>
                 </configuration>
             </plugin>
 
-            <!-- JavaFX Plugin -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
-
                 <configuration>
-                    <mainClass>wildlife.simulation/wildlife.core.Main</mainClass>
-                    <!-- Tạo custom runtime -->
-                    <launcher>WildlifeSimulation</launcher>
-
-                    <jlinkZipName>WildlifeSimulation</jlinkZipName>
-
-                    <jlinkImageName>WildlifeSimulation</jlinkImageName>
-
-                    <stripDebug>true</stripDebug>
-
-                    <noHeaderFiles>true</noHeaderFiles>
-
-                    <noManPages>true</noManPages>
+                    <mainClass>test.Launcher</mainClass>
                 </configuration>
-
-                <executions>
-
-                    <!-- Build runtime image -->
-                    <execution>
-                        <id>create-runtime-image</id>
-
-                        <goals>
-                            <goal>jlink</goal>
-                        </goals>
-                    </execution>
-
-                </executions>
             </plugin>
 
-            <!-- Native Packaging -->
             <plugin>
-                <groupId>org.panteleyev</groupId>
-                <artifactId>jpackage-maven-plugin</artifactId>
-                <version>1.7.4</version>
-
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
                 <configuration>
-
-                    <name>WildlifeSimulation</name>
-
-
-                    <appVersion>1.0.0</appVersion>
-
-
-                    <runtimeImage>
-                        target/WildlifeSimulation
-                    </runtimeImage>
-
-                    <destination>
-                        target/dist
-                    </destination>
-
-                    <module>wildlife.simulation/wildlife.core.Main</module>
-
-                    <!-- Windows shortcut -->
-                    <winShortcut>true</winShortcut>
-
-                    <!-- Windows menu -->
-                    <winMenu>true</winMenu>
-
-                    <icon>${app.icon}</icon>
-
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>test.Launcher</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
+            </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>test.Launcher</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
     </build>
+
 
 </project>
