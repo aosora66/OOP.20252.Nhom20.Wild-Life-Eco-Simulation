@@ -10,3 +10,7 @@ target/
 # Bỏ qua file log và OS rác
 *.log
 .DS_Store
+
+# Cursor / Junie (cấu hình local, không đẩy lên remote)
+.cursor/
+.junie/
