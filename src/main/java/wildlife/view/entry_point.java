@@ -1,4 +1,4 @@
-package test.view.ui;
+package wildlife.view;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -27,7 +27,7 @@ public class entry_point extends Application {
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/wildlife/view/ui/css/style.css")));
 
         primaryStage.setTitle("Wild-life eco simulation");
-        Image logo = new Image(getClass().getResourceAsStream("/wildlife/view/ui/assets/images/App_Icon.svg"));
+        Image logo = new Image(getClass().getResourceAsStream("/wildlife/view/ui/assets/images/Fox.png"));
         primaryStage.getIcons().add(logo);
 
         primaryStage.setScene(scene);

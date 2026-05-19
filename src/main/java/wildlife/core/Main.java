@@ -1,18 +1,10 @@
 package wildlife.core;
-import wildlife.view.organism;
-import wildlife.view.environment;
-import wildlife.view.viewSetup;
-
+import wildlife.view.entry_point;
 public class Main {
     public static void main(String[] args) {
 
-        organism.mobsList.add("");
-        organism.mobsList.add("");
-        organism.plantsList.add("");
-        organism.plantsList.add("");
-        environment.materialLists.add("");
-        environment.materialLists.add("");
 
-        viewSetup.main(args);
+        //Gọi cửa sổ giao diện
+        entry_point.main(args);
     }
 }
