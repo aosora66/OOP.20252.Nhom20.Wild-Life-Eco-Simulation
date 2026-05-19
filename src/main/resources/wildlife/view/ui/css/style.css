@@ -1,0 +1,78 @@
+.card-panel {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 24;
+    -fx-effect: dropshadow(gaussian, rgba(45, 52, 54, 0.15), 12, 0, 0, 6);
+}
+
+.title-text {
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 20px;
+    -fx-text-fill: #2d3436;
+}
+
+.header-text {
+    -fx-font-family: "Inter Medium";
+    -fx-font-size: 40px;
+    -fx-text-fill: #2d3436;
+}
+
+.label-text {
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 15px;
+    -fx-text-fill: #2d3436;
+}
+
+.stat-value-text {
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+}
+
+.stat-bar-container {
+    -fx-background-color: rgba(45, 52, 54, 0.2);
+    -fx-background-radius: 0 5 5 0;
+    -fx-border-color: #2d3436;
+    -fx-border-radius: 0 5 5 0;
+}
+
+.stat-bar-fill {
+    -fx-background-radius: 0 5 5 0;
+}
+
+.frame-bar-fill{
+    -fx-background-color: #2D3436;
+    -fx-opacity: 0.2;
+}
+
+.hp-fill {
+    -fx-background-color: #f28c8c;
+}
+
+.hunger-fill {
+    -fx-background-color: #ffd082;
+}
+
+.thirsty-fill {
+    -fx-background-color: #8cc0de;
+}
+
+.toolbox-wrapper {
+    -fx-padding: 0 10 0 10;
+}
+
+.toolset-wrapper {
+    -fx-padding: 0 20 0 20;
+    -fx-spacing: 5;
+}
+
+.tool-item {
+    -fx-min-width: 29;
+    -fx-min-height: 29;
+    -fx-max-width: 29;
+    -fx-max-height: 29;
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 4;
+}
+.tool-item:hover {
+    -fx-background-color: #cbd5e1;
+}
