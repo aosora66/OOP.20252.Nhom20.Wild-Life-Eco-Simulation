@@ -1,6 +1,7 @@
 package wildlife.model.organism;
 
 import wildlife.model.dto.RenderData;
+import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -27,7 +28,7 @@ public abstract class Organism {
     protected final String id;
     protected final String speciesName;
     protected Vector2D position;
-    protected TerrainType currentEnvironment;
+    protected Environment currentEnvironment;
     protected OrganismState state;
 
     // ----------------------------------------------------------
