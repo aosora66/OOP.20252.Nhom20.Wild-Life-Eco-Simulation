@@ -219,6 +219,7 @@ public abstract class Environment {
      */
     public void addOrganism(Organism organism) {
         registry.add(organism);
+        organism.bindEnvironment(this);
         events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_BORN);
     }
 
