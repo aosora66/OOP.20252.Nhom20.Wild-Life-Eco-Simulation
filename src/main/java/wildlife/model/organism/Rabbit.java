@@ -9,13 +9,8 @@ import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
 import java.util.List;
-import java.util.Random;
 
 public class Rabbit extends Animal {
-
-    private final Random random = new Random();
-    private final float eatRadius;
-    private final float drinkRadius;
 
     public Rabbit(String id,
                   String speciesName,
@@ -23,8 +18,11 @@ public class Rabbit extends Animal {
                   Environment startEnv,
                   GrowthComponent growth,
                   SurvivalStatsComponent stats,
-                  AdaptabilityComponent adaptability) {
+                  AdaptabilityComponent adaptability,
+                  String gender) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+        this.gender      = gender;
+        this.combatPower = AppConfig.getFloat("animal.rabbit.combatPower");
         this.vision      = AppConfig.getFloat("animal.rabbit.vision");
         this.speed       = AppConfig.getFloat("animal.rabbit.speed");
         this.eatRadius   = AppConfig.getFloat("animal.rabbit.eatRadius");
@@ -33,9 +31,9 @@ public class Rabbit extends Animal {
 
     @Override
     protected void onTick(int currentTick) {
-        hunting();
-        drinking();
-        wandering();
+    //    hunting();
+    //    drinking();
+        wandering();    // di chuyển mặc định của sinh vật
     }
 
     @Override
@@ -57,25 +55,6 @@ public class Rabbit extends Animal {
 
         if (dist <= speed && position.distanceTo(foodPos) <= eatRadius) {
             eating(prey);
-        }
-    }
-
-    // di chuyển đến vị trí ngẫu nhiên trong bán kính di chuyển 1 tick
-    @Override
-    public void wandering() {
-        if (currentEnvironment == null) return;
-
-        float angle = random.nextFloat() * (float) (2 * Math.PI);
-        float radius = random.nextFloat() * speed;
-        Vector2D destination = new Vector2D(
-                position.getX() + (float) Math.cos(angle) * radius,
-                position.getY() + (float) Math.sin(angle) * radius
-        );
-
-        if (isPassable(destination)) {
-            setPosition(destination);
-        } else {
-            moveTo(destination);
         }
     }
 

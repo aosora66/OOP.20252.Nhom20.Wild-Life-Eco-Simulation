@@ -10,12 +10,17 @@ import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
 import java.util.List;
+import java.util.Random;
 
 public abstract class Animal extends Organism {
+    private final Random random = new Random();
+
     protected String gender;
     protected float vision;
     protected float combatPower;
     protected float speed;
+    protected float eatRadius;
+    protected float drinkRadius;
     protected List<FoodItem> EdibleFood;
 
     protected Animal(String id,
@@ -28,7 +33,23 @@ public abstract class Animal extends Organism {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
     }
 
-    public abstract void wandering();
+    // di chuyển đến vị trí ngẫu nhiên trong bán kính di chuyển 1 tick
+    public void wandering()  {
+        if (currentEnvironment == null) return;
+
+        float angle = random.nextFloat() * (float) (2 * Math.PI);
+        float radius = random.nextFloat() * speed;
+        Vector2D destination = new Vector2D(
+                position.getX() + (float) Math.cos(angle) * radius,
+                position.getY() + (float) Math.sin(angle) * radius
+        );
+
+        if (isPassable(destination)) {
+            setPosition(destination);
+        } else {
+            moveTo(destination);
+        }
+    }
 
     public abstract void hunting();
 
@@ -36,7 +57,6 @@ public abstract class Animal extends Organism {
     public void escaping(Vector2D pos) {
 
     }
-
 
     /**
      * Di chuyển tối đa {@link #speed} trong một tick về phía {@code target}.
