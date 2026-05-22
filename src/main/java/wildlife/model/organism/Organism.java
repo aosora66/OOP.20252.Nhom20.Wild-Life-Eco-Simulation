@@ -1,5 +1,4 @@
 package wildlife.model.organism;
-
 import wildlife.model.dto.RenderData;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.TerrainType;
@@ -7,8 +6,8 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.SurvivalStrategy;
 import wildlife.util.Vector2D;
-
 /**
  * Abstract class trung tâm đại diện cho mọi sinh vật
  *
@@ -37,6 +36,8 @@ public abstract class Organism {
     protected final GrowthComponent growth;
     protected final SurvivalStatsComponent stats;
     protected final AdaptabilityComponent adaptability;
+    protected SurvivalStrategy strategy;
+    protected Environment environment;
 
     // ----------------------------------------------------------
     //  Constructor
@@ -188,6 +189,12 @@ public abstract class Organism {
         boolean died = stats.reduceHp(amount);
         if (died) die();
     }
+    protected void executeStrategy(int currentTick) {
+    if (strategy != null && environment != null) {
+        strategy.execute(this, environment);
+    }
+}
+
 
     /**
      * Đóng gói dữ liệu tối thiểu để ViewLogic render.
@@ -235,7 +242,13 @@ public abstract class Organism {
     public void setCurrentEnvironment(Environment    env)   { this.currentEnvironment = env; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
+    public void bindEnvironment(Environment env) {
+    this.environment = env;
+}
 
+public void setStrategy(SurvivalStrategy strategy) {
+    this.strategy = strategy;
+}
     @Override
     public String toString() {
         return String.format("[%s | id=%s | hp=%.1f | age=%.0f | pos=%s | state=%s]",
