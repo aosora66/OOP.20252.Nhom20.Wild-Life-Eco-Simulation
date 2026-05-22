@@ -18,21 +18,17 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
 
     @Override
     public void execute(Organism self, Environment env) {
-        float seasonMult = env.getTime().getSeasonMultiplier();
-        self.getStats().applyHungerThirstDecay(seasonMult, seasonMult);
-
-        if (self.getStats().checkHpThreshold()) {
-            self.decreaseHp(0);
-            return;
-        }
-
         if (self.getStats().getThirstLevel() >= thirstSearchThreshold) {
             findNearestFood(self, env, true).ifPresentOrElse(
                 water -> {
                     moveToward(self, water.position(), env);
                     if (self.getPosition().distanceTo(water.position()) <= attackRange) {
-                        self.getStats().consume(water.nutritionalValue(), true);
-                        env.getResources().consume(water);
+                        if (self instanceof wildlife.model.organism.Animal) {
+                            ((wildlife.model.organism.Animal) self).eating(water);
+                        } else {
+                            self.getStats().consume(water.nutritionalValue(), true);
+                            env.getResources().consume(water);
+                        }
                     }
                 },
                 () -> wander(self, env)
@@ -45,15 +41,18 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
                 food -> {
                     moveToward(self, food.position(), env);
                     if (self.getPosition().distanceTo(food.position()) <= attackRange) {
-                        self.getStats().consume(food.nutritionalValue(), false);
-                        env.getResources().consume(food);
+                        if (self instanceof wildlife.model.organism.Animal) {
+                            ((wildlife.model.organism.Animal) self).eating(food);
+                        } else {
+                            self.getStats().consume(food.nutritionalValue(), false);
+                            env.getResources().consume(food);
+                        }
                     }
                 },
                 () -> wander(self, env)
             );
             return;
         }
-
         wander(self, env);
     }
 }

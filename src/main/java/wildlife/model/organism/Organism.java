@@ -88,10 +88,10 @@ public abstract class Organism {
         // 2. Logic hành vi riêng của từng loài (nếu sinh vật vẫn còn sống sau khi growUp)
         if (isAlive()) {
             this.onTick(currentTick);
-        // 3. Đói/khát, trao đổi cơ bản và ngưỡng HP (sau khi ăn/uống/quang hợp trong onTick)
+            // 3. Đói/khát, trao đổi chất cơ bản và ảnh hưởng môi trường (sau khi ăn/uống/quang hợp)
             this.processSurvivalMetabolism();
         }
-        // cập nhật trạng thái
+        // 4. Kiểm tra ngưỡng đói/khát cực hạn và cập nhật trạng thái sống chết
         if (stats.checkHpThreshold()) {
             die();
         }
@@ -190,10 +190,11 @@ public abstract class Organism {
         if (died) die();
     }
     protected void executeStrategy(int currentTick) {
-    if (strategy != null && environment != null) {
-        strategy.execute(this, environment);
+        Environment env = currentEnvironment != null ? currentEnvironment : environment;
+        if (strategy != null && env != null) {
+            strategy.execute(this, env);
+        }
     }
-}
 
 
     /**
@@ -243,8 +244,9 @@ public abstract class Organism {
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
     public void bindEnvironment(Environment env) {
-    this.environment = env;
-}
+        this.environment = env;
+        this.currentEnvironment = env;
+    }
 
 public void setStrategy(SurvivalStrategy strategy) {
     this.strategy = strategy;

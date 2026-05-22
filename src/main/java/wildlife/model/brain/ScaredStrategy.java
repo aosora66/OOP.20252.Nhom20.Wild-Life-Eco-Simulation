@@ -20,14 +20,6 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
 
     @Override
     public void execute(Organism self, Environment env) {
-        float seasonMult = env.getTime().getSeasonMultiplier();
-        self.getStats().applyHungerThirstDecay(seasonMult, seasonMult);
-
-        if (self.getStats().checkHpThreshold()) {
-            self.decreaseHp(0);
-            return;
-        }
-
         Optional<Organism> threat = findNearestBySpecies(self, env, predatorSpecies);
         threat.ifPresentOrElse(
             predator -> {
