@@ -3,12 +3,14 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.util.Duration;
 import wildlife.view.organism;
 import wildlife.view.environment;
@@ -16,7 +18,6 @@ import wildlife.view.environment;
 public class MainController {
     private static boolean sceneModeIsBasic = true;
     private Timeline timelineForAnimation;
-
     //view button
     @FXML
     public HBox viewButton;
@@ -131,5 +132,11 @@ public class MainController {
     public void initialize() {
         organism_list_load();
         environment_materials_load();
+    }
+
+    public double getImageHeight() {
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
+        return bounds.getHeight() * 0.2;
     }
 }
