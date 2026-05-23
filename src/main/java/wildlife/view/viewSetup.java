@@ -9,7 +9,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class entry_point extends Application {
+public class viewSetup extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
