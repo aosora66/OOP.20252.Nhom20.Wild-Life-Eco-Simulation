@@ -33,7 +33,7 @@
 
             <properties>
                 <app.icon>
-                    wildlife/view/ui/assets/images/App_Icon.ico
+                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico
                 </app.icon>
             </properties>
         </profile>
@@ -50,7 +50,7 @@
 
             <properties>
                 <app.icon>
-                    wildlife/view/ui/assets/images/App_Icon.icns
+                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns
                 </app.icon>
             </properties>
         </profile>
@@ -67,7 +67,7 @@
 
             <properties>
                 <app.icon>
-                    wildlife/view/ui/assets/images/App_Icon.png
+                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.png
                 </app.icon>
             </properties>
         </profile>
@@ -114,8 +114,7 @@
                 <version>0.0.8</version>
 
                 <configuration>
-                    <mainClass>wildlife.core.Main</mainClass>
-
+                    <mainClass>wildlife.simulation/wildlife.core.Main</mainClass>
                     <!-- Tạo custom runtime -->
                     <launcher>WildlifeSimulation</launcher>
 
@@ -154,11 +153,9 @@
 
                     <name>WildlifeSimulation</name>
 
+
                     <appVersion>1.0.0</appVersion>
 
-                    <vendor>Wildlife Team</vendor>
-
-                    <copyright>Wildlife Team</copyright>
 
                     <runtimeImage>
                         target/WildlifeSimulation
@@ -168,13 +165,7 @@
                         target/dist
                     </destination>
 
-                    <mainJar>
-                        simulation-0.0.1.jar
-                    </mainJar>
-
-                    <mainClass>
-                        wildlife.core.Main
-                    </mainClass>
+                    <module>wildlife.simulation/wildlife.core.Main</module>
 
                     <!-- Windows shortcut -->
                     <winShortcut>true</winShortcut>
