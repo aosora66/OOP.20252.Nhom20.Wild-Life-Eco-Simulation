@@ -7,15 +7,24 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import javafx.embed.swing.SwingNode;
+import javax.swing.SwingUtilities;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.backends.lwjgl.LwjglAWTCanvas;
 import wildlife.view.Mobs;
 
 public class MainController {
 
     private static boolean isBasic = true;
     public HBox entityPanel;
+    
+    @FXML
+    public AnchorPane libgdxContainer;
+    
     //View Button
         private Timeline timeline;
         //timeline for animation handling
@@ -99,10 +108,21 @@ public class MainController {
             }
         }
 
+
+
     //Init
         public void initialize() {
             mobs_list_loader();
-        }
+            SwingNode swingNode = new SwingNode();
+            AnchorPane.setTopAnchor(swingNode, 0.0);
+            AnchorPane.setBottomAnchor(swingNode, 0.0);
+            AnchorPane.setLeftAnchor(swingNode, 0.0);
+            AnchorPane.setRightAnchor(swingNode, 0.0);
+            libgdxContainer.getChildren().add(swingNode);
+            SwingUtilities.invokeLater(() ->{
 
+            });
+
+        }
 
 }
