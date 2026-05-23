@@ -70,6 +70,16 @@ public class MainController {
             info.setManaged(fullForm);
             info.setVisible(fullForm);
         }
+        public void entityShow(MouseEvent mouseEvent) {
+            entityPanel.setOpacity(1);
+        }
+
+        public void entityHide(MouseEvent mouseEvent) {
+            entityPanel.setOpacity(0.5);
+            fullForm = false;
+            info.setManaged(fullForm);
+            info.setVisible(fullForm);
+        }
 
     //Tool panel
         @FXML
@@ -93,4 +103,6 @@ public class MainController {
         public void initialize() {
             mobs_list_loader();
         }
+
+
 }
