@@ -9,15 +9,15 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class viewSetup extends Application {
+import java.util.Objects;
 
+public class viewSetup extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/wildlife/view/ui/fxml/main_ui.fxml"));
         Parent root = loader.load();
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
-
         primaryStage.setX(bounds.getMinX());
         primaryStage.setY(bounds.getMinY());
         primaryStage.setWidth(bounds.getWidth());
@@ -27,7 +27,7 @@ public class viewSetup extends Application {
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/wildlife/view/ui/css/style.css")));
 
         primaryStage.setTitle("Wild-life eco simulation");
-        Image logo = new Image(getClass().getResourceAsStream("/wildlife/view/ui/assets/images/Fox.png"));
+        Image logo = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/wildlife/view/ui/assets/images/Fox.png")));
         primaryStage.getIcons().add(logo);
 
         primaryStage.setScene(scene);
