@@ -2,6 +2,9 @@ module wildlife.simulation {
     // Declare dependencies on required JavaFX modules
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.swing;
+    requires gdx;
+    requires gdx.backend.lwjgl;
 
     // Export packages containing public APIs that other modules might need to access.
     // This includes your main application entry point and model/view components.
@@ -23,6 +26,6 @@ module wildlife.simulation {
     opens wildlife.view.ui.fxml;         // Contains FXML files like main_ui.fxml
     opens wildlife.view.ui.css;          // Contains CSS files like style.css
     opens wildlife.view.ui.assets.images; // Contains image assets like Fox.png
-//    opens wildlife.view.ui.assets.fonts;  // Contains font files
+    //opens wildlife.view.ui.assets.fonts;  // Contains font files
     opens config;                         // Contains setting.properties
 }

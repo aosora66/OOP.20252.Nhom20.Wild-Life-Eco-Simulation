@@ -76,6 +76,31 @@
 
     <dependencies>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.openjfx/javafx-swing -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>21.0.11</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx-backend-lwjgl -->
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-backend-lwjgl</artifactId>
+            <version>1.14.1</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/com.badlogicgames.gdx/gdx -->
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx</artifactId>
+            <version>1.14.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+
+
         <!-- JavaFX Controls -->
         <dependency>
             <groupId>org.openjfx</groupId>
