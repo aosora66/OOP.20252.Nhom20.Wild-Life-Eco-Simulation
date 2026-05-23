@@ -64,5 +64,5 @@ Dự án được chia thành các package chuyên biệt, đảm bảo nguyên 
 
 ## 🛠️ Dành cho Team Phát triển
 *   **Quy trình Git:** Không code trực tiếp lên `main`. Hãy tạo nhánh `feature/...` từ `develop`, code xong tạo Pull Request để review trước khi gộp.
-*   **Thêm loài mới:** Để thêm một con vật (VD: Gấu), chỉ cần tạo class `Gau extends Carnivore` trong gói `entity`, gán cho nó một bộ não từ gói `brain`, và thả vào `environment`. Không cần sửa lại logic vòng lặp chính.
+*   **Thêm loài mới:** Để thêm một con vật (VD: Gấu), chỉ cần tạo class `Gau extends Carnivore` trong gói `organism`, gán cho nó một bộ não từ gói `brain`, và thả vào `environment`. Không cần sửa lại logic vòng lặp chính.
 *   **Tránh Hardcode:** Tuyệt đối không fix cứng các con số (tốc độ, tầm nhìn) trong code. Hãy khai báo hằng số hoặc đưa vào file `setting.properties`.

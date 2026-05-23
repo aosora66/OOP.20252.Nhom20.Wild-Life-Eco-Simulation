@@ -1,5 +1,4 @@
 package wildlife.view.ui;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -11,118 +10,126 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import javafx.embed.swing.SwingNode;
-import javax.swing.SwingUtilities;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.backends.lwjgl.LwjglAWTCanvas;
-import wildlife.view.Mobs;
+import wildlife.view.organism;
+import wildlife.view.environment;
 
 public class MainController {
+    private static boolean sceneModeIsBasic = true;
+    private Timeline timelineForAnimation;
 
-    private static boolean isBasic = true;
-    public HBox entityPanel;
-    
+    //view button
     @FXML
-    public AnchorPane libgdxContainer;
-    
-    //View Button
-        private Timeline timeline;
-        //timeline for animation handling
-        @FXML
-        public Label hiddenLabel_view;
-        @FXML
-        public HBox viewButton;
-        @FXML
-        public void viewButtonFullForm(MouseEvent mouseEvent) {
-            hiddenLabel_view.setManaged(true);
-            hiddenLabel_view.setVisible(true);
-            double targetWidth = hiddenLabel_view.prefWidth(-1);
-            timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(hiddenLabel_view.maxWidthProperty(), 0)),
-                    new KeyFrame(Duration.millis(50), new KeyValue(hiddenLabel_view.maxWidthProperty(), targetWidth))
-            );
-            timeline.play();
-        }
-        @FXML
-        public void viewButtonDefault(MouseEvent mouseEvent) {
-            hiddenLabel_view.setManaged(false);
-            hiddenLabel_view.setVisible(false);
-        }
-        @FXML
-        public void viewButtonOnPressed(MouseEvent mouseEvent) {
-            viewButton.setStyle("    -fx-background-color: #B0C7DD;\n" +
-                    "    -fx-effect: dropshadow(gaussian, rgba(45, 52, 54, 0.15), 12, 0, 0, 0);");
-        }
-        @FXML
-        public void ViewButtonOnReleased(MouseEvent mouseEvent) {
-            isBasic = !isBasic;
-            double currentWidth = hiddenLabel_view.getWidth();
-            hiddenLabel_view.setText((isBasic)?"Basic":"Sprite");
-            timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(hiddenLabel_view.maxWidthProperty(), currentWidth)),
-                    new KeyFrame(Duration.millis(50), new KeyValue(hiddenLabel_view.maxWidthProperty(), hiddenLabel_view.prefWidth(-1)))
-            );
-            timeline.play();
-            viewButton.setStyle("-fx-background-color: #F8FAFC;\n" +
-                    "    -fx-effect: dropshadow(gaussian, rgba(45, 52, 54, 0.15), 12, 0, 0, 4);");
-        }
+    public HBox viewButton;
+    @FXML
+    public Label sceneMode_label;
+    @FXML
+    public void viewButtonExpand(MouseEvent mouseEvent) {
+        sceneMode_label.setManaged(true);
+        sceneMode_label.setVisible(true);
+        double targetWidth = sceneMode_label.prefWidth(-1);
+        timelineForAnimation = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(sceneMode_label.maxWidthProperty(), 0)),
+                new KeyFrame(Duration.millis(50), new KeyValue(sceneMode_label.maxWidthProperty(), targetWidth))
+        );
+        timelineForAnimation.play();
+    }
+    @FXML
+    public void viewButtonCollapse(MouseEvent mouseEvent) {
+        sceneMode_label.setManaged(false);
+        sceneMode_label.setVisible(false);
+    }
+    @FXML
+    public void viewButtonOnPressed(MouseEvent mouseEvent) {
+        viewButton.setStyle("-fx-background-color: #B0C7DD");
+    }
+    @FXML
+    public void ViewButtonOnReleased(MouseEvent mouseEvent) {
+        sceneModeIsBasic = !sceneModeIsBasic;
+        double currentWidth = sceneMode_label.getWidth();
+        sceneMode_label.setText((sceneModeIsBasic)?"Basic":"Sprite");
+        timelineForAnimation = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(sceneMode_label.maxWidthProperty(), currentWidth)),
+                new KeyFrame(Duration.millis(10), new KeyValue(sceneMode_label.maxWidthProperty(), sceneMode_label.prefWidth(-1)))
+        );
+        timelineForAnimation.play();
+        viewButton.setStyle("-fx-background-color: #F8FAFC");
+    }
 
-    //Entity
-        @FXML
-        private boolean fullForm = false;
-        public VBox info;
-        public void update_visiblity(boolean isFocused) {
-                entityPanel.setVisible(isFocused);
-        }
-        public void entityFormChange(MouseEvent mouseEvent) {
-            fullForm = !fullForm;
-            info.setManaged(fullForm);
-            info.setVisible(fullForm);
-        }
-        public void entityShow(MouseEvent mouseEvent) {
+    //entity panel
+    private boolean entityPanelIsExpanded = false;
+    @FXML
+    public HBox entityPanel;
+    @FXML
+    public VBox info;
+    public void entityPanelShow(boolean anAnimalFocused){
+        entityPanel.setManaged(anAnimalFocused);
+        entityPanel.setVisible(anAnimalFocused);
+    }
+    public void entityPanelFormChange(MouseEvent mouseEvent) {
+        entityPanelIsExpanded = !entityPanelIsExpanded;
+        info.setManaged(entityPanelIsExpanded);
+        info.setVisible(entityPanelIsExpanded);
+    }
+    public void entityPanelSolid(MouseEvent mouseEvent) {
             entityPanel.setOpacity(1);
-        }
-
-        public void entityHide(MouseEvent mouseEvent) {
+    }
+    public void entityPanelTransparent(MouseEvent mouseEvent) {
+        if(!entityPanelIsExpanded){
             entityPanel.setOpacity(0.5);
-            fullForm = false;
-            info.setManaged(fullForm);
-            info.setVisible(fullForm);
         }
+    }
 
-    //Tool panel
-        @FXML
-        public HBox mobsTool;
-
-        private void mobs_list_loader(){
-            if(Mobs.MobsList.isEmpty()){
-                return;
-            }
-            int N = 1;
-            for(String b: Mobs.MobsList){
+    //toolBox
+    @FXML
+    public HBox organismToolset;
+    private void organism_list_load(){
+        if(!organism.mobsList.isEmpty()){
+            int id = 1;
+            for(String b: organism.mobsList){
                 Button button = new Button(b);
                 button.getStyleClass().add("tool-item");
-                button.setId("mobsButton" + N);
-                N++;
-                mobsTool.getChildren().add(button);
+                button.setStyle("-fx-background-color: #D9B65D");
+
+                button.setId("animalButton" + id);
+                id++;
+                organismToolset.getChildren().add(button);
             }
         }
-
-
-
-    //Init
-        public void initialize() {
-            mobs_list_loader();
-            SwingNode swingNode = new SwingNode();
-            AnchorPane.setTopAnchor(swingNode, 0.0);
-            AnchorPane.setBottomAnchor(swingNode, 0.0);
-            AnchorPane.setLeftAnchor(swingNode, 0.0);
-            AnchorPane.setRightAnchor(swingNode, 0.0);
-            libgdxContainer.getChildren().add(swingNode);
-            SwingUtilities.invokeLater(() ->{
-
-            });
-
+        if(!organism.plantsList.isEmpty()){
+            int id = 1;
+            for(String b: organism.plantsList){
+                Button button = new Button(b);
+                button.getStyleClass().add("tool-item");
+                button.setId("plantsButton" + id);
+                button.setStyle("-fx-background-color: #6FA37C");
+                id++;
+                organismToolset.getChildren().add(button);
+            }
         }
+    }
+    @FXML
+    public HBox envTool;
+    private void environment_materials_load(){
+        if(environment.materialLists.isEmpty()){
+            return;
+        }
+        int id = 1;
+        for(String b: environment.materialLists){
+            Button button = new Button(b);
+            button.getStyleClass().add("tool-item");
+            button.setId("envButton" + id);
+            button.setStyle("-fx-background-color: #A8907A");
+            id++;
+            envTool.getChildren().add(button);
+        }
+    }
 
+    //Pane nay de render scene
+    @FXML
+    public AnchorPane sceneCanvas;
+
+    public void initialize() {
+        organism_list_load();
+        environment_materials_load();
+    }
 }

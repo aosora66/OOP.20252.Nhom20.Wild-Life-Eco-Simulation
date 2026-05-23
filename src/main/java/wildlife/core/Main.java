@@ -1,16 +1,18 @@
 package wildlife.core;
-import wildlife.view.Mobs;
-import wildlife.view.entry_point;
+import wildlife.view.organism;
+import wildlife.view.environment;
+import wildlife.view.viewSetup;
 
 public class Main {
     public static void main(String[] args) {
 
-        Mobs.MobsList.add(("vip1"));
-        Mobs.MobsList.add(("vip2"));
-        Mobs.MobsList.add(("vip3"));
-        Mobs.MobsList.add(("vip5"));
-        Mobs.MobsList.add(("vip6"));
+        organism.mobsList.add("");
+        organism.mobsList.add("");
+        organism.plantsList.add("");
+        organism.plantsList.add("");
+        environment.materialLists.add("");
+        environment.materialLists.add("");
 
-        entry_point.main(args);
+        viewSetup.main(args);
     }
 }
