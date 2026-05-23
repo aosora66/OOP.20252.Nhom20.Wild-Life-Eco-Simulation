@@ -7,7 +7,7 @@
 
 .title-text {
     -fx-font-family: "Roboto Medium";
-    -fx-font-size: 20px;
+    /*-fx-font-size: 20px;*/
     -fx-text-fill: #2d3436;
 }
 
@@ -19,13 +19,13 @@
 
 .label-text {
     -fx-font-family: "Roboto Medium";
-    -fx-font-size: 15px;
+    /*-fx-font-size: 15px;*/
     -fx-text-fill: #2d3436;
 }
 
 .stat-value-text {
     -fx-font-family: "Roboto Medium";
-    -fx-font-size: 24px;
+    /*-fx-font-size: 24px;*/
     -fx-text-fill: #F8FAFC;
 }
 
