@@ -10,7 +10,7 @@
            fx:controller="wildlife.view.ui.MainController">
    <AnchorPane>
       <!-- ENTITY STATUS -->
-      <HBox fx:id="entityPanel" alignment="CENTER" onMouseClicked="#entityFormChange" spacing="50"
+      <HBox fx:id="entityPanel" alignment="CENTER" opacity="0.5" onMouseClicked="#entityFormChange" onMouseEntered="#entityShow" onMouseExited="#entityHide" spacing="50"
             styleClass="card-panel" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="24.0">
          <padding>
             <Insets bottom="20" left="20" right="20" top="20"/>
@@ -125,7 +125,7 @@
       <!-- View button -->
       <HBox fx:id="viewButton" alignment="CENTER" onMouseEntered="#viewButtonFullForm"
             onMouseExited="#viewButtonDefault" onMousePressed="#viewButtonOnPressed"
-            onMouseReleased="#ViewButtonOnReleased" prefHeight="70" spacing="43.0" styleClass="card-panel"
+            onMouseReleased="#ViewButtonOnReleased" prefHeight="70" maxHeight="70" minHeight="70" spacing="43.0" styleClass="card-panel"
             AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
          <padding>
             <Insets bottom="10.0" left="20.0" right="20.0" top="10.0"/>
