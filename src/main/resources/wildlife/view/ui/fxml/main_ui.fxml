@@ -8,6 +8,11 @@
 
 <StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="wildlife.view.ui.MainController">
+
+   <!-- LibGDX Render Layer (Background Layer) -->
+   <AnchorPane fx:id="libgdxContainer" />
+
+   <!-- UI Layer (Foreground Layer) -->
    <AnchorPane>
       <!-- ENTITY STATUS -->
       <HBox fx:id="entityPanel" alignment="CENTER" opacity="0.5" onMouseClicked="#entityFormChange" onMouseEntered="#entityShow" onMouseExited="#entityHide" spacing="50"
