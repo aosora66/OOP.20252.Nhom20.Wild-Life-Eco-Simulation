@@ -88,7 +88,7 @@ public abstract class Organism {
         // 2. Logic hành vi riêng của từng loài (nếu sinh vật vẫn còn sống sau khi growUp)
         if (isAlive()) {
             this.onTick(currentTick);
-            // 3. Đói/khát, trao đổi chất cơ bản và ảnh hưởng môi trường (sau khi ăn/uống/quang hợp)
+            // 3. cập nhật chỉ số đói/khát theo thời gian, và giảm hp theo thời gain
             this.processSurvivalMetabolism();
         }
         // 4. Kiểm tra ngưỡng đói/khát cực hạn và cập nhật trạng thái sống chết
@@ -139,23 +139,26 @@ public abstract class Organism {
      */
     protected void processSurvivalMetabolism() {
         if (currentEnvironment == null) return;
-
+        // cập nhật chỉ số đói khát theo môi trường
         float seasonMultiplier = currentEnvironment.getTime().getSeasonMultiplier();
         float humidityFactor = currentEnvironment.getHumidity()
-                / AppConfig.getFloat("organism.stats.humidityMax");
+                                / AppConfig.getFloat("organism.stats.humidityMax");
         float thirstMultiplier = seasonMultiplier
-                * (1f + (1f - humidityFactor) * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
+                                * (1f + (1f - humidityFactor) * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
 
         // cập nhật chỉ số đói và chỉ số khát mỗi tick
         stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
 
-        // giảm Hp mỗi tick
+        // giảm Hp mỗi tick (phụ thuộc vào môi trường và độ đói/khát)
         float hpDrain = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
         float stressPenalty = getEnvironmentalStressHpPenalty();
         if (stressPenalty > 0f && seasonMultiplier > 1f) {
             stressPenalty *= seasonMultiplier;
         }
         hpDrain += stressPenalty;
+        
+        // Cộng thêm phạt đói/khát
+        hpDrain += stats.getStarvationPenalty();
 
         if (stats.reduceHp(hpDrain)) {
             die();
