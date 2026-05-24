@@ -10,3 +10,5 @@ target/
 # Bỏ qua file log và OS rác
 *.log
 .DS_Store
+
+dependency-reduced-pom.xml
