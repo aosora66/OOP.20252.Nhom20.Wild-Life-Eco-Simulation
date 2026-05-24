@@ -11,6 +11,4 @@ target/
 *.log
 .DS_Store
 
-# Cursor / Junie (cấu hình local, không đẩy lên remote)
-.cursor/
-.junie/
+dependency-reduced-pom.xml
