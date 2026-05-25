@@ -10,12 +10,18 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Random;
 
+/**
+ * Lớp nền cho mọi strategy, cung cấp các hành động di chuyển và tìm kiếm dùng chung.
+ * Subclass chỉ cần implement isApplicable(), getPriority() và execute().
+ */
 public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
     private static final Random RNG = new Random();
 
     protected final float stepSize;
+    // Bán kính quan sát — dùng để tìm mồi, kẻ thù, thức ăn
     protected final float sightRadius;
+    // Khoảng cách tối đa để tấn công hoặc ăn
     protected final float attackRange;
 
     protected AbstractSurvivalStrategy(float stepSize, float sightRadius, float attackRange) {
@@ -24,6 +30,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         this.attackRange = attackRange;
     }
 
+    /** Di chuyển ngẫu nhiên một bước, bỏ qua nếu ô đích không đi được. */
     protected void wander(Organism self, Environment env) {
         float angle = RNG.nextFloat() * 2f * (float) Math.PI;
         Vector2D next = new Vector2D(
@@ -35,6 +42,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         }
     }
 
+    /** Tiến về phía target tối đa stepSize, dừng khi đã chạm. */
     protected void moveToward(Organism self, Vector2D target, Environment env) {
         Vector2D pos = self.getPosition();
         float dist   = pos.distanceTo(target);
@@ -53,6 +61,10 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         }
     }
 
+    /**
+     * Chạy ra xa khỏi threat một bước stepSize.
+     * Nếu hướng ngược lại bị chặn, fallback sang wander để tránh bị kẹt góc.
+     */
     protected void moveAwayFrom(Organism self, Vector2D threat, Environment env) {
         Vector2D pos = self.getPosition();
         float dist   = pos.distanceTo(threat);
@@ -72,17 +84,24 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         }
     }
 
+    /**
+     * Tìm sinh vật còn sống gần nhất cùng loài targetSpecies trong sightRadius,
+     * loại trừ bản thân và xác đã chết (TRANSFORMING).
+     * Lọc isAlive() để hunter không tấn công xác và scared không chạy khỏi predator đã chết.
+     */
     protected Optional<Organism> findNearestBySpecies(Organism self, Environment env,
                                                        String targetSpecies) {
         return env.getRegistry()
                   .findNear(self.getPosition(), sightRadius)
                   .stream()
-                  .filter(o -> !o.getId().equals(self.getId())
+                  .filter(o -> o.isAlive()
+                            && !o.getId().equals(self.getId())
                             && o.getSpeciesName().equals(targetSpecies))
                   .min(Comparator.comparingDouble(
                       o -> o.getPosition().distanceTo(self.getPosition())));
     }
 
+    /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
     protected Optional<FoodItem> findNearestFood(Organism self, Environment env,
                                                   boolean wantWater) {
         return env.getResources()

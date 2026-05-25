@@ -1,6 +1,7 @@
 package wildlife.model.organism;
 import wildlife.model.dto.RenderData;
 import wildlife.model.environment.Environment;
+import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -8,6 +9,9 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.SurvivalStrategy;
 import wildlife.util.Vector2D;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 /**
  * Abstract class trung tâm đại diện cho mọi sinh vật
  *
@@ -18,8 +22,8 @@ import wildlife.util.Vector2D;
  * - Subclass CHỈ cần implement onTick() và reproduce().
  */
 public abstract class Organism {
-    // Lấy chỉ số trừ HP khi lão hóa từ file config
-    private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.stats.hpPenaltyPerTick");
+    // HP bị trừ mỗi tick khi sinh vật vào giai đoạn lão hóa (key riêng, không dùng chung với starvation penalty)
+    private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.growth.decayHpPenalty");
 
     // ----------------------------------------------------------
     //  5 thuộc tính nhận diện cơ bản
@@ -36,7 +40,9 @@ public abstract class Organism {
     protected final GrowthComponent growth;
     protected final SurvivalStatsComponent stats;
     protected final AdaptabilityComponent adaptability;
-    protected SurvivalStrategy strategy;
+    // Danh sách strategy gắn vào sinh vật — thứ tự thêm vào không quan trọng,
+    // executeStrategy() tự sắp xếp theo priority mỗi tick
+    protected final List<SurvivalStrategy> strategies = new ArrayList<>();
     protected Environment environment;
 
     // ----------------------------------------------------------
@@ -77,18 +83,25 @@ public abstract class Organism {
      * Cập nhật toàn bộ trạng thái sinh vật mỗi tick.
      * Hàm này bị khóa (final) để ép luồng logic cốt lõi của hệ sinh thái.
      *
+     * Thứ tự cố định: growUp → onTick (hành động) → processSurvivalMetabolism (decay) → checkHp.
+     * Hành động (ăn/uống) chạy trước decay để kết quả ăn trong tick này
+     * được tính vào trước khi trừ HP.
+     *
      * @param currentTick  số thứ tự tick hiện tại
      */
     public final void tick(int currentTick) {
         if (!isAlive()) return;
 
-        // 1. Logic hệ thống bắt buộc (sinh vật tự động lớn lên và lão hóa)
         this.growUp();
+        if (!isAlive()) return;
 
-        // 2. Logic hành vi riêng của từng loài (nếu sinh vật vẫn còn sống sau khi growUp)
-        if (isAlive()) {
-            this.onTick(currentTick);
-        }
+        // Hành động trước: di chuyển, ăn, săn, chạy...
+        this.onTick(currentTick);
+        if (!isAlive()) return;
+
+        // Sau đó mới tính decay — nếu vừa ăn xong, hunger giảm trước khi bị phạt HP
+        // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
+        this.processSurvivalMetabolism();
     }
 
     // ----------------------------------------------------------
@@ -137,11 +150,88 @@ public abstract class Organism {
         boolean died = stats.reduceHp(amount);
         if (died) die();
     }
-    protected void executeStrategy(int currentTick) {
-    if (strategy != null && environment != null) {
-        strategy.execute(this, environment);
+
+    /**
+     * Tiêu thụ một FoodItem — giảm đói/khát, tăng HP, xóa khỏi resources.
+     * Subclass (Animal) có thể override để thêm hành vi (vd. trigger sinh sản khi no).
+     * Strategy gọi self.eating(food) polymorphic, không cần instanceof.
+     */
+    public void eating(FoodItem food) {
+        if (food == null || environment == null) return;
+        stats.consume(food.nutritionalValue(), food.isWater());
+        environment.getResources().consume(food);
     }
-}
+
+    /**
+     * Tính và áp dụng decay đói/khát + toàn bộ HP drain mỗi tick.
+     * Gộp 3 nguồn drain: base drain cơ bản + stress nhiệt độ + starvation penalty.
+     * Thirst multiplier tính thêm yếu tố độ ẩm — môi trường khô làm khát nhanh hơn.
+     */
+    protected void processSurvivalMetabolism() {
+        if (environment == null) return;
+
+        float seasonMultiplier = environment.getTime().getSeasonMultiplier();
+        float humidityFactor   = environment.getHumidity()
+                                 / AppConfig.getFloat("organism.stats.humidityMax");
+        float thirstMultiplier = seasonMultiplier
+                                 * (1f + (1f - humidityFactor)
+                                 * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
+
+        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+
+        float hpDrain      = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
+        float stressPenalty = getEnvironmentalStressHpPenalty();
+        // Mùa khắc nghiệt làm stress tệ hơn
+        if (stressPenalty > 0f && seasonMultiplier > 1f) {
+            stressPenalty *= seasonMultiplier;
+        }
+        hpDrain += stressPenalty;
+        hpDrain += stats.getStarvationPenalty();
+
+        if (stats.reduceHp(hpDrain)) {
+            die();
+        }
+    }
+
+    /**
+     * HP phạt thêm mỗi tick khi môi trường không phù hợp với khả năng thích nghi.
+     * Hai mức kiểm tra:
+     *   1. Terrain không thuộc danh sách sinh tồn được (vd. cá trên cạn) → lethal
+     *   2. Nhiệt độ nằm ngoài vùng tolerance → lethal; ngoài optimal → suboptimal
+     */
+    protected float getEnvironmentalStressHpPenalty() {
+        if (environment == null) return 0f;
+
+        // Terrain check trước — sai môi trường thì coi như chết ngay, bất kể nhiệt độ
+        if (currentEnvironment != null && !adaptability.canSurviveIn(currentEnvironment)) {
+            return AppConfig.getFloat("organism.stats.lethalStressHpPenalty");
+        }
+
+        float temperature = environment.getTemperature();
+        if (adaptability.isLethal(temperature) || !adaptability.canTolerate(temperature)) {
+            return AppConfig.getFloat("organism.stats.lethalStressHpPenalty");
+        }
+        if (!adaptability.isOptimal(temperature)) {
+            return AppConfig.getFloat("organism.stats.suboptimalStressHpPenalty");
+        }
+        return 0f;
+    }
+
+    /**
+     * Chọn và chạy đúng một strategy mỗi tick theo cơ chế priority.
+     * Strategy có priority cao nhất thỏa isApplicable() sẽ được thực thi,
+     * các strategy còn lại bị bỏ qua — đảm bảo không có hai hành vi xung đột
+     * cùng di chuyển sinh vật trong một tick.
+     * Subclass gọi hàm này từ onTick().
+     */
+    protected void executeStrategy(int currentTick) {
+        if (environment == null || strategies.isEmpty()) return;
+        strategies.stream()
+                .sorted(Comparator.comparingInt(SurvivalStrategy::getPriority).reversed())
+                .filter(s -> s.isApplicable(this, environment))
+                .findFirst()
+                .ifPresent(s -> s.execute(this, environment));
+    }
 
 
     /**
@@ -190,13 +280,16 @@ public abstract class Organism {
     public void setCurrentEnvironment(TerrainType env)   { this.currentEnvironment = env; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
-    public void bindEnvironment(Environment env) {
-    this.environment = env;
-}
 
-public void setStrategy(SurvivalStrategy strategy) {
-    this.strategy = strategy;
-}
+    /** Phải gọi sau khi thêm organism vào Environment để executeStrategy() hoạt động. */
+    public void bindEnvironment(Environment env) {
+        this.environment = env;
+    }
+
+    /** Thêm một strategy vào danh sách. Có thể gọi nhiều lần để gắn nhiều strategy. */
+    public void addStrategy(SurvivalStrategy strategy) {
+        this.strategies.add(strategy);
+    }
     @Override
     public String toString() {
         return String.format("[%s | id=%s | hp=%.1f | age=%.0f | pos=%s | state=%s]",
