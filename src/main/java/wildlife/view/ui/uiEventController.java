@@ -12,7 +12,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.util.Duration;
 
-public class MainController {
+
+//Dieu khien cac thao tac tren man hinh UI (va animation) va ghi nhan cac event tac dong vao scene canvas de gui sang lwjgl
+public class uiEventController {
     private static boolean sceneModeIsBasic = true;
     private Timeline timelineForAnimation;
     //view button

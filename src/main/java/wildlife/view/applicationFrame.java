@@ -6,12 +6,15 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-
 import java.util.Objects;
 
+/*
+ this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for lwjgl embedding (renderer).
+ */
 public class applicationFrame extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
+        //we load the frame from fxml file, set it as root node on javafx
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/wildlife/view/ui/fxml/main_ui.fxml"));
         Parent root = loader.load();
         primaryStage.setMaximized(true);

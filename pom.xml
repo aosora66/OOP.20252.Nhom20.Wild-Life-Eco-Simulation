@@ -17,59 +17,44 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.11</javafx.version>
         <lwjgl.version>3.3.6</lwjgl.version>
+        <lwjgl.natives>natives-windows</lwjgl.natives>
         <joml.version>1.10.8</joml.version>
     </properties>
 
     <profiles>
 
-        <!-- Windows -->
         <profile>
             <id>windows</id>
-
             <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
+                <os> <family>Windows</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico
-                </app.icon>
+                <app.icon> src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico </app.icon>
+                <lwjgl.natives>natives-windows</lwjgl.natives>
             </properties>
         </profile>
 
         <!-- macOS -->
         <profile>
             <id>mac</id>
-
             <activation>
-                <os>
-                    <family>mac</family>
-                </os>
+                <os><family>mac</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns
-                </app.icon>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+                <lwjgl.natives>natives-macos</lwjgl.natives>
             </properties>
         </profile>
 
         <!-- Linux -->
         <profile>
             <id>linux</id>
-
             <activation>
-                <os>
-                    <family>unix</family>
-                </os>
+                <os><family>unix</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.png
-                </app.icon>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
+                <lwjgl.natives>natives-linux</lwjgl.natives>
             </properties>
         </profile>
 
@@ -93,6 +78,9 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Lightweight Java game lib -->
+
+
         <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl</artifactId>
@@ -108,6 +96,25 @@
             <artifactId>lwjgl-glfw</artifactId>
             <version>${lwjgl.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+
         <dependency>
             <groupId>org.joml</groupId>
             <artifactId>joml</artifactId>
