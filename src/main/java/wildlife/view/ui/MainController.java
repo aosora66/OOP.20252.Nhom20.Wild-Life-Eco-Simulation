@@ -4,7 +4,6 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -12,8 +11,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.util.Duration;
-import wildlife.view.organism;
-import wildlife.view.environment;
 
 public class MainController {
     private static boolean sceneModeIsBasic = true;
@@ -84,45 +81,12 @@ public class MainController {
     @FXML
     public HBox organismToolset;
     private void organism_list_load(){
-        if(!organism.mobsList.isEmpty()){
-            int id = 1;
-            for(String b: organism.mobsList){
-                Button button = new Button(b);
-                button.getStyleClass().add("tool-item");
-                button.setStyle("-fx-background-color: #D9B65D");
 
-                button.setId("animalButton" + id);
-                id++;
-                organismToolset.getChildren().add(button);
-            }
-        }
-        if(!organism.plantsList.isEmpty()){
-            int id = 1;
-            for(String b: organism.plantsList){
-                Button button = new Button(b);
-                button.getStyleClass().add("tool-item");
-                button.setId("plantsButton" + id);
-                button.setStyle("-fx-background-color: #6FA37C");
-                id++;
-                organismToolset.getChildren().add(button);
-            }
-        }
     }
     @FXML
     public HBox envTool;
     private void environment_materials_load(){
-        if(environment.materialLists.isEmpty()){
-            return;
-        }
-        int id = 1;
-        for(String b: environment.materialLists){
-            Button button = new Button(b);
-            button.getStyleClass().add("tool-item");
-            button.setId("envButton" + id);
-            button.setStyle("-fx-background-color: #A8907A");
-            id++;
-            envTool.getChildren().add(button);
-        }
+
     }
 
     //Pane nay de render scene

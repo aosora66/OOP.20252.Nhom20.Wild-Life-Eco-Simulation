@@ -2,26 +2,20 @@ package wildlife.view;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.Objects;
 
-public class viewSetup extends Application {
+public class applicationFrame extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/wildlife/view/ui/fxml/main_ui.fxml"));
         Parent root = loader.load();
-        Screen screen = Screen.getPrimary();
-        Rectangle2D bounds = screen.getVisualBounds();
-        primaryStage.setX(bounds.getMinX());
-        primaryStage.setY(bounds.getMinY());
-        primaryStage.setWidth(bounds.getWidth());
-        primaryStage.setHeight(bounds.getHeight());
+        primaryStage.setMaximized(true);
+        primaryStage.setResizable(false);
 
         Scene scene = new Scene(root);
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/wildlife/view/ui/css/style.css")));
@@ -35,7 +29,7 @@ public class viewSetup extends Application {
 
     }
 
-    public static void main(String[] args) {
+    public void show(String[] args){
         launch(args);
     }
 }
