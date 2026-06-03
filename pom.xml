@@ -78,6 +78,14 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- JavaFX Swing -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Lightweight Java game lib -->
 
 
@@ -120,6 +128,8 @@
             <artifactId>joml</artifactId>
             <version>${joml.version}</version>
         </dependency>
+
+
 
     </dependencies>
 
