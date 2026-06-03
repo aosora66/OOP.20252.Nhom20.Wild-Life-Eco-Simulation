@@ -118,4 +118,32 @@ public class TerrainComponent {
     public Set<TerrainType> getContainedTerrains() {
         return Collections.unmodifiableSet(containedTerrains);
     }
+    /**
+     * Tìm tọa độ của ô địa hình thuộc loại chỉ định gần với vị trí hiện tại nhất.
+     * * @param currentPos Vị trí hiện tại
+     * @param targetType Loại địa hình cần tìm (VD: Nước nông)
+     * @return Tọa độ Vector2D của ô gần nhất, hoặc null nếu không tìm thấy
+     */
+    public Vector2D findNearestTile(Vector2D currentPos, wildlife.model.environment.enums.TerrainType targetType) {
+        Vector2D nearestPos = null;
+        float minDistance = Float.MAX_VALUE;
+
+        // Duyệt qua danh sách các ô địa hình điểm xuyết để tìm ô phù hợp
+        for (Map.Entry<TileIndex, wildlife.model.environment.enums.TerrainType> entry : customTiles.entrySet()) {
+            if (entry.getValue() == targetType) {
+                // Tính toạ độ thực của ô đó (lấy tâm ô)
+                float tileCenterX = entry.getKey().x() * TILE_SIZE + (TILE_SIZE / 2);
+                float tileCenterY = entry.getKey().y() * TILE_SIZE + (TILE_SIZE / 2);
+                Vector2D tilePos = new Vector2D(tileCenterX, tileCenterY);
+
+                // Giả định class Vector2D của cậu có hàm distanceTo()
+                float dist = currentPos.distanceTo(tilePos);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestPos = tilePos;
+                }
+            }
+        }
+        return nearestPos;
+    }
 }

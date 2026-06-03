@@ -5,6 +5,7 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
@@ -316,5 +317,83 @@ public abstract class Environment {
                 time.getCurrentSeason(),
                 time.getCurrentWeather(),
                 registry.count());
+    }
+    // ====================================================================
+    //  NHÓM HÀM HỖ TRỢ SINH VẬT (GIÁC QUAN & CẢM NHẬN)
+    // ====================================================================
+
+    /**
+     * Cấp danh sách sinh vật trong tầm nhìn.
+     * * @param center Tọa độ của sinh vật đang nhìn (tâm)
+     * @param radius Bán kính tầm nhìn
+     * @return Danh sách các sinh vật đang sống nằm trong bán kính đó
+     */
+    public List<Organism> getOrganismsInVision(Vector2D center, float radius) {
+        // Gọi thẳng hàm findNear đã được tối ưu trong OrganismRegistry
+        return registry.findNear(center, radius);
+    }
+
+    /**
+     * Cung cấp hướng/tọa độ đi tới nguồn nước gần nhất.
+     * * @param currentPos Tọa độ hiện tại của động vật đang khát
+     * @return Tọa độ của vùng nước gần nhất, hoặc null nếu không tìm thấy
+     */
+    public Vector2D getNearestWaterLocation(Vector2D currentPos) {
+        // Ủy quyền cho bản đồ địa hình dò tìm ô chứa SHALLOW_WATER
+        // (Yêu cầu: TerrainComponent phải có hàm findNearestTile)
+        return terrain.findNearestTile(currentPos, TerrainType.SHALLOW_WATER);
+    }
+
+    /**
+     * Giảm độ nhận diện khi sinh vật ở nơi trú ẩn (bụi rậm, rừng sâu...).
+     * * @param pos Tọa độ sinh vật đang đứng
+     * @return Tỉ lệ % độ lộ diện (1.0 = bình thường, < 1.0 = đang trốn)
+     */
+    public float getStealthModifier(Vector2D pos) {
+        // 1. Kiểm tra lợi thế tàng hình từ bản thân loại địa hình (VD: Rừng rậm)
+        float terrainModifier = terrain.getVisibilityModifier(pos);
+
+        // 2. Kiểm tra xem ngay vị trí đó có vật cản tĩnh nào để nấp không (VD: Bụi rậm)
+        // Dùng bán kính rất nhỏ (0.5f) để xác định sinh vật đang thực sự nấp sau vật cản
+        if (!resources.getObstaclesNear(pos, 0.5f).isEmpty()) {
+            // Nếu có bụi rậm, độ lộ diện giảm mạnh xuống 30% (0.3f)
+            // Lấy giá trị nhỏ nhất giữa địa hình và vật cản để sinh vật có lợi thế nấp tốt nhất
+            return Math.min(terrainModifier, 0.3f);
+        }
+
+        return terrainModifier;
+    }
+    // ====================================================================
+    //  NHÓM HÀM THAO TÁC, ÂM THANH (TƯƠNG TÁC TỪ NGOÀI)
+    // ====================================================================
+
+    /**
+     * Người chơi (hoặc hệ thống) đặt vật cản tĩnh vào bản đồ.
+     * * @param pos Tọa độ đặt vật cản
+     * @param obstacleType Loại vật cản (đá, bụi rậm...). Hiện tại hệ thống 
+     * gom chung thành ObstacleItem, nhưng giữ tham số 
+     * để dễ mở rộng hình ảnh/tính năng sau này.
+     */
+    public void placeObstacle(Vector2D pos, String obstacleType) {
+        // Ủy quyền cho ResourceManager thêm vật cản vào danh sách
+        resources.addObstacle(pos);
+        
+        // Gợi ý mở rộng: Có thể thêm events.publish("EVENT_OBSTACLE_PLACED") 
+        // nếu sau này cậu muốn phát âm thanh tiếng cạch/lạch cạch khi đặt đá.
+    }
+
+    /**
+     * Sinh ra thức ăn (Táo rụng, thả miếng thịt...) và phát âm thanh.
+     * * @param pos Vị trí xuất hiện thức ăn
+     * @param foodType Loại thức ăn (Táo, Thịt...)
+     * @param nutrition Giá trị dinh dưỡng của thức ăn đó
+     */
+    public void spawnFood(Vector2D pos, String foodType, float nutrition) {
+        // Gọi hàm sinh thức ăn thủ công đã được định nghĩa trong ResourceManager
+        resources.spawnFoodManual(pos, nutrition);
+
+        // QUAN TRỌNG: Báo cáo sự kiện ra loa phường!
+        // ViewLogic đang vểnh tai nghe, thấy sự kiện này sẽ tự động phát tiếng "bụp"
+        events.publish(EnvironmentEventPublisher.EVENT_FOOD_SPAWNED);
     }
 }

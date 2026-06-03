@@ -120,4 +120,5 @@ public class OrganismRegistry {
     public List<Organism> getAll() {
         return Collections.unmodifiableList(new ArrayList<>(organisms));
     }
+    
 }
