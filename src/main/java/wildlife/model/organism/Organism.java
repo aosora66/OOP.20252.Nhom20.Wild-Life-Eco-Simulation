@@ -190,4 +190,11 @@ public abstract class Organism {
                 stats.getHp(), growth.getCurrentAge(),
                 position, state);
     }
+    /**
+     * Cập nhật trạng thái của sinh vật.
+     * @param newState Trạng thái mới (ví dụ: ALIVE, DEAD, TRANSFORMING...)
+     */
+    public void setState(OrganismState newState) {
+        this.state = newState; // Giả định biến lưu trạng thái của bạn tên là 'state'
+    }
 }

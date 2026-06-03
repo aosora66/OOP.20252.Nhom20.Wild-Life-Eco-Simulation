@@ -146,4 +146,36 @@ public class TerrainComponent {
         }
         return nearestPos;
     }
+    /**
+     * Trả về hệ số tốc độ di chuyển dựa trên địa hình và loài sinh vật.
+     * @param pos Tọa độ sinh vật đang đứng
+     * @param species Phân loại sinh vật (Ví dụ: "Wolf", "Deer", "Elephant")
+     * @return Hệ số tốc độ (1.0 = bình thường, 0.5 = giảm nửa tốc độ)
+     */
+    public float getMovementSpeedModifier(Vector2D pos, String species) {
+        TerrainType terrain = getTerrainAt(pos);
+
+        // Voi (Động vật đầu bảng) càn lướt mọi địa hình, không bị giảm tốc
+        if (species.equalsIgnoreCase("Elephant")) {
+            return 1.0f; 
+        }
+
+        switch (terrain) {
+            case MUD:
+                // Bùn lầy làm chậm Hươu và Sói đáng kể
+                return 0.5f; 
+                
+            case SHALLOW_WATER:
+                // Nước nông làm chậm vừa phải
+                return 0.7f;
+                
+            case FOREST:
+                // Rừng rậm: Sói di chuyển nhanh hơn Hươu một chút nhờ bản năng
+                if (species.equalsIgnoreCase("Wolf")) return 0.9f;
+                return 0.8f;
+                
+            default: // GRASSLAND
+                return 1.0f; // Tốc độ tối đa trên đồng cỏ
+        }
+    }
 }
