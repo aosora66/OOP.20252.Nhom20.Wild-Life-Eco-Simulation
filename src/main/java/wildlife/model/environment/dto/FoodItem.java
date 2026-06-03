@@ -22,13 +22,5 @@ public record FoodItem(
         /** Số tick còn lại trước khi tài nguyên này biến mất (thối rữa/bốc hơi) */
         int ticksUntilExpiry
 ) {
-    /**
-     * Kiểm tra xem tài nguyên này đã hết hạn chưa.
-     * @param currentTick tick hiện tại của hệ thống
-     * @param spawnTick   tick lúc tài nguyên được tạo ra
-     * @return true nếu đã hết hạn
-     */
-    public boolean isExpired(int currentTick, int spawnTick) {
-        return (currentTick - spawnTick) >= ticksUntilExpiry;
-    }
+   
 }

@@ -48,7 +48,10 @@ public class TimeComponent {
 
     /** Thời tiết hiện tại */
     private WeatherType currentWeather;
-
+    // Các chỉ số vật lý của môi trường
+    private float temperature; // Nhiệt độ (Độ C)
+    private float humidity;    // Độ ẩm (0.0 đến 100.0)
+    private float lightLevel;  // Ánh sáng (0.0 đến 1.0)
     private final Random random;
 
     // ----------------------------------------------------------------
@@ -82,6 +85,7 @@ public class TimeComponent {
         this.currentTick = tick;
         updateSeason();
         updateWeatherBySeason();
+        updateClimateMetrics();
     }
 
     /**
@@ -181,4 +185,45 @@ public class TimeComponent {
     public WeatherType getCurrentWeather() { return currentWeather; }
     public int getTicksPerDayCycle()     { return ticksPerDayCycle; }
     public int getTicksPerSeason()       { return ticksPerSeason; }
+
+    public float getTemperature() { return temperature; }
+    public float getHumidity() { return humidity; }
+    public float getLightLevel() { return lightLevel; }
+    /**
+     * Cập nhật các chỉ số vật lý dựa trên sự giao thoa của Thời gian, Mùa và Thời tiết.
+     */
+    private void updateClimateMetrics() {
+        // 1. Ánh sáng: Phụ thuộc trực tiếp vào Ngày và Đêm
+        // Ban ngày sáng tỏ (1.0), ban đêm chỉ có ánh trăng mờ (0.2)
+        this.lightLevel = isDaytime() ? 1.0f : 0.2f;
+
+        // 2. Nhiệt độ cơ bản: Phụ thuộc vào Mùa
+        float baseTemp = switch (currentSeason) {
+            case BREEDING -> 25.0f; // Mùa sinh sản thường ấm áp, lý tưởng
+            case DROUGHT -> 38.0f;  // Hạn hán thì nóng rát
+            default -> 20.0f;       // NORMAL - mát mẻ
+        };
+        
+        // Yếu tố tinh chỉnh nhiệt độ:
+        if (!isDaytime()) baseTemp -= 6.0f; // Đêm xuống thì nhiệt độ giảm
+        if (currentWeather == WeatherType.RAIN) baseTemp -= 4.0f; // Trời mưa làm mát không khí
+        
+        this.temperature = baseTemp;
+
+        // 3. Độ ẩm cơ bản: Phụ thuộc vào Mùa
+        float baseHumidity = switch (currentSeason) {
+            case BREEDING -> 65.0f; // Ẩm ướt thuận lợi cho nảy mầm
+            case DROUGHT -> 20.0f;  // Khô hanh nứt nẻ
+            default -> 50.0f;       // NORMAL
+        };
+        
+        // Yếu tố tinh chỉnh độ ẩm: Thời tiết có tiếng nói quyết định nhất
+        if (currentWeather == WeatherType.RAIN) {
+            baseHumidity = 95.0f; // Mưa rào thì độ ẩm bão hòa
+        } else if (currentWeather == WeatherType.DROUGHT) {
+            baseHumidity = 10.0f; // Hạn hán tột độ
+        }
+        
+        this.humidity = baseHumidity;
+    }
 }

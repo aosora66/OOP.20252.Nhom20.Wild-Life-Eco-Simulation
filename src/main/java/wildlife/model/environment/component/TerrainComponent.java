@@ -16,7 +16,7 @@ import java.util.Set;
  * Đã nâng cấp sử dụng Strategy Pattern (Boundary) và Hybrid Tilemap.
  */
 public class TerrainComponent {
-
+    
     // ----------------------------------------------------------------
     //  Hằng số hệ thống
     // ----------------------------------------------------------------
