@@ -81,7 +81,11 @@ public class Grassland extends Environment {
             // Thi thoảng xuất hiện ngẫu nhiên một vũng bùn mới (Giới hạn tối đa 10 vũng để không lag)
             if (activeMudPuddles.size() < 10 && random.nextFloat() < 0.05f) {
                 // TODO: Thay tọa độ random (100) bằng tọa độ thực tế từ Boundary của bạn
-                Vector2D mudPos = new Vector2D(random.nextInt(100), random.nextInt(100));
+          // Sửa ở hàm applyWeatherEffect()
+        Vector2D mudPos = terrain.getRandomValidPosition(random);
+
+         // Sửa ở hàm generateNaturalResources()
+        Vector2D grassPos = terrain.getRandomValidPosition(random); 
                 
                 // Nếu điểm đó thuộc đồng cỏ, biến nó thành bùn
                 if (terrain.containsPosition(mudPos)) {

@@ -14,8 +14,6 @@ import java.util.Random;
 
 /**
  * Môi trường Hồ Nước (Lake)
-...
-
 /**
  * Môi trường Hồ Nước (Lake)
 

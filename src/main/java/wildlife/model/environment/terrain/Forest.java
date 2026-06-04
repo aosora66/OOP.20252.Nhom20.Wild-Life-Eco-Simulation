@@ -50,23 +50,21 @@ public class Forest extends Environment {
     }
 
     /**
-     * Khởi tạo các cây cổ thụ và bụi rậm.
+     * Khởi tạo các cây cổ thụ và bụi rậm dựa trên kích thước thật của bản đồ.
      */
     private void initializeFlora() {
-        // Trồng một vài cây cổ thụ làm gốc sinh thái
-        // (Trong thực tế bạn có thể dùng vòng lặp để sinh ngẫu nhiên theo diện tích)
-        Vector2D tree1 = new Vector2D(30, 40);
-        Vector2D tree2 = new Vector2D(70, 60);
-        
-        treeLocations.add(tree1);
-        treeLocations.add(tree2);
+        // Trồng 3 cây cổ thụ ở các vị trí ngẫu nhiên hợp lệ trong bản đồ
+        for (int i = 0; i < 3; i++) {
+            Vector2D treePos = terrain.getRandomValidPosition(random);
+            treeLocations.add(treePos);
+            resources.placeObstacle(treePos); 
+        }
 
-        resources.placeObstacle(tree1); 
-        resources.placeObstacle(tree2);
-
-        // Rải thêm bụi rậm làm nơi trú ẩn (Tương tác với getStealthModifier)
-        resources.placeObstacle(new Vector2D(35, 45));
-        resources.placeObstacle(new Vector2D(80, 20));
+        // Rải thêm 5 bụi rậm làm nơi trú ẩn (Tương tác với getStealthModifier)
+        for (int i = 0; i < 5; i++) {
+            Vector2D bushPos = terrain.getRandomValidPosition(random);
+            resources.placeObstacle(bushPos);
+        }
     }
 
     // ----------------------------------------------------------------
@@ -98,10 +96,10 @@ public class Forest extends Environment {
                 // Lấy ngẫu nhiên một cây cổ thụ
                 Vector2D treePos = treeLocations.get(random.nextInt(treeLocations.size()));
                 
-                // Mọc nấm cách gốc cây một khoảng nhỏ
+                // Mọc nấm cách gốc cây một khoảng nhỏ (Dùng nextFloat thay vì nextInt)
                 Vector2D mushroomPos = new Vector2D(
-                        treePos.getX() + (random.nextInt(10) - 5), 
-                        treePos.getY() + (random.nextInt(10) - 5)
+                        treePos.getX() + (random.nextFloat() * 10 - 5), // Lệch [-5.0 đến 5.0]
+                        treePos.getY() + (random.nextFloat() * 10 - 5)
                 );
 
                 if (terrain.containsPosition(mushroomPos)) {
@@ -130,10 +128,10 @@ public class Forest extends Environment {
         if (random.nextFloat() < dropChance && !treeLocations.isEmpty()) {
             Vector2D treePos = treeLocations.get(random.nextInt(treeLocations.size()));
             
-            // Quả rơi trong bán kính 10 đơn vị quanh gốc cây
+            // Quả rơi trong bán kính 10 đơn vị quanh gốc cây (Dùng nextFloat)
             Vector2D applePos = new Vector2D(
-                    treePos.getX() + (random.nextInt(20) - 10), 
-                    treePos.getY() + (random.nextInt(20) - 10)
+                    treePos.getX() + (random.nextFloat() * 20 - 10), // Lệch [-10.0 đến 10.0]
+                    treePos.getY() + (random.nextFloat() * 20 - 10)
             );
 
             if (terrain.containsPosition(applePos)) {

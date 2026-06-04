@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -95,10 +96,16 @@ public class TerrainComponent {
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
     }
 
-    public boolean isPassable(Vector2D pos, String species) {
+   public boolean isPassable(Vector2D pos, String species) {
         TerrainType terrain = getTerrainAt(pos);
-        // Sau này bạn có thể thêm logic: nếu species = "Vit" thì DEEP_WATER = passable
-        return !DEFAULT_IMPASSABLE.contains(terrain);
+
+        // Cả 6 loài đều sống trên cạn, nên Nước Sâu và Vách Đá chặn tất cả.
+        if (terrain == TerrainType.DEEP_WATER || terrain == TerrainType.CLIFF) {
+            return false; 
+        }
+
+        // Cỏ, Rừng, Bùn, Nước nông đều có thể dẫm lên được.
+        return true; 
     }
 
     public float getVisibilityModifier(Vector2D pos) {
@@ -124,19 +131,33 @@ public class TerrainComponent {
      * @param targetType Loại địa hình cần tìm (VD: Nước nông)
      * @return Tọa độ Vector2D của ô gần nhất, hoặc null nếu không tìm thấy
      */
+/**
+     * Tìm tọa độ của ô địa hình thuộc loại chỉ định gần với vị trí hiện tại nhất.
+     */
     public Vector2D findNearestTile(Vector2D currentPos, wildlife.model.environment.enums.TerrainType targetType) {
         Vector2D nearestPos = null;
         float minDistance = Float.MAX_VALUE;
 
-        // Duyệt qua danh sách các ô địa hình điểm xuyết để tìm ô phù hợp
+        // --- BƯỚC VÁ LỖI 1: KIỂM TRA NỀN MẶC ĐỊNH (DEFAULT TERRAIN) ---
+        if (this.defaultTerrain == targetType) {
+            if (containsPosition(currentPos) && getTerrainAt(currentPos) == targetType) {
+                // Nếu sinh vật đang đứng ngay trên loại đất/nước đó rồi thì khỏi tìm đâu xa
+                return currentPos; 
+            } else {
+                // Nếu đang đứng ngoài, lấy một tọa độ tượng trưng ở trung tâm vùng đó làm đích đến
+                // (Giả định trung tâm khu vực là 50,50. Sau này nếu lớp Boundary có hàm getCenter(), cậu thay vào đây nhé)
+                nearestPos = new Vector2D(50, 50); 
+                minDistance = currentPos.distanceTo(nearestPos);
+            }
+        }
+
+        // --- BƯỚC 2: TÌM TRONG CÁC Ô ĐIỂM XUYẾT (CUSTOM TILES) NHƯ CŨ ---
         for (Map.Entry<TileIndex, wildlife.model.environment.enums.TerrainType> entry : customTiles.entrySet()) {
             if (entry.getValue() == targetType) {
-                // Tính toạ độ thực của ô đó (lấy tâm ô)
                 float tileCenterX = entry.getKey().x() * TILE_SIZE + (TILE_SIZE / 2);
                 float tileCenterY = entry.getKey().y() * TILE_SIZE + (TILE_SIZE / 2);
                 Vector2D tilePos = new Vector2D(tileCenterX, tileCenterY);
 
-                // Giả định class Vector2D của cậu có hàm distanceTo()
                 float dist = currentPos.distanceTo(tilePos);
                 if (dist < minDistance) {
                     minDistance = dist;
@@ -144,6 +165,7 @@ public class TerrainComponent {
                 }
             }
         }
+        
         return nearestPos;
     }
     /**
@@ -177,5 +199,8 @@ public class TerrainComponent {
             default: // GRASSLAND
                 return 1.0f; // Tốc độ tối đa trên đồng cỏ
         }
+    }
+    public Vector2D getRandomValidPosition(Random random) {
+        return boundary.getRandomPoint(random);
     }
 }

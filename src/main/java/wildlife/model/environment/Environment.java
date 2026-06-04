@@ -5,6 +5,7 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.dto.ObstacleItem;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
@@ -245,11 +246,37 @@ public abstract class Environment {
      * @param species tên loài (để TerrainComponent kiểm tra đặc thù loài)
      * @return true nếu có thể di chuyển đến
      */
+    /**
+     * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
+     * Kết hợp kiểm tra địa hình và vật cản tĩnh (Bụi rậm, đá).
+     */
     public boolean isPositionPassable(Vector2D pos, String species) {
-        // Kiểm tra địa hình
+        // 1. Kiểm tra giới hạn địa hình (Nước sâu, vách núi)
         if (!terrain.isPassable(pos, species)) return false;
-        // Kiểm tra vật cản tĩnh (bán kính nhỏ để phát hiện va chạm)
-        return resources.getObstaclesNear(pos, 0.5f).isEmpty();
+
+        // 2. Kiểm tra vật cản
+        List<ObstacleItem> obstacles = resources.getObstaclesNear(pos, 0.5f);
+        if (!obstacles.isEmpty()) {
+            
+            if (species == null) return false;
+
+            // Động vật đầu bảng: Voi dẫm nát/bước qua vật cản dễ dàng
+            if (species.equalsIgnoreCase("Elephant")) {
+                return true;
+            }
+
+            // Động vật ăn thịt và Người: To xác, không lách vào bụi rậm được
+            if (species.equalsIgnoreCase("Wolf") || species.equalsIgnoreCase("Tiger") || species.equalsIgnoreCase("hunter")) {
+                return false;
+            }
+
+            // Động vật ăn cỏ (Thỏ, Hươu): Được phép chui vào vật cản (bụi rậm) để trốn
+            if (species.equalsIgnoreCase("Rabbit") || species.equalsIgnoreCase("Hươu")) {
+                return true; 
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -338,10 +365,17 @@ public abstract class Environment {
      * * @param currentPos Tọa độ hiện tại của động vật đang khát
      * @return Tọa độ của vùng nước gần nhất, hoặc null nếu không tìm thấy
      */
-    public Vector2D getNearestWaterLocation(Vector2D currentPos) {
-        // Ủy quyền cho bản đồ địa hình dò tìm ô chứa SHALLOW_WATER
-        // (Yêu cầu: TerrainComponent phải có hàm findNearestTile)
-        return terrain.findNearestTile(currentPos, TerrainType.SHALLOW_WATER);
+public Vector2D getNearestWaterLocation(Vector2D currentPos) {
+        // Tìm cả Nước Nông và Nước Sâu
+        Vector2D shallow = terrain.findNearestTile(currentPos, TerrainType.SHALLOW_WATER);
+        Vector2D deep    = terrain.findNearestTile(currentPos, TerrainType.DEEP_WATER);
+
+        // Xử lý các trường hợp null (chỉ tìm thấy 1 loại hoặc không thấy gì)
+        if (shallow == null) return deep;
+        if (deep == null) return shallow;
+
+        // Nếu tìm thấy cả 2, so sánh khoảng cách và trả về vũng nước gần hơn
+        return (currentPos.distanceTo(shallow) < currentPos.distanceTo(deep)) ? shallow : deep;
     }
 
     /**
@@ -408,4 +442,5 @@ public abstract class Environment {
         // Môi trường không tự tính mà chuyển "câu hỏi" này xuống cho bộ phận Địa hình
         return terrain.getMovementSpeedModifier(pos, species);
     }
+    
 }

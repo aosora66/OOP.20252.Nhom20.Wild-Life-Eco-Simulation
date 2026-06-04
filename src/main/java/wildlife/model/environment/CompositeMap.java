@@ -7,186 +7,365 @@ import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
+import wildlife.model.organism.Organism;
 import wildlife.util.AppConfig;
-import wildlife.util.ValueRange;
+import wildlife.util.RectBoundary;
+import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 /**
- * Bản đồ tổng hợp (Composite Pattern) — quản lý nhiều môi trường con cùng lúc.
+ * Composite world map.
+ *
+ * This class is the coordinator for positioned sub-environments. Each child
+ * environment owns its own TerrainComponent boundary, and that boundary is used
+ * as the child region's footprint on the global map.
  */
 public class CompositeMap extends Environment {
 
-    // ----------------------------------------------------------------
-    //  Danh sách môi trường con
-    // ----------------------------------------------------------------
+    private static final float DEFAULT_WORLD_SCALE = 0.45f;
+    private static final float DEFAULT_LOCAL_SCALE = 1.0f;
+    private static final float WATER_LOCAL_SCALE = 2.0f;
 
-    /** Danh sách các môi trường con được quản lý */
-    private final List<Environment> subEnvironments;
+    private final List<MapRegion> regions;
+    private ViewMode viewMode;
+    private Environment focusedEnvironment;
 
-    // ----------------------------------------------------------------
-    //  Constructor
-    // ----------------------------------------------------------------
+    public enum ViewMode {
+        WORLD,
+        LOCAL
+    }
 
     /**
-     * @param id   ID duy nhất của bản đồ tổng
-     * @param name Tên hiển thị
+     * A positioned child environment on the global map.
+     *
+     * The actual position/shape is still stored in the child's TerrainComponent
+     * boundary. The scales here tell ViewLogic how large organisms should be
+     * drawn in world view versus local view.
      */
+    public static final class MapRegion {
+        private final Environment environment;
+        private final float worldScale;
+        private final float localScale;
+
+        private MapRegion(Environment environment, float worldScale, float localScale) {
+            if (environment == null) {
+                throw new IllegalArgumentException("Environment cannot be null");
+            }
+            if (worldScale <= 0 || localScale <= 0) {
+                throw new IllegalArgumentException("Render scales must be positive");
+            }
+
+            this.environment = environment;
+            this.worldScale = worldScale;
+            this.localScale = localScale;
+        }
+
+        public boolean contains(Vector2D position) {
+            return environment.getTerrain().containsPosition(position);
+        }
+
+        private float scaleFor(ViewMode mode, Environment focusedEnvironment) {
+            if (mode == ViewMode.LOCAL && environment == focusedEnvironment) {
+                return localScale;
+            }
+            return worldScale;
+        }
+
+        public Environment getEnvironment() {
+            return environment;
+        }
+
+        public float getWorldScale() {
+            return worldScale;
+        }
+
+        public float getLocalScale() {
+            return localScale;
+        }
+    }
+
+    /**
+     * Render snapshot enriched with composite-map metadata.
+     */
+    public static final class MapRenderData {
+        private final RenderData renderData;
+        private final String environmentId;
+        private final String environmentName;
+        private final float displayScale;
+        private final boolean focused;
+
+        private MapRenderData(RenderData renderData,
+                              Environment environment,
+                              float displayScale,
+                              boolean focused) {
+            this.renderData = renderData;
+            this.environmentId = environment.getId();
+            this.environmentName = environment.getName();
+            this.displayScale = displayScale;
+            this.focused = focused;
+        }
+
+        public RenderData getRenderData() {
+            return renderData;
+        }
+
+        public String getEnvironmentId() {
+            return environmentId;
+        }
+
+        public String getEnvironmentName() {
+            return environmentName;
+        }
+
+        public float getDisplayScale() {
+            return displayScale;
+        }
+
+        public boolean isFocused() {
+            return focused;
+        }
+    }
+
     public CompositeMap(String id, String name) {
-        // CompositeMap tự tạo các component tối giản (placeholder),
-        // vì thực chất nó không dùng chúng — chỉ ủy quyền xuống con.
         super(
-                id, name,
-                0f, 0f, 1f,
+                id,
+                name,
+                0f,
+                0f,
+                1f,
                 new TimeComponent(
                         AppConfig.getInt("environment.time.ticksPerDayCycle"),
                         AppConfig.getInt("environment.time.ticksPerSeason")
                 ),
-                // --- DÒNG ĐƯỢC SỬA ---
-                // Bản đồ tổng hợp bao trọn toàn bộ thế giới (0 đến 1000)
-                new TerrainComponent(new wildlife.util.RectBoundary(0, 1000, 0, 1000), TerrainType.GRASSLAND),
-                // ---------------------
-
+                new TerrainComponent(new RectBoundary(0, 1000, 0, 1000), TerrainType.GRASSLAND),
                 new OrganismRegistry(),
                 new ResourceManager(),
                 new EnvironmentEventPublisher("sounds/world_ambient.wav")
         );
-        this.subEnvironments = new ArrayList<>();
+
+        this.regions = new ArrayList<>();
+        this.viewMode = ViewMode.WORLD;
+        this.focusedEnvironment = null;
     }
 
-    // ----------------------------------------------------------------
-    //  Quản lý môi trường con
-    // ----------------------------------------------------------------
-
     /**
-     * Thêm một môi trường con vào bản đồ tổng.
-     *
-     * @param env môi trường cần thêm
-     * @throws IllegalArgumentException nếu env là null hoặc là CompositeMap lồng nhau bản thân
+     * Adds a child environment using default scales. Water-heavy regions get a
+     * larger local scale so lake organisms can be inspected more clearly.
      */
     public void addSubEnvironment(Environment env) {
-        if (env == null) throw new IllegalArgumentException("Không thể thêm môi trường null");
-        if (env == this) throw new IllegalArgumentException("Không thể thêm CompositeMap vào chính nó");
-        subEnvironments.add(env);
+        float localScale = env != null && env.getTerrain().containsTerrain(TerrainType.DEEP_WATER)
+                ? WATER_LOCAL_SCALE
+                : DEFAULT_LOCAL_SCALE;
+        addSubEnvironment(env, DEFAULT_WORLD_SCALE, localScale);
     }
 
     /**
-     * Xóa một môi trường con khỏi bản đồ tổng.
-     *
-     * @param id ID của môi trường cần xóa
-     * @return true nếu xóa thành công
+     * Adds a child environment with explicit render scales.
      */
-    public boolean removeSubEnvironment(String id) {
-        return subEnvironments.removeIf(env -> env.getId().equals(id));
+    public void addSubEnvironment(Environment env, float worldScale, float localScale) {
+        if (env == null) {
+            throw new IllegalArgumentException("Cannot add null environment");
+        }
+        if (env == this) {
+            throw new IllegalArgumentException("Cannot add CompositeMap to itself");
+        }
+        if (findSubEnvironment(env.getId()) != null) {
+            throw new IllegalArgumentException("Duplicate environment id: " + env.getId());
+        }
+
+        regions.add(new MapRegion(env, worldScale, localScale));
     }
 
-    // ----------------------------------------------------------------
-    //  Ghi đè updateEnvironment — phân phối lệnh xuống con
-    // ----------------------------------------------------------------
+    public boolean removeSubEnvironment(String id) {
+        if (focusedEnvironment != null && focusedEnvironment.getId().equals(id)) {
+            focusedEnvironment = null;
+            viewMode = ViewMode.WORLD;
+        }
+        return regions.removeIf(region -> region.getEnvironment().getId().equals(id));
+    }
 
     /**
-     * Cập nhật toàn bộ bản đồ tổng bằng cách ra lệnh cho từng môi trường con.
-     *
-     * Ghi đè hoàn toàn logic của lớp cha vì CompositeMap không tự tick —
-     * nó chỉ là bộ điều phối (orchestrator).
-     *
-     * @param currentTick tick hiện tại từ hệ thống
+     * Updates all positioned child environments.
      */
     @Override
     public final void updateEnvironment(int currentTick) {
-        for (Environment sub : subEnvironments) {
-            sub.updateEnvironment(currentTick);
+        for (MapRegion region : regions) {
+            region.getEnvironment().updateEnvironment(currentTick);
         }
     }
 
-    // ----------------------------------------------------------------
-    //  Lấy dữ liệu render từ toàn bộ môi trường con
-    // ----------------------------------------------------------------
+    /**
+     * Finds the child environment whose terrain boundary contains this position.
+     */
+    public Environment findEnvironmentAt(Vector2D position) {
+        if (position == null) {
+            return null;
+        }
+        for (MapRegion region : regions) {
+            if (region.contains(position)) {
+                return region.getEnvironment();
+            }
+        }
+        return null;
+    }
 
     /**
-     * Gom toàn bộ RenderData từ tất cả môi trường con.
-     * ViewLogic gọi phương thức này để lấy snapshot toàn thế giới.
+     * Moves an organism across the global map and transfers ownership to the
+     * target child environment when it crosses a region boundary.
      *
-     * @return danh sách RenderData của toàn bộ sinh vật trên bản đồ
+     * @return true when the move is accepted, false when the target is outside
+     *         the composite map or blocked by terrain/obstacles.
+     */
+    public boolean moveOrganism(Organism organism, Vector2D newPosition) {
+        if (organism == null || newPosition == null) {
+            return false;
+        }
+
+        Environment target = findEnvironmentAt(newPosition);
+        if (target == null) {
+            return false;
+        }
+        if (!target.isPositionPassable(newPosition, organism.getSpeciesName())) {
+            return false;
+        }
+
+        Environment current = findEnvironmentContainingOrganism(organism.getId());
+        if (current != target) {
+            if (current != null) {
+                current.getRegistry().remove(organism.getId());
+            }
+            if (!target.getRegistry().findById(organism.getId()).isPresent()) {
+                target.addOrganism(organism);
+            }
+        }
+
+        organism.setPosition(newPosition);
+        organism.setCurrentEnvironment(target.getTerrain().getTerrainAt(newPosition));
+        return true;
+    }
+
+    public void showWorldView() {
+        viewMode = ViewMode.WORLD;
+        focusedEnvironment = null;
+    }
+
+    public boolean focusEnvironment(String id) {
+        Environment env = findSubEnvironment(id);
+        if (env == null) {
+            return false;
+        }
+        viewMode = ViewMode.LOCAL;
+        focusedEnvironment = env;
+        return true;
+    }
+
+    public boolean focusEnvironmentAt(Vector2D position) {
+        Environment env = findEnvironmentAt(position);
+        if (env == null) {
+            return false;
+        }
+        viewMode = ViewMode.LOCAL;
+        focusedEnvironment = env;
+        return true;
+    }
+
+    /**
+     * Old compatibility API: returns only organism render data.
      */
     public List<RenderData> getAllRenderSnapshots() {
         List<RenderData> all = new ArrayList<>();
-        for (Environment sub : subEnvironments) {
-            all.addAll(sub.getRenderSnapshot());
+        for (MapRegion region : regions) {
+            all.addAll(region.getEnvironment().getRenderSnapshot());
         }
         return Collections.unmodifiableList(all);
     }
 
     /**
-     * Tìm môi trường con theo ID.
-     *
-     * @param id ID môi trường cần tìm
-     * @return môi trường tìm được, hoặc null nếu không tồn tại
+     * Preferred API for the GUI: returns organism render data plus region and
+     * scale information for world/local drawing modes.
      */
+    public List<MapRenderData> getCompositeRenderSnapshot() {
+        List<MapRenderData> all = new ArrayList<>();
+        for (MapRegion region : regions) {
+            Environment env = region.getEnvironment();
+            float scale = region.scaleFor(viewMode, focusedEnvironment);
+            boolean focused = viewMode == ViewMode.LOCAL && env == focusedEnvironment;
+            for (RenderData renderData : env.getRenderSnapshot()) {
+                all.add(new MapRenderData(renderData, env, scale, focused));
+            }
+        }
+        return Collections.unmodifiableList(all);
+    }
+
     public Environment findSubEnvironment(String id) {
-        return subEnvironments.stream()
-                .filter(e -> e.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        for (MapRegion region : regions) {
+            Environment env = region.getEnvironment();
+            if (env.getId().equals(id)) {
+                return env;
+            }
+        }
+        return null;
     }
 
-    /**
-     * Đếm tổng số sinh vật còn sống trên toàn bộ bản đồ.
-     *
-     * @return tổng số sinh vật còn sống
-     */
     public int getTotalOrganismCount() {
-        return subEnvironments.stream()
-                .mapToInt(e -> e.getRegistry().getAllAlive().size())
-                .sum();
+        int total = 0;
+        for (MapRegion region : regions) {
+            total += region.getEnvironment().getRegistry().getAllAlive().size();
+        }
+        return total;
     }
 
-    // ----------------------------------------------------------------
-    //  Implement abstract methods (rỗng — ủy quyền xuống con)
-    // ----------------------------------------------------------------
-
-    /**
-     * CompositeMap không tự xử lý hiệu ứng mùa.
-     * Mỗi môi trường con tự xử lý trong updateEnvironment() của nó.
-     */
     @Override
     protected void applySeasonEffect() {
-        // Ủy quyền xuống từng subEnvironment — không cần xử lý ở đây
+        // CompositeMap delegates season effects to child environments.
     }
 
-    /**
-     * CompositeMap không tự xử lý hiệu ứng thời tiết.
-     * Mỗi môi trường con tự xử lý trong updateEnvironment() của nó.
-     */
     @Override
     protected void applyWeatherEffect() {
-        // Ủy quyền xuống từng subEnvironment — không cần xử lý ở đây
+        // CompositeMap delegates weather effects to child environments.
     }
 
-    /**
-     * CompositeMap không tự sinh tài nguyên.
-     * Mỗi môi trường con tự sinh tài nguyên trong updateEnvironment() của nó.
-     */
     @Override
     protected void generateNaturalResources() {
-        // Ủy quyền xuống từng subEnvironment — không cần xử lý ở đây
+        // CompositeMap delegates resource generation to child environments.
     }
 
-    // ----------------------------------------------------------------
-    //  Getters
-    // ----------------------------------------------------------------
-
-    /** Trả về danh sách môi trường con (chỉ đọc) */
     public List<Environment> getSubEnvironments() {
-        return Collections.unmodifiableList(subEnvironments);
+        List<Environment> environments = new ArrayList<>();
+        for (MapRegion region : regions) {
+            environments.add(region.getEnvironment());
+        }
+        return Collections.unmodifiableList(environments);
+    }
+
+    public List<MapRegion> getRegions() {
+        return Collections.unmodifiableList(regions);
+    }
+
+    public ViewMode getViewMode() {
+        return viewMode;
+    }
+
+    public Environment getFocusedEnvironment() {
+        return focusedEnvironment;
+    }
+
+    private Environment findEnvironmentContainingOrganism(String organismId) {
+        for (MapRegion region : regions) {
+            Environment env = region.getEnvironment();
+            if (env.getRegistry().findById(organismId).isPresent()) {
+                return env;
+            }
+        }
+        return null;
     }
 
     @Override
     public String toString() {
-        return String.format("[CompositeMap | id=%s | subEnvironments=%d | totalOrganisms=%d]",
-                getId(), subEnvironments.size(), getTotalOrganismCount());
+        return String.format("[CompositeMap | id=%s | regions=%d | totalOrganisms=%d | view=%s]",
+                getId(), regions.size(), getTotalOrganismCount(), viewMode);
     }
 }
