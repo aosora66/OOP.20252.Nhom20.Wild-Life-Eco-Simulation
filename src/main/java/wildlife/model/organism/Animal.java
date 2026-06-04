@@ -5,7 +5,11 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.SurvivalStrategy;
 import wildlife.util.Vector2D;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Lớp nền cho mọi động vật — cung cấp các thuộc tính vật lý chung
@@ -17,6 +21,10 @@ import wildlife.util.Vector2D;
  * 3. Implement addSurvivalStrategies() để gọi addStrategy() cho từng strategy cần thiết.
  */
 public abstract class Animal extends Organism {
+
+    // Danh sách strategy gắn vào động vật — thứ tự thêm vào không quan trọng,
+    // executeStrategy() tự sắp xếp theo priority mỗi tick
+    protected final List<SurvivalStrategy> strategies = new ArrayList<>();
 
     protected String gender;
     protected float vision;
@@ -56,6 +64,27 @@ public abstract class Animal extends Organism {
      */
     protected final void initStrategies() {
         addSurvivalStrategies();
+    }
+
+    /** Thêm một strategy vào danh sách. Có thể gọi nhiều lần để gắn nhiều strategy. */
+    public void addStrategy(SurvivalStrategy strategy) {
+        this.strategies.add(strategy);
+    }
+
+    /**
+     * Chọn và chạy đúng một strategy mỗi tick theo cơ chế priority.
+     * Strategy có priority cao nhất thỏa isApplicable() sẽ được thực thi,
+     * các strategy còn lại bị bỏ qua — đảm bảo không có hai hành vi xung đột
+     * cùng di chuyển động vật trong một tick.
+     * Subclass gọi hàm này từ onTick().
+     */
+    protected void executeStrategy(int currentTick) {
+        if (environment == null || strategies.isEmpty()) return;
+        strategies.stream()
+                .sorted(Comparator.comparingInt(SurvivalStrategy::getPriority).reversed())
+                .filter(s -> s.isApplicable(this, environment))
+                .findFirst()
+                .ifPresent(s -> s.execute(this, environment));
     }
 
     // eating(FoodItem) được kế thừa từ Organism — override ở đây nếu cần thêm hành vi animal-specific

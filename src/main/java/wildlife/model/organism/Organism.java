@@ -7,11 +7,7 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
-import wildlife.util.SurvivalStrategy;
 import wildlife.util.Vector2D;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 /**
  * Abstract class trung tâm đại diện cho mọi sinh vật
  *
@@ -40,9 +36,6 @@ public abstract class Organism {
     protected final GrowthComponent growth;
     protected final SurvivalStatsComponent stats;
     protected final AdaptabilityComponent adaptability;
-    // Danh sách strategy gắn vào sinh vật — thứ tự thêm vào không quan trọng,
-    // executeStrategy() tự sắp xếp theo priority mỗi tick
-    protected final List<SurvivalStrategy> strategies = new ArrayList<>();
     protected Environment environment;
 
     // ----------------------------------------------------------
@@ -218,23 +211,6 @@ public abstract class Organism {
     }
 
     /**
-     * Chọn và chạy đúng một strategy mỗi tick theo cơ chế priority.
-     * Strategy có priority cao nhất thỏa isApplicable() sẽ được thực thi,
-     * các strategy còn lại bị bỏ qua — đảm bảo không có hai hành vi xung đột
-     * cùng di chuyển sinh vật trong một tick.
-     * Subclass gọi hàm này từ onTick().
-     */
-    protected void executeStrategy(int currentTick) {
-        if (environment == null || strategies.isEmpty()) return;
-        strategies.stream()
-                .sorted(Comparator.comparingInt(SurvivalStrategy::getPriority).reversed())
-                .filter(s -> s.isApplicable(this, environment))
-                .findFirst()
-                .ifPresent(s -> s.execute(this, environment));
-    }
-
-
-    /**
      * Đóng gói dữ liệu tối thiểu để ViewLogic render.
      * Không lộ bất kỳ thuộc tính nội bộ nào và không chứa logic xử lý chuỗi của View.
      *
@@ -281,15 +257,11 @@ public abstract class Organism {
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
 
-    /** Phải gọi sau khi thêm organism vào Environment để executeStrategy() hoạt động. */
+    /** Phải gọi sau khi thêm sinh vật vào Environment để các method phụ thuộc môi trường hoạt động. */
     public void bindEnvironment(Environment env) {
         this.environment = env;
     }
 
-    /** Thêm một strategy vào danh sách. Có thể gọi nhiều lần để gắn nhiều strategy. */
-    public void addStrategy(SurvivalStrategy strategy) {
-        this.strategies.add(strategy);
-    }
     @Override
     public String toString() {
         return String.format("[%s | id=%s | hp=%.1f | age=%.0f | pos=%s | state=%s]",

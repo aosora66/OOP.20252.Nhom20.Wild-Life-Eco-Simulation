@@ -17,7 +17,7 @@ public interface SurvivalStrategy {
 
     /**
      * Kiểm tra strategy này có phù hợp với trạng thái hiện tại của sinh vật không.
-     * Organism.executeStrategy() dùng kết quả này để chọn strategy nào chạy.
+     * Animal.executeStrategy() dùng kết quả này để chọn strategy nào chạy.
      */
     boolean isApplicable(Organism self, Environment env);
 
