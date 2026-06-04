@@ -1,4 +1,4 @@
-package wildlife.util;
+package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.organism.Organism;

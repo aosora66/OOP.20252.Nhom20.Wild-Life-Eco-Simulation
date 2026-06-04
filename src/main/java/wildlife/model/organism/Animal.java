@@ -5,7 +5,7 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
-import wildlife.util.SurvivalStrategy;
+import wildlife.model.brain.SurvivalStrategy;
 import wildlife.util.Vector2D;
 import java.util.ArrayList;
 import java.util.Comparator;

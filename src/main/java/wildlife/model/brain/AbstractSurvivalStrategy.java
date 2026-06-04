@@ -3,7 +3,7 @@ package wildlife.model.brain;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.organism.Organism;
-import wildlife.util.SurvivalStrategy;
+import wildlife.model.brain.SurvivalStrategy;
 import wildlife.util.Vector2D;
 
 import java.util.Comparator;
