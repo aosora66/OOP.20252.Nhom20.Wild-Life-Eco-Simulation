@@ -10,12 +10,6 @@ import wildlife.util.Vector2D;
 
 /**
  * Abstract class trung tâm đại diện cho mọi sinh vật
- *
- * Nguyên tắc thiết kế:
- * - Logic sinh tồn (BioLogic) hoàn toàn tách khỏi ViewLogic.
- * - Các chỉ số cụ thể được ủy quyền cho 3 Component, tránh class phình to.
- * - Áp dụng Template Method Pattern ở hàm tick() để quản lý luồng sống chết cơ bản.
- * - Subclass CHỈ cần implement onTick() và reproduce().
  */
 public abstract class Organism {
     // Lấy chỉ số trừ HP khi lão hóa từ file config
@@ -73,11 +67,9 @@ public abstract class Organism {
 
     /**
      * Cập nhật toàn bộ trạng thái sinh vật mỗi tick.
-     * Hàm này bị khóa (final) để ép luồng logic cốt lõi của hệ sinh thái.
-     *
      * @param currentTick  số thứ tự tick hiện tại
      */
-    public final void tick(int currentTick) {
+    public final void updateOrganism(int currentTick) {
         if (!isAlive()) return;
 
         // 1. Logic hệ thống bắt buộc (sinh vật tự động lớn lên và lão hóa)
@@ -95,15 +87,12 @@ public abstract class Organism {
 
     /**
      * Hành vi cụ thể của từng loài trong mỗi tick.
-     * Được gọi tự động bởi hàm tick() chung.
      * @param currentTick số thứ tự tick hiện tại
      */
     protected abstract void onTick(int currentTick);
 
     /**
      * Sinh sản: tạo ra một sinh vật con cùng loài.
-     * Subclass trả về đúng kiểu của mình (covariant return).
-     *
      * @return sinh vật con mới, hoặc null nếu chưa đủ điều kiện
      */
     public abstract Organism reproduce();
@@ -137,6 +126,19 @@ public abstract class Organism {
     }
 
     /**
+     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
+     * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
+     *
+     * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
+     */
+    protected void die() {
+        if (state == OrganismState.ALIVE) {
+            state = OrganismState.DEAD;
+            // Environment sẽ lắng nghe trạng thái này và xóa sau N tick
+        }
+    }
+
+    /**
      * Đóng gói dữ liệu tối thiểu để ViewLogic render.
      * Không lộ bất kỳ thuộc tính nội bộ nào và không chứa logic xử lý chuỗi của View.
      *
@@ -150,19 +152,6 @@ public abstract class Organism {
                 position.getY(),
                 state
         );
-    }
-
-    /**
-     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
-     * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
-     *
-     * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
-     */
-    protected void die() {
-        if (state == OrganismState.ALIVE) {
-            state = OrganismState.TRANSFORMING;
-            // Environment sẽ lắng nghe trạng thái này và xóa sau N tick
-        }
     }
 
     // ----------------------------------------------------------

@@ -18,19 +18,7 @@ import java.util.List;
 /**
  * Abstract class trung tâm của tầng môi trường.
  *
- * =====================================================================
- * DESIGN CONTRACT — Hướng dẫn triển khai lớp con
- * =====================================================================
- *
- * Đây là khung xương (skeleton) cho mọi môi trường cụ thể (Grassland,
- * Forest, Lake...). Lớp con CHỈ cần implement 3 phương thức abstract:
- *
- *   1. applySeasonEffect()         → Điều chỉnh chỉ số môi trường theo mùa.
- *   2. applyWeatherEffect()        → Điều chỉnh chỉ số môi trường theo thời tiết.
- *   3. generateNaturalResources()  → Sinh tài nguyên đặc trưng của môi trường.
- *
- * Toàn bộ luồng cập nhật chính (tick → sinh vật → tài nguyên → dọn dẹp xác)
- * đã được đóng gói trong updateEnvironment() và KHÔNG được ghi đè.
+ * luồng cập nhật chính (tick → sinh vật → tài nguyên → dọn dẹp xác)
  *
  */
 public abstract class Environment {
@@ -47,13 +35,11 @@ public abstract class Environment {
 
     /**
      * Độ ẩm hiện tại [0.0 – 100.0].
-     * Ảnh hưởng tốc độ khát của sinh vật, tốc độ phát triển cây cỏ.
      */
     protected float humidity;
 
     /**
      * Nhiệt độ hiện tại (độ C).
-     * Được so sánh với AdaptabilityComponent của sinh vật để kiểm tra sống sót.
      */
     protected float temperature;
 
@@ -88,9 +74,6 @@ public abstract class Environment {
 
     /**
      * Constructor duy nhất — ép lớp con phải cung cấp đủ 5 component.
-     *
-     * Lý do không dùng setter injection: đảm bảo Environment luôn ở
-     * trạng thái hợp lệ ngay sau khi khởi tạo (Fail Fast).
      *
      * @param id          ID duy nhất của môi trường
      * @param name        Tên hiển thị
@@ -169,10 +152,10 @@ public abstract class Environment {
 
         // 5. Tick toàn bộ sinh vật
         for (Organism o : registry.getAllAlive()) {
-            o.tick(currentTick);
+            o.updateOrganism(currentTick);
         }
 
-        // 6. Xử lý xác sinh vật TRANSFORMING
+        // 6. Xử lý xác sinh vật DEAD
         processDeadOrganisms(currentTick);
 
         // 7. Sinh tài nguyên tự nhiên theo đặc trưng môi trường
@@ -188,15 +171,11 @@ public abstract class Environment {
 
     /**
      * Áp dụng tác động của mùa hiện tại lên chỉ số môi trường.
-     * Lưu ý: Hãy dùng time.getCurrentSeason() để lấy mùa hiện tại.
      */
     protected abstract void applySeasonEffect();
 
     /**
      * Áp dụng tác động của thời tiết hiện tại lên chỉ số môi trường.
-     * Lưu ý: Hãy dùng time.getCurrentWeather() để lấy thời tiết hiện tại.
-     * Sau khi phát hiện thời tiết thay đổi, nên gọi events.publish() với
-     * hằng số EVENT_RAIN_START / EVENT_DROUGHT_START để kích hoạt âm thanh.
      */
     protected abstract void applyWeatherEffect();
 
@@ -211,30 +190,6 @@ public abstract class Environment {
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
 
-    /**
-     * Đăng ký một sinh vật vào môi trường này.
-     * Phát sự kiện ORGANISM_BORN để ViewLogic / SoundManager phản ứng.
-     *
-     * @param organism sinh vật cần thêm
-     */
-    public void addOrganism(Organism organism) {
-        registry.add(organism);
-        events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_BORN);
-    }
-
-    /**
-     * Lấy snapshot dữ liệu render của toàn bộ sinh vật còn sống trong môi trường.
-     * Đây là ĐIỂM ViewLogic giao tiếp với Environment.
-     *
-     * @return danh sách RenderData để ViewLogic vẽ lên màn hình
-     */
-    public List<RenderData> getRenderSnapshot() {
-        List<RenderData> snapshot = new ArrayList<>();
-        for (Organism o : registry.getAll()) {
-            snapshot.add(o.getRenderData());
-        }
-        return snapshot;
-    }
 
     /**
      * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
@@ -252,33 +207,16 @@ public abstract class Environment {
     }
 
     /**
-     * Đăng ký listener lắng nghe sự kiện của môi trường này.
-     * ViewLogic hoặc SoundManager gọi phương thức này để đăng ký.
-     *
-     * @param listener listener cần đăng ký
-     */
-    public void addEventListener(EnvironmentEventListener listener) {
-        events.addListener(listener);
-    }
-
-    // ----------------------------------------------------------------
-    //  Xử lý xác sinh vật nội bộ
-    // ----------------------------------------------------------------
-
-    /**
-     * Xử lý các sinh vật đang ở trạng thái TRANSFORMING:
+     * Xử lý các sinh vật đang ở trạng thái DEAD:
      * - Chuyển vị trí của chúng thành FoodItem (thịt).
-     * - Phát sự kiện ORGANISM_DIED.
      * - Xóa chúng khỏi registry.
-     *
-     * Được gọi nội bộ bởi updateEnvironment().
      * Private — không lộ ra ngoài, không ghi đè được.
      */
     private void processDeadOrganisms(int currentTick) {
         List<String> toRemove = new ArrayList<>();
 
         for (Organism o : registry.getAll()) {
-            if (o.getState() == OrganismState.TRANSFORMING) {
+            if (o.getState() == OrganismState.DEAD) {
                 // Chuyển xác thành thịt
                 float nutrition = o.getStats().getNutritionalValue();
                 resources.convertDeadToMeat(o.getPosition(), nutrition);
@@ -291,6 +229,41 @@ public abstract class Environment {
         for (String id : toRemove) {
             registry.remove(id);
         }
+    }
+
+    /**
+     * Đăng ký một sinh vật vào môi trường này.
+     * Phát sự kiện ORGANISM_BORN để ViewLogic / SoundManager phản ứng.
+     *
+     * @param organism sinh vật cần thêm
+     */
+    public void addOrganism(Organism organism) {
+        registry.add(organism);
+        events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_BORN);
+    }
+
+    /**
+     * Đăng ký listener lắng nghe sự kiện của môi trường này.
+     * ViewLogic hoặc SoundManager gọi phương thức này để đăng ký.
+     *
+     * @param listener listener cần đăng ký
+     */
+    public void addEventListener(EnvironmentEventListener listener) {
+        events.addListener(listener);
+    }
+
+    /**
+     * Lấy snapshot dữ liệu render của toàn bộ sinh vật còn sống trong môi trường.
+     * Đây là ĐIỂM ViewLogic giao tiếp với Environment.
+     *
+     * @return danh sách RenderData để ViewLogic vẽ lên màn hình
+     */
+    public List<RenderData> getRenderSnapshot() {
+        List<RenderData> snapshot = new ArrayList<>();
+        for (Organism o : registry.getAll()) {
+            snapshot.add(o.getRenderData());
+        }
+        return snapshot;
     }
 
     // ----------------------------------------------------------------

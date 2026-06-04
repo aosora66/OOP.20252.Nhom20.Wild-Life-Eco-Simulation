@@ -10,14 +10,6 @@ import java.util.Optional;
 
 /**
  * Component quản lý toàn bộ danh sách sinh vật trong một môi trường.
- *
- * Trách nhiệm (SRP):
- * - Thêm / xóa sinh vật.
- * - Truy vấn sinh vật theo ID, bán kính, trạng thái sống.
- * - Không chứa bất kỳ logic sinh tồn hay render nào.
- *
- * Lưu ý thread-safety: Hiện tại chưa xử lý đồng thời (single-threaded game loop).
- * Nếu sau này cần multi-thread, cần thay ArrayList bằng CopyOnWriteArrayList.
  */
 public class OrganismRegistry {
 
@@ -45,8 +37,6 @@ public class OrganismRegistry {
 
     /**
      * Xóa sinh vật khỏi môi trường theo ID.
-     * Thường được gọi bởi Environment sau khi sinh vật chuyển sang trạng thái DEAD.
-     *
      * @param id ID của sinh vật cần xóa
      * @return true nếu xóa thành công
      */
@@ -71,7 +61,7 @@ public class OrganismRegistry {
     }
 
     /**
-     * Đếm tổng số sinh vật hiện đang được quản lý (kể cả đang chết dần).
+     * Đếm tổng số sinh vật hiện đang được quản lý (kể cả chết).
      *
      * @return số lượng sinh vật
      */
@@ -99,8 +89,6 @@ public class OrganismRegistry {
 
     /**
      * Lấy toàn bộ danh sách sinh vật còn sống (ALIVE).
-     * Dùng cho vòng lặp tick chính của Environment.
-     *
      * @return danh sách chỉ đọc các sinh vật còn sống
      */
     public List<Organism> getAllAlive() {
@@ -112,7 +100,7 @@ public class OrganismRegistry {
     }
 
     /**
-     * Lấy toàn bộ danh sách sinh vật (kể cả đang TRANSFORMING).
+     * Lấy toàn bộ danh sách sinh vật (kể cả DEAD).
      * Dùng để Environment dọn dẹp xác sinh vật sau N tick.
      *
      * @return danh sách chỉ đọc tất cả sinh vật

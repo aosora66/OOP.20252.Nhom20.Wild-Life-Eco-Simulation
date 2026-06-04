@@ -12,13 +12,6 @@ import java.util.List;
 /**
  * Component quản lý tài nguyên thiên nhiên trong môi trường:
  * thức ăn, nguồn nước và vật cản tĩnh.
- *
- * Trách nhiệm (SRP):
- * - Sinh ra và xóa các FoodItem theo chu kỳ.
- * - Chuyển xác sinh vật chết thành thịt (FoodItem).
- * - Đặt vật cản (ObstacleItem) cố định vào bản đồ.
- * - Cung cấp API tìm kiếm tài nguyên gần một vị trí.
- *
  */
 public class ResourceManager {
 
@@ -43,12 +36,10 @@ public class ResourceManager {
 
     /**
      * Sinh ra một đơn vị thức ăn hoặc nước tại vị trí chỉ định.
-     * Được gọi bởi generateNaturalResources() của Environment.
-     *
      * @param pos           tọa độ sinh ra tài nguyên
      * @param nutrition     giá trị dinh dưỡng
      * @param isWater       true = nguồn nước, false = thức ăn
-     * @param ticksExpiry   số tick trước khi tài nguyên biến mất
+     * @param ticksExpiry   số tick tồn tại
      */
     public void spawnFood(Vector2D pos, float nutrition, boolean isWater, int ticksExpiry) {
         foodItems.add(new FoodItem(pos, nutrition, isWater, ticksExpiry));
@@ -56,8 +47,6 @@ public class ResourceManager {
 
     /**
      * Đặt một vật cản tĩnh vào môi trường.
-     * Thường được gọi một lần khi khởi tạo môi trường cụ thể.
-     *
      * @param pos tọa độ của vật cản
      */
     public void placeObstacle(Vector2D pos) {
@@ -67,6 +56,15 @@ public class ResourceManager {
     // ----------------------------------------------------------------
     //  Dọn dẹp tài nguyên hết hạn
     // ----------------------------------------------------------------
+
+    /**
+     * Xóa một FoodItem cụ thể khỏi danh sách (khi sinh vật ăn/uống).
+     *
+     * @param item tài nguyên đã bị tiêu thụ
+     */
+    public void consume(FoodItem item) {
+        foodItems.remove(item);
+    }
 
     /**
      * Xóa tất cả FoodItem đã hết thời hạn tồn tại.
@@ -110,8 +108,6 @@ public class ResourceManager {
 
     /**
      * Lấy danh sách thức ăn/nước trong bán kính quanh một vị trí.
-     * Dùng cho HunterStrategy và PassiveStrategy khi tìm kiếm nguồn thức ăn.
-     *
      * @param center tọa độ trung tâm
      * @param radius bán kính tìm kiếm
      * @return danh sách FoodItem trong vùng (chỉ đọc)
@@ -142,15 +138,6 @@ public class ResourceManager {
             }
         }
         return Collections.unmodifiableList(result);
-    }
-
-    /**
-     * Xóa một FoodItem cụ thể khỏi danh sách (khi sinh vật ăn/uống).
-     *
-     * @param item tài nguyên đã bị tiêu thụ
-     */
-    public void consume(FoodItem item) {
-        foodItems.remove(item);
     }
 
     // ----------------------------------------------------------------

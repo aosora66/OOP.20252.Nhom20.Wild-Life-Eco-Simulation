@@ -19,7 +19,7 @@ public record FoodItem(
         /** true = nguồn nước, false = thức ăn rắn */
         boolean isWater,
 
-        /** Số tick còn lại trước khi tài nguyên này biến mất (thối rữa/bốc hơi) */
+        /** Số tick duy trì tồn tại */
         int ticksUntilExpiry
 ) {
     /**
