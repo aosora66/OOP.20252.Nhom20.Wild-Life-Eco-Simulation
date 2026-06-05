@@ -4,27 +4,29 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.organism.Organism;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Strategy săn mồi — kích hoạt khi đói đủ ngưỡng, ưu tiên 20.
- * Nếu không tìm thấy con mồi trong tầm nhìn thì wander, chờ tick sau tìm lại.
+ * Hỗ trợ nhiều loài con mồi — săn con gần nhất trong tất cả các loài có thể ăn được.
+ * Nếu không tìm thấy con mồi nào trong tầm nhìn thì wander, chờ tick sau tìm lại.
  */
 public class HunterStrategy extends AbstractSurvivalStrategy {
 
-    private final String preySpecies;
-    private final float  attackDamage;
+    private final List<String> preySpecies;
+    private final float        attackDamage;
     // Mức đói tối thiểu để bắt đầu săn (0–100)
-    private final float  hungerSearchThreshold;
+    private final float        hungerSearchThreshold;
 
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
-                          String preySpecies) {
+                          String... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
-        this.preySpecies           = preySpecies;
+        this.preySpecies           = List.of(preySpecies);
     }
 
     /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
@@ -44,7 +46,12 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
      */
     @Override
     public void execute(Organism self, Environment env) {
-        Optional<Organism> prey = findNearestBySpecies(self, env, preySpecies);
+        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
+        Optional<Organism> prey = preySpecies.stream()
+                .map(s -> findNearestBySpecies(self, env, s))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
         prey.ifPresentOrElse(
             target -> {
                 float dist = self.getPosition().distanceTo(target.getPosition());
