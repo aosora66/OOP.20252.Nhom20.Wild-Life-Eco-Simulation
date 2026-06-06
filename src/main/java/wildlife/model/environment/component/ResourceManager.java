@@ -2,6 +2,8 @@ package wildlife.model.environment.component;
 
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.ObstacleType;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
@@ -38,19 +40,20 @@ public class ResourceManager {
      * Sinh ra một đơn vị thức ăn hoặc nước tại vị trí chỉ định.
      * @param pos           tọa độ sinh ra tài nguyên
      * @param nutrition     giá trị dinh dưỡng
-     * @param isWater       true = nguồn nước, false = thức ăn
+     * @param type
      * @param ticksExpiry   số tick tồn tại
      */
-    public void spawnFood(Vector2D pos, float nutrition, boolean isWater, int ticksExpiry) {
-        foodItems.add(new FoodItem(pos, nutrition, isWater, ticksExpiry));
+    public void spawnFood(Vector2D pos, float nutrition, FoodType type, int ticksExpiry) {
+        foodItems.add(new FoodItem(pos, nutrition, type, ticksExpiry));
     }
 
     /**
      * Đặt một vật cản tĩnh vào môi trường.
      * @param pos tọa độ của vật cản
+     * @param type
      */
-    public void placeObstacle(Vector2D pos) {
-        obstacles.add(new ObstacleItem(pos));
+    public void placeObstacle(Vector2D pos, ObstacleType type) {
+        obstacles.add(new ObstacleItem(pos, type));
     }
 
     // ----------------------------------------------------------------
@@ -81,7 +84,7 @@ public class ResourceManager {
                 updated.add(new FoodItem(
                         item.position(),
                         item.nutritionalValue(),
-                        item.isWater(),
+                        item.type(),
                         remaining
                 ));
             }
@@ -99,7 +102,7 @@ public class ResourceManager {
      */
     public void convertDeadToMeat(Vector2D pos, float nutrition) {
         int expiry = AppConfig.getInt("environment.meat.expiryTicks");
-        spawnFood(pos, nutrition, false, expiry);
+        spawnFood(pos, nutrition, FoodType.MEAT, expiry);
     }
 
     // ----------------------------------------------------------------
@@ -144,17 +147,17 @@ public class ResourceManager {
     //  Tương tác của Người dùng (User Interaction)
     // ----------------------------------------------------------------
     /** Người dùng click để gieo mầm thức ăn (Tính năng thủ công) */
-    public void spawnFoodManual(Vector2D pos, float nutrition) {
+    public void spawnFoodManual(Vector2D pos, FoodType type, float nutrition) {
         int expiry = AppConfig.getInt("environment.meat.expiryTicks");
-        spawnFood(pos, nutrition, false, expiry);
+        spawnFood(pos, nutrition, type, expiry);
     }
     /**
      * Người dùng đặt thêm vật cản (đá, vách núi...) vào bản đồ.
      * @param position Tọa độ đặt vật cản
      */
-    public void addObstacle(Vector2D position) {
+    public void addObstacle(Vector2D position, ObstacleType type) {
         if (position != null) {
-            obstacles.add(new ObstacleItem(position));
+            obstacles.add(new ObstacleItem(position, type));
         }
     }
 

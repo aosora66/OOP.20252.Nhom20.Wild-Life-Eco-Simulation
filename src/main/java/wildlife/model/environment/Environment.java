@@ -9,6 +9,7 @@ import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
+import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
@@ -129,7 +130,7 @@ public abstract class Environment {
      *   3. Áp dụng hiệu ứng mùa (lớp con implement)
      *   4. Áp dụng hiệu ứng thời tiết (lớp con implement)
      *   5. Tick toàn bộ sinh vật còn sống
-     *   6. Xử lý sinh vật TRANSFORMING (chuyển thành thịt + xóa)
+     *   6. Xử lý sinh vật DEAD (chuyển thành thịt + xóa)
      *   7. Sinh tài nguyên thiên nhiên (lớp con implement)
      *   8. Dọn dẹp tài nguyên hết hạn
      *
@@ -208,8 +209,8 @@ public abstract class Environment {
 
     /**
      * Xử lý các sinh vật đang ở trạng thái DEAD:
-     * - Chuyển vị trí của chúng thành FoodItem (thịt).
-     * - Xóa chúng khỏi registry.
+     * - Nếu là Động vật (Animal): Chuyển vị trí thành FoodItem (thịt).
+     * - Dù là Động vật hay Thực vật: Xóa chúng khỏi registry.* - Xóa chúng khỏi registry.
      * Private — không lộ ra ngoài, không ghi đè được.
      */
     private void processDeadOrganisms(int currentTick) {
@@ -217,11 +218,13 @@ public abstract class Environment {
 
         for (Organism o : registry.getAll()) {
             if (o.getState() == OrganismState.DEAD) {
-                // Chuyển xác thành thịt
-                float nutrition = o.getStats().getNutritionalValue();
-                resources.convertDeadToMeat(o.getPosition(), nutrition);
+                if (o instanceof Animal) {
+                    // Chuyển xác thành thịt
+                    float nutrition = o.getStats().getNutritionalValue();
+                    resources.convertDeadToMeat(o.getPosition(), nutrition);
+                    events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_DIED);
+                }
                 toRemove.add(o.getId());
-                events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_DIED);
             }
         }
 

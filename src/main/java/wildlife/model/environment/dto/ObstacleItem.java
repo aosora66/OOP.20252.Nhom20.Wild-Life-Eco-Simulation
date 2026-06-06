@@ -1,5 +1,6 @@
 package wildlife.model.environment.dto;
 
+import wildlife.model.environment.enums.ObstacleType;
 import wildlife.util.Vector2D;
 
 /**
@@ -10,5 +11,6 @@ import wildlife.util.Vector2D;
  */
 public record ObstacleItem(
         /** Tọa độ của vật cản trong môi trường */
-        Vector2D position
+        Vector2D position,
+        ObstacleType type
 ) { }
