@@ -11,4 +11,5 @@ target/
 *.log
 .DS_Store
 
-dependency-reduced-pom.xml
+# Bo qua agent review cua JetBrains
+qodana.yaml

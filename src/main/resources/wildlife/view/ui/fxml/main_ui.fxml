@@ -6,8 +6,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 
-<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.ui.MainController">
-   <!-- LibGDX Render Layer (Background Layer) -->
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.ui.uiEventController">
+   <!-- LWJGL Render Layer (Background Layer) -->
    <AnchorPane fx:id="sceneCanvas" />
 
    <!-- UI Layer (Foreground Layer) -->

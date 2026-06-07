@@ -15,60 +15,46 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <javafx.version>21.0.11</javafx.version>
+        <lwjgl.version>3.3.6</lwjgl.version>
+        <lwjgl.natives>natives-windows</lwjgl.natives>
+        <joml.version>1.10.8</joml.version>
     </properties>
 
     <profiles>
 
-        <!-- Windows -->
         <profile>
             <id>windows</id>
-
             <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
+                <os> <family>Windows</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico
-                </app.icon>
+                <app.icon> src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico </app.icon>
+                <lwjgl.natives>natives-windows</lwjgl.natives>
             </properties>
         </profile>
 
         <!-- macOS -->
         <profile>
             <id>mac</id>
-
             <activation>
-                <os>
-                    <family>mac</family>
-                </os>
+                <os><family>mac</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns
-                </app.icon>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+                <lwjgl.natives>natives-macos</lwjgl.natives>
             </properties>
         </profile>
 
         <!-- Linux -->
         <profile>
             <id>linux</id>
-
             <activation>
-                <os>
-                    <family>unix</family>
-                </os>
+                <os><family>unix</family></os>
             </activation>
-
             <properties>
-                <app.icon>
-                    src/main/resources/wildlife/view/ui/assets/images/App_Icon.png
-                </app.icon>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
+                <lwjgl.natives>natives-linux</lwjgl.natives>
             </properties>
         </profile>
 
@@ -81,6 +67,7 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- JavaFX FXML -->
@@ -88,7 +75,61 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
+            <scope>compile</scope>
         </dependency>
+
+        <!-- JavaFX Swing -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Lightweight Java game lib -->
+
+
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>${lwjgl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>${lwjgl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>${lwjgl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opengl</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <version>${lwjgl.version}</version>
+            <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>${joml.version}</version>
+        </dependency>
+
+
 
     </dependencies>
 
@@ -114,7 +155,7 @@
                 <version>0.0.8</version>
 
                 <configuration>
-                    <mainClass>wildlife.simulation/wildlife.core.Main</mainClass>
+                    <mainClass>wildlife.core.Main</mainClass>
                     <!-- Tạo custom runtime -->
                     <launcher>WildlifeSimulation</launcher>
 
@@ -143,41 +184,55 @@
                 </executions>
             </plugin>
 
-            <!-- Native Packaging -->
             <plugin>
-                <groupId>org.panteleyev</groupId>
-                <artifactId>jpackage-maven-plugin</artifactId>
-                <version>1.7.4</version>
-
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
                 <configuration>
-
-                    <name>WildlifeSimulation</name>
-
-
-                    <appVersion>1.0.0</appVersion>
-
-
-                    <runtimeImage>
-                        target/WildlifeSimulation
-                    </runtimeImage>
-
-                    <destination>
-                        target/dist
-                    </destination>
-
-                    <module>wildlife.simulation/wildlife.core.Main</module>
-
-                    <!-- Windows shortcut -->
-                    <winShortcut>true</winShortcut>
-
-                    <!-- Windows menu -->
-                    <winMenu>true</winMenu>
-
-                    <icon>${app.icon}</icon>
-
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>wildlife.core.Main</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>wildlife.core.Main</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
 
             </plugin>
+
 
         </plugins>
     </build>
