@@ -2,73 +2,97 @@ package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.Organism;
-import wildlife.util.AppConfig;
-import wildlife.util.SurvivalStrategy;
+import wildlife.model.organism.animal.Animal;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Strategy săn mồi — kích hoạt khi đói đủ ngưỡng, ưu tiên 20.
+ * Nếu không tìm thấy con mồi trong tầm nhìn thì wander, chờ tick sau tìm lại.
+ */
 public class HunterStrategy extends AbstractSurvivalStrategy {
 
-    private final String preySpecies;
+    private final List<String> preySpecies;
     private final float  attackDamage;
+
+    // Mức đói tối thiểu để bắt đầu săn (0–100)
     private final float  hungerSearchThreshold;
 
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
-                          String preySpecies) {
+                          String... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
-        this.preySpecies           = preySpecies;
+        this.preySpecies           = List.of(preySpecies);
+    }
+
+    /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
+    @Override
+    public boolean isApplicable(Animal self, Environment env) {
+        return self.getStats().getHungerLevel() >= hungerSearchThreshold;
     }
 
     @Override
-    public void execute(Organism self, Environment env) {
-        // kiểm tra nếu đói thì tìm con mồi xung quanh
-        if (self.getStats().getHungerLevel() >= hungerSearchThreshold) {
-            Optional<Organism> prey = findNearestBySpecies(self, env, preySpecies);
-            prey.ifPresentOrElse(
+    public int getPriority() { return 20; }
+
+
+    /**
+     * Thực thi chiến lược săn mồi:
+     * * 1. Ưu tiên ăn nếu có thịt sẵn
+     * * 2. Bản năng săn mồi (Săn):tìm kiếm con mồi gần nhất.
+     * - Trong tầm đánh: Cắn mục tiêu (trừ HP). Nếu mục tiêu chết, hệ thống (Environment)
+     * sẽ tự động dọn xác và sinh ra thịt (FoodItem) để nhặt vào tick tiếp theo.
+     * - Ngoài tầm đánh: Di chuyển bám theo con mồi.
+     * * 3. Trạng thái nghỉ (Wander): Nếu không có thịt và cũng không tìm thấy mồi,
+     * di chuyển lang thang ngẫu nhiên.
+     *
+     * @param self Thực thể động vật đang thực hiện chiến lược này.
+     * @param env  Môi trường sống hiện tại chứa các danh sách thực thể và tài nguyên.
+     */
+    @Override
+    public void execute(Animal self, Environment env) {
+        // =================================================================
+        // ƯU TIÊN 1: Quét tìm thịt rớt xung quanh (trong phạm vi attackRange)
+        // =================================================================
+        List<FoodItem> nearbyFood = env.getResources().getFoodNear(self.getPosition(), attackRange);
+
+        for (FoodItem f : nearbyFood) {
+            if (f.type() == FoodType.MEAT) {
+                self.eating(f);
+                return;
+            }
+        }
+        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
+        Optional<Organism> prey = preySpecies.stream()
+                .map(s -> findNearestBySpecies(self, env, s))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
+
+        // =================================================================
+        // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
+        // =================================================================
+        prey.ifPresentOrElse(
                 target -> {
                     float dist = self.getPosition().distanceTo(target.getPosition());
                     if (dist <= attackRange) {
+                        // Mồi trong tầm -> Cắn
                         target.decreaseHp(attackDamage);
-                        // If prey died immediately, convert to meat and eat right away
-                        if (!target.isAlive()) {
-                            float nutrition = target.getStats().getNutritionalValue();
-                            // convert corpse to meat immediately (uses configured expiry)
-                            env.getResources().convertDeadToMeat(target.getPosition(), nutrition);
-                            // remove prey from registry to avoid double-processing later
-                            env.getRegistry().remove(target.getId());
-
-                            // find the spawned meat near hunter and eat it
-                            List<FoodItem> nearby = env.getResources().getFoodNear(self.getPosition(), attackRange);
-                            FoodItem meat = null;
-                            float min = Float.MAX_VALUE;
-                            for (FoodItem f : nearby) {
-                                if (f.isWater()) continue;
-                                float d = f.position().distanceTo(self.getPosition());
-                                if (d < min) { min = d; meat = f; }
-                            }
-                            if (meat != null) {
-                                if (self instanceof wildlife.model.organism.Animal) {
-                                    ((wildlife.model.organism.Animal) self).eating(meat);
-                                } else {
-                                    self.getStats().consume(meat.nutritionalValue(), false);
-                                    env.getResources().consume(meat);
-                                }
-                            }
-                        }
                     } else {
+                        // Mồi ngoài tầm -> Đuổi theo
                         moveToward(self, target.getPosition(), env);
                     }
                 },
-
+                // =================================================================
+                // ƯU TIÊN 3: Không có mồi, không có thịt -> Đi dạo
+                // =================================================================
                 () -> wander(self, env)
-            );
-        } else {
-            wander(self, env);
-        }
+        );
     }
+
 }

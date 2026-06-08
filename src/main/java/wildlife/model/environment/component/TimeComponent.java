@@ -8,12 +8,6 @@ import java.util.Random;
 
 /**
  * Component quản lý thời gian, mùa và thời tiết của một môi trường.
- *
- * Trách nhiệm (SRP):
- * - Đếm tick và quy đổi sang chu kỳ ngày/đêm.
- * - Xác định mùa hiện tại dựa trên tổng số tick đã qua.
- * - Cập nhật thời tiết ngẫu nhiên theo xác suất của từng mùa.
- * - Cung cấp hệ số nhân (multiplier) để các component khác điều chỉnh hành vi.
  */
 public class TimeComponent {
 
@@ -74,8 +68,6 @@ public class TimeComponent {
 
     /**
      * Tiến tick: cập nhật mùa và thời tiết theo chu kỳ.
-     * Được gọi bởi Environment mỗi vòng lặp chính.
-     *
      * @param tick tick hiện tại từ hệ thống (dùng để đồng bộ nếu cần)
      */
     public void advance(int tick) {
@@ -86,7 +78,6 @@ public class TimeComponent {
 
     /**
      * Cập nhật mùa dựa theo số tick đã qua.
-     * Thứ tự mùa: NORMAL → BREEDING → NORMAL → DROUGHT → (lặp lại)
      */
     private void updateSeason() {
         // Lấy vị trí trong chu kỳ 3 mùa
@@ -104,7 +95,6 @@ public class TimeComponent {
 
     /**
      * Cập nhật thời tiết ngẫu nhiên dựa trên xác suất của mùa hiện tại.
-     * Chỉ thay đổi thời tiết mỗi nửa chu kỳ ngày để tránh dao động liên tục.
      */
     public void updateWeatherBySeason() {
         // Chỉ xét thay đổi thời tiết định kỳ (mỗi nửa ngày)
@@ -146,8 +136,6 @@ public class TimeComponent {
 
     /**
      * Trả về hệ số nhân tổng hợp của mùa + thời tiết.
-     * Hệ số này được dùng bởi SurvivalStatsComponent để tính tốc độ đói/khát.
-     *
      * Quy ước: > 1.0 = khắc nghiệt hơn, < 1.0 = dễ chịu hơn.
      *
      * @return hệ số nhân môi trường

@@ -33,14 +33,12 @@ public class TerrainComponent {
     // Kích thước 1 ô vuông ảo để tránh lỗi số thực float khi dùng HashMap
     private record TileIndex(int x, int y) {}
     private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
-
+    private final Map<TileIndex, TerrainType> customTiles; // Các ô địa hình điểm xuyết
     // ----------------------------------------------------------------
     //  Trạng thái nội tại
     // ----------------------------------------------------------------
     private final Boundary boundary; // Ranh giới môi trường (Tròn hoặc Chữ nhật)
     private final TerrainType defaultTerrain; // Loại đất nền trải khắp vùng
-
-    private final Map<TileIndex, TerrainType> customTiles; // Các ô địa hình điểm xuyết
     private final Set<TerrainType> containedTerrains; // Thống kê các loại đất đang có
 
     // ----------------------------------------------------------------
@@ -60,7 +58,7 @@ public class TerrainComponent {
     //  Phương thức thêm địa hình điểm xuyết
     // ----------------------------------------------------------------
     /**
-     * "Vẽ" thêm một loại địa hình đặc biệt vào bên trong môi trường.
+     * Thêm loại địa hình vào 1 ô .
      * @param pos Tọa độ của điểm cần vẽ
      * @param type Loại địa hình
      */
@@ -71,14 +69,6 @@ public class TerrainComponent {
             customTiles.put(new TileIndex(tileX, tileY), type);
             containedTerrains.add(type);
         }
-    }
-
-    // ----------------------------------------------------------------
-    //  Truy vấn
-    // ----------------------------------------------------------------
-
-    public boolean containsPosition(Vector2D pos) {
-        return boundary.contains(pos);
     }
 
     public TerrainType getTerrainAt(Vector2D pos) {
@@ -95,18 +85,30 @@ public class TerrainComponent {
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
     }
 
-    public boolean isPassable(Vector2D pos, String species) {
-        TerrainType terrain = getTerrainAt(pos);
-        // Sau này bạn có thể thêm logic: nếu species = "Vit" thì DEEP_WATER = passable
-        return !DEFAULT_IMPASSABLE.contains(terrain);
-    }
-
     public float getVisibilityModifier(Vector2D pos) {
         TerrainType terrain = getTerrainAt(pos);
         return LOW_VISIBILITY_TERRAINS.contains(terrain)
                 ? VISIBILITY_REDUCED
                 : VISIBILITY_NORMAL;
     }
+
+    /** Check địa hình cản trở
+     *
+     * @param pos
+     * @param species
+     * @return true nếu không có cản trở
+     */
+    public boolean isPassable(Vector2D pos, String species) {
+        TerrainType terrain = getTerrainAt(pos);
+        // thêm logic cho species đặc biệt
+        return !DEFAULT_IMPASSABLE.contains(terrain);
+    }
+
+
+    public boolean containsPosition(Vector2D pos) {
+        return boundary.contains(pos);
+    }
+
 
     public boolean containsTerrain(TerrainType type) {
         return containedTerrains.contains(type);
