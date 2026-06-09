@@ -1,6 +1,7 @@
 package wildlife.model.organism.animal;
 
 import wildlife.model.environment.Environment;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.component.AdaptabilityComponent;
@@ -25,6 +26,7 @@ public class Rabbit extends Animal{
         this.vision      = AppConfig.getFloat("animal.rabbit.vision");
         this.speed       = AppConfig.getFloat("animal.rabbit.speed");
         this.interactionRadius = AppConfig.getFloat("animal.rabbit.eatRadius");
+        this.diet.add(FoodType.APPLE);
         initStrategies();
     }
 
@@ -38,7 +40,25 @@ public class Rabbit extends Animal{
 
     @Override
     protected void addSurvivalStrategies() {
+        float fleeSpeedMult = AppConfig.getFloat("animal.rabbit.flee.speedMultiplier");
+        int fleeSprintSteps = AppConfig.getInt("animal.rabbit.flee.sprintSteps");
 
+        // 1. Chạy trốn khi thấy Tiger hoặc Wolf (Ưu tiên cao nhất: 30)
+        addStrategy(new wildlife.model.brain.ScaredStrategy(
+                this.speed * fleeSpeedMult,
+                this.vision,
+                fleeSprintSteps,
+                "Tiger", "Wolf"
+        ));
+
+        // 2. Tìm thức ăn/nước uống mặc định (Ưu tiên thấp: 10)
+        addStrategy(new wildlife.model.brain.PassiveStrategy(
+                this.speed,
+                this.vision,
+                this.interactionRadius,
+                this.defaultHungerSearchThreshold,
+                this.defaultThirstSearchThreshold
+        ));
     }
 
     @Override

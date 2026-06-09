@@ -114,7 +114,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         return env.getResources()
                 .getFoodNear(self.getPosition(), sightRadius)
                 .stream()
-                .filter(f -> f.isWater() == wantWater)
+                .filter(f -> f.isWater() == wantWater && self.canEat(f.type()))
                 .min(Comparator.comparingDouble(
                         f -> f.position().distanceTo(self.getPosition())));
     }

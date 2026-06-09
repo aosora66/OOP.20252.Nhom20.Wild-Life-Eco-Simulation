@@ -3,6 +3,7 @@ package wildlife.model.organism.animal;
 import wildlife.model.brain.SurvivalStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.component.AdaptabilityComponent;
@@ -16,9 +17,9 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
-        * Lớp abstract đại diện chức năng sinh học, thuộc tính vật lý chung của động vật
-        * (tốc độ, tầm nhìn, sức chiến đấu) và cơ chế khởi tạo strategy.
-        * Implement addSurvivalStrategies() để gọi addStrategy() cho từng strategy cần thiết.
+ * Lớp abstract đại diện chức năng sinh học, thuộc tính vật lý chung của động vật
+ * (tốc độ, tầm nhìn, sức chiến đấu) và cơ chế khởi tạo strategy.
+ * Implement addSurvivalStrategies() để gọi addStrategy() cho từng strategy cần thiết.
  */
 public abstract class Animal extends Organism {
 
@@ -33,6 +34,8 @@ public abstract class Animal extends Organism {
     protected float defaultThirstSearchThreshold;
     // Danh sách strategy gắn vào động vật — thứ tự thêm vào không quan trọng,
     protected final List<SurvivalStrategy> strategies = new ArrayList<>();
+    // Chế độ ăn uống: danh sách các loại thức ăn có thể ăn
+    protected final List<FoodType> diet = new ArrayList<>();
 
     protected Animal(String id,
                      String speciesName,
@@ -64,6 +67,12 @@ public abstract class Animal extends Organism {
     /** Thêm một strategy vào danh sách. Có thể gọi nhiều lần để gắn nhiều strategy. */
     public void addStrategy(SurvivalStrategy strategy) {
         this.strategies.add(strategy);
+    }
+
+    /** Kiểm tra xem động vật có thể ăn loại thức ăn này không. */
+    public boolean canEat(FoodType type) {
+        if (type == FoodType.WATER) return true;
+        return diet.contains(type);
     }
 
     /**
