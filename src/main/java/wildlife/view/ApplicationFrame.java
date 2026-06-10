@@ -11,7 +11,7 @@ import java.util.Objects;
 /*
  this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for lwjgl embedding (renderer).
  */
-public class applicationFrame extends Application {
+public class ApplicationFrame extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         //we load the frame from fxml file, set it as root node on javafx

@@ -13,7 +13,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.util.Duration;
-import wildlife.view.renderer.renderer;
+import wildlife.view.renderer.Renderer;
+import wildlife.view.renderer.SpriteBatch;
+import wildlife.view.renderer.TextureRegistry;
 
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -141,8 +143,14 @@ public class uiEventController {
     
     private void startLWJGLThread(Canvas canvas) {
         Thread renderThread = new Thread(() -> {
-            renderer myRenderer = new renderer(canvas);
-            myRenderer.run();
+            // TODO: Initialize OpenGL context from canvas, then create/inject dependencies:
+            //   SpriteBatch      spriteBatch     = new SpriteBatch(canvas.getWidth(), canvas.getHeight());
+            //   TextureRegistry  textureRegistry = /* your implementation */;
+            //   Renderer         renderer        = new Renderer(spriteBatch, textureRegistry);
+            //
+            // Then, in the render loop:
+            //   List<RenderData> snapshot = environment.getRenderSnapshot();
+            //   renderer.render(snapshot);
         }, "LWJGL-Render-Thread");
         
         renderThread.setDaemon(true);
