@@ -90,7 +90,7 @@ public class TimeComponent {
 
     /**
      * Cập nhật mùa dựa theo số tick đã qua.
-     * Thứ tự mùa: NORMAL → BREEDING → NORMAL → DROUGHT → (lặp lại)
+     * Thứ tự mùa: NORMAL → BREEDING → DROUGHT →NORMAL  (lặp lại)
      */
     private void updateSeason() {
         // Lấy vị trí trong chu kỳ 3 mùa
@@ -191,39 +191,46 @@ public class TimeComponent {
     public float getLightLevel() { return lightLevel; }
     /**
      * Cập nhật các chỉ số vật lý dựa trên sự giao thoa của Thời gian, Mùa và Thời tiết.
+     * Nhiệt độ thay đổi liên tục theo tiến trình ngày-đêm (đường cong sin),
+     * không cố định một giá trị duy nhất.
      */
     private void updateClimateMetrics() {
-        // 1. Ánh sáng: Phụ thuộc trực tiếp vào Ngày và Đêm
-        // Ban ngày sáng tỏ (1.0), ban đêm chỉ có ánh trăng mờ (0.2)
-        this.lightLevel = isDaytime() ? 1.0f : 0.2f;
+        // --- 1. Ánh sáng ---
+        float dayLight   = AppConfig.getFloat("environment.light.day");
+        float nightLight  = AppConfig.getFloat("environment.light.night");
+        this.lightLevel = isDaytime() ? dayLight : nightLight;
 
-        // 2. Nhiệt độ cơ bản: Phụ thuộc vào Mùa
-        float baseTemp = switch (currentSeason) {
-            case BREEDING -> 25.0f; // Mùa sinh sản thường ấm áp, lý tưởng
-            case DROUGHT -> 38.0f;  // Hạn hán thì nóng rát
-            default -> 20.0f;       // NORMAL - mát mẻ
-        };
-        
-        // Yếu tố tinh chỉnh nhiệt độ:
-        if (!isDaytime()) baseTemp -= 6.0f; // Đêm xuống thì nhiệt độ giảm
-        if (currentWeather == WeatherType.RAIN) baseTemp -= 4.0f; // Trời mưa làm mát không khí
-        
-        this.temperature = baseTemp;
+        // --- 2. Nhiệt độ: biến thiên liên tục theo chu kỳ ngày-đêm (sin) ---
+        // Lấy nhiệt độ cơ bản và biên độ dao động từ config theo từng mùa
+        float baseTemp = AppConfig.getFloat("environment.climate." + currentSeason.name().toLowerCase() + ".baseTemp");
+        float tempAmplitude = AppConfig.getFloat("environment.climate." + currentSeason.name().toLowerCase() + ".tempAmplitude");
 
-        // 3. Độ ẩm cơ bản: Phụ thuộc vào Mùa
-        float baseHumidity = switch (currentSeason) {
-            case BREEDING -> 65.0f; // Ẩm ướt thuận lợi cho nảy mầm
-            case DROUGHT -> 20.0f;  // Khô hanh nứt nẻ
-            default -> 50.0f;       // NORMAL
-        };
-        
-        // Yếu tố tinh chỉnh độ ẩm: Thời tiết có tiếng nói quyết định nhất
+        // Tính vị trí trong chu kỳ ngày (0.0 ~ 1.0)
+        float dayProgress = (float) (currentTick % ticksPerDayCycle) / ticksPerDayCycle;
+
+        // Dùng hàm sin để nhiệt độ đạt cực đại vào giữa ban ngày (0.25 chu kỳ)
+        // và cực tiểu vào giữa ban đêm (0.75 chu kỳ)
+        // sin(2π * (progress - 0.25)) → đỉnh tại progress=0.5 (giữa ngày), đáy tại progress=0.0 (nửa đêm)
+        float tempOffset = (float) Math.sin(2 * Math.PI * (dayProgress - 0.25));
+        float currentTemp = baseTemp + tempAmplitude * tempOffset;
+
+        // Yếu tố tinh chỉnh thêm từ thời tiết
+        float rainTempDelta    = AppConfig.getFloat("environment.climate.weather.rain.tempDelta");
+        float droughtTempDelta = AppConfig.getFloat("environment.climate.weather.drought.tempDelta");
+        if (currentWeather == WeatherType.RAIN)    currentTemp += rainTempDelta;
+        if (currentWeather == WeatherType.DROUGHT)  currentTemp += droughtTempDelta;
+
+        this.temperature = currentTemp;
+
+        // --- 3. Độ ẩm: phụ thuộc mùa, bị thời tiết ghi đè ---
+        float baseHumidity = AppConfig.getFloat("environment.climate." + currentSeason.name().toLowerCase() + ".humidity");
+
         if (currentWeather == WeatherType.RAIN) {
-            baseHumidity = 95.0f; // Mưa rào thì độ ẩm bão hòa
+            baseHumidity = AppConfig.getFloat("environment.climate.weather.rain.humidity");
         } else if (currentWeather == WeatherType.DROUGHT) {
-            baseHumidity = 10.0f; // Hạn hán tột độ
+            baseHumidity = AppConfig.getFloat("environment.climate.weather.drought.humidity");
         }
-        
+
         this.humidity = baseHumidity;
     }
 }

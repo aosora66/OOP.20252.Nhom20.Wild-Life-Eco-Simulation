@@ -9,4 +9,7 @@ public interface Boundary {
     /** Kiểm tra xem tọa độ pos có nằm trong ranh giới này không */
     boolean contains(Vector2D pos);
     Vector2D getRandomPoint(Random random);
+
+    /** Trả về tọa độ trung tâm của ranh giới */
+    Vector2D getCenter();
 }

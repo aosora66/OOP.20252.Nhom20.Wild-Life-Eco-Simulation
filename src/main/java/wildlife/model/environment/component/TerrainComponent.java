@@ -104,7 +104,7 @@ public class TerrainComponent {
             return false; 
         }
 
-        // Cỏ, Rừng, Bùn, Nước nông đều có thể dẫm lên được.
+        // Cỏ, Rừng, Nước nông đều có thể dẫm lên được.
         return true; 
     }
 
@@ -138,15 +138,14 @@ public class TerrainComponent {
         Vector2D nearestPos = null;
         float minDistance = Float.MAX_VALUE;
 
-        // --- BƯỚC VÁ LỖI 1: KIỂM TRA NỀN MẶC ĐỊNH (DEFAULT TERRAIN) ---
+        // --- BƯỚC 1: KIỂM TRA NỀN MẶC ĐỊNH (DEFAULT TERRAIN) ---
         if (this.defaultTerrain == targetType) {
             if (containsPosition(currentPos) && getTerrainAt(currentPos) == targetType) {
                 // Nếu sinh vật đang đứng ngay trên loại đất/nước đó rồi thì khỏi tìm đâu xa
                 return currentPos; 
             } else {
-                // Nếu đang đứng ngoài, lấy một tọa độ tượng trưng ở trung tâm vùng đó làm đích đến
-                // (Giả định trung tâm khu vực là 50,50. Sau này nếu lớp Boundary có hàm getCenter(), cậu thay vào đây nhé)
-                nearestPos = new Vector2D(50, 50); 
+                // Lấy tọa độ trung tâm thực tế của ranh giới vùng làm đích đến (tổng quát cho mọi hình dạng)
+                nearestPos = boundary.getCenter();
                 minDistance = currentPos.distanceTo(nearestPos);
             }
         }
@@ -183,10 +182,7 @@ public class TerrainComponent {
         }
 
         switch (terrain) {
-            case MUD:
-                // Bùn lầy làm chậm Hươu và Sói đáng kể
-                return 0.5f; 
-                
+   
             case SHALLOW_WATER:
                 // Nước nông làm chậm vừa phải
                 return 0.7f;

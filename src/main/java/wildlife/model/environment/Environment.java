@@ -161,13 +161,36 @@ public abstract class Environment {
         // 2. Cập nhật cường độ ánh sáng theo ngày/đêm
         float dayLight = AppConfig.getFloat("environment.light.day");
         float nightLight = AppConfig.getFloat("environment.light.night");
-        lightLevel = time.isDaytime() ? dayLight : nightLight;
+
+        // Lưu chỉ số cũ trước khi tính toán mục tiêu mới
+        float prevTemp = this.temperature;
+        float prevHumid = this.humidity;
+        float prevLight = this.lightLevel;
+
+        // Đặt mục tiêu ánh sáng cơ bản
+        this.lightLevel = time.isDaytime() ? dayLight : nightLight;
 
         // 3. Hiệu ứng mùa đặc trưng của từng môi trường
         applySeasonEffect();
 
         // 4. Hiệu ứng thời tiết đặc trưng của từng môi trường
         applyWeatherEffect();
+
+        // Thực hiện nội suy tuyến tính (lerp) để làm mượt các chỉ số môi trường
+        float targetTemp = this.temperature;
+        float targetHumid = this.humidity;
+        float targetLight = this.lightLevel;
+
+        float lerpTemp = AppConfig.getFloat("environment.transition.temperature");
+        float lerpHumid = AppConfig.getFloat("environment.transition.humidity");
+        float lerpLight = AppConfig.getFloat("environment.transition.lightLevel");
+
+        this.temperature = prevTemp + (targetTemp - prevTemp) * lerpTemp;
+        this.humidity = prevHumid + (targetHumid - prevHumid) * lerpHumid;
+        this.lightLevel = prevLight + (targetLight - prevLight) * lerpLight;
+
+        // Gọi hook xử lý sau khi làm mượt
+        postClimateUpdate();
 
         // 5. Tick toàn bộ sinh vật
         for (Organism o : registry.getAllAlive()) {
@@ -187,6 +210,14 @@ public abstract class Environment {
     // ----------------------------------------------------------------
     //  Abstract Methods — Design Contract cho lớp con
     // ----------------------------------------------------------------
+
+    /**
+     * Hook method cho phép lớp con thực hiện logic sau khi các chỉ số môi trường
+     * đã được cập nhật và làm mượt (ví dụ: đóng băng hồ nước).
+     */
+    protected void postClimateUpdate() {
+        // Mặc định không làm gì
+    }
 
     /**
      * Áp dụng tác động của mùa hiện tại lên chỉ số môi trường.

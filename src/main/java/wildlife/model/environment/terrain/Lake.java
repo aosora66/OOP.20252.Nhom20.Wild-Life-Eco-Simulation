@@ -78,8 +78,11 @@ public class Lake extends Environment {
         } else if (weather == WeatherType.DROUGHT) {
             currentWaterLevel = Math.max(0, currentWaterLevel - 0.2f);
         }
+    }
 
-        // 2. CƠ CHẾ ĐẶC TRƯNG: Đóng băng mặt hồ
+    @Override
+    protected void postClimateUpdate() {
+        // 2. CƠ CHẾ ĐẶC TRƯNG: Đóng băng mặt hồ dựa trên nhiệt độ đã được làm mượt
         if (this.temperature < 0 && !isFrozen) {
             freezeLake();
         } else if (this.temperature >= 0 && isFrozen) {

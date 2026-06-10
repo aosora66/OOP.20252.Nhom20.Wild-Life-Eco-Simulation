@@ -27,4 +27,9 @@ public class CircleBoundary implements Boundary {
         
         return new Vector2D(x, y);
     }
+
+    @Override
+    public Vector2D getCenter() {
+        return center;
+    }
 }

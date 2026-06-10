@@ -21,4 +21,11 @@ public class RectBoundary implements Boundary {
         float randomY = boundsY.getMin() + random.nextFloat() * (boundsY.getMax() - boundsY.getMin());
         return new Vector2D(randomX, randomY);
     }
+
+    @Override
+    public Vector2D getCenter() {
+        float centerX = (boundsX.getMin() + boundsX.getMax()) / 2.0f;
+        float centerY = (boundsY.getMin() + boundsY.getMax()) / 2.0f;
+        return new Vector2D(centerX, centerY);
+    }
 }
