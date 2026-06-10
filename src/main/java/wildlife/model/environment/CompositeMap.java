@@ -19,11 +19,6 @@ import java.util.List;
  * Bản đồ tổng hợp (Composite Pattern) — quản lý nhiều môi trường con cùng lúc.
  */
 public class CompositeMap extends Environment {
-
-    // ----------------------------------------------------------------
-    //  Danh sách môi trường con
-    // ----------------------------------------------------------------
-
     /** Danh sách các môi trường con được quản lý */
     private final List<Environment> subEnvironments;
 
