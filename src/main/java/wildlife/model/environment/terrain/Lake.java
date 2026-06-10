@@ -2,6 +2,7 @@ package wildlife.model.environment.terrain;
 
 import wildlife.model.environment.Environment; // <-- THÊM DÒNG NÀY ĐỂ HẾT LỖI ENVIRONMENT
 import wildlife.model.environment.component.*;
+import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
@@ -64,8 +65,30 @@ public class Lake extends Environment {
     protected void applySeasonEffect() {
         // Hồ nước có "nhiệt dung" lớn, nên nhiệt độ ổn định hơn đồng cỏ
         // Không quá nóng vào mùa Hạn, không quá lạnh vào ban đêm
-        this.temperature = time.getTemperature() * 0.9f; 
-        this.humidity = Math.min(100.0f, time.getHumidity() + 20.0f); // Luôn ẩm ướt
+        float tempBase = time.getTemperature() * 0.9f; 
+        float humidBase = Math.min(100.0f, time.getHumidity() + 20.0f); // Luôn ẩm ướt
+        float lightBase = this.lightLevel;
+
+        switch (time.getCurrentSeason()) {
+            case BREEDING -> {
+                // Mùa sinh sản: thời tiết ôn hòa, nhiệt độ dao động nhỏ, độ ẩm dao động nhẹ
+                this.temperature = tempBase + (random.nextFloat() * 1.5f - 0.75f); // +/- 0.75 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase + (random.nextFloat() * 4.0f - 2.0f))); // +/- 2%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + (random.nextFloat() * 0.04f - 0.02f))); // +/- 0.02
+            }
+            case DROUGHT -> {
+                // Mùa hạn hán: nhiệt độ ấm hơn, độ ẩm giảm nhẹ ngẫu nhiên, ánh sáng phản chiếu mạnh hơn
+                this.temperature = tempBase + (random.nextFloat() * 2.5f - 0.5f); // -0.5 đến +2.0 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase - random.nextFloat() * 4.0f)); // giảm thêm tới 4%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + random.nextFloat() * 0.06f)); // tăng thêm tới 0.06
+            }
+            default -> { // NORMAL
+                // Mùa bình thường: biến động rất nhỏ
+                this.temperature = tempBase + (random.nextFloat() * 1.0f - 0.5f); // +/- 0.5 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase + (random.nextFloat() * 2.0f - 1.0f))); // +/- 1%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + (random.nextFloat() * 0.02f - 0.01f))); // +/- 0.01
+            }
+        }
     }
 
     @Override

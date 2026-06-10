@@ -75,13 +75,34 @@ public class Forest extends Environment {
     protected void applySeasonEffect() {
         // Tán lá rừng giúp điều hòa khí hậu: Nhiệt độ và độ ẩm biến thiên ít hơn
         // Lấy chênh lệch giữa thực tế và nhiệt độ trung bình (22) rồi chia đôi
-        this.temperature = 22.0f + (time.getTemperature() - 22.0f) * 0.5f;
+        float tempBase = 22.0f + (time.getTemperature() - 22.0f) * 0.5f;
         
         // Độ ẩm luôn giữ ở mức cao, không bị khô cạn hoàn toàn
-        this.humidity = Math.max(40.0f, time.getHumidity());
+        float humidBase = Math.max(40.0f, time.getHumidity());
 
         // Ánh sáng luôn bị trừ đi do tán lá cản lại
-        this.lightLevel = Math.max(0.1f, time.getLightLevel() - 0.3f);
+        float lightBase = Math.max(0.1f, this.lightLevel - 0.3f);
+
+        switch (time.getCurrentSeason()) {
+            case BREEDING -> {
+                // Mùa sinh sản: thời tiết ôn hòa, nhiệt độ dao động nhỏ, độ ẩm dao động nhẹ
+                this.temperature = tempBase + (random.nextFloat() * 2.0f - 1.0f); // +/- 1.0 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase + (random.nextFloat() * 6.0f - 3.0f))); // +/- 3%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + (random.nextFloat() * 0.04f - 0.02f))); // +/- 0.02
+            }
+            case DROUGHT -> {
+                // Mùa hạn hán: nhiệt độ ấm hơn, độ ẩm giảm nhẹ ngẫu nhiên, ánh sáng tăng nhẹ do thưa lá
+                this.temperature = tempBase + (random.nextFloat() * 3.0f - 0.5f); // -0.5 đến +2.5 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase - random.nextFloat() * 5.0f)); // giảm thêm tới 5%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + random.nextFloat() * 0.08f)); // tăng thêm tới 0.08
+            }
+            default -> { // NORMAL
+                // Mùa bình thường: biến động rất nhỏ
+                this.temperature = tempBase + (random.nextFloat() * 1.0f - 0.5f); // +/- 0.5 độ C
+                this.humidity = Math.max(0.0f, Math.min(100.0f, humidBase + (random.nextFloat() * 4.0f - 2.0f))); // +/- 2%
+                this.lightLevel = Math.max(0.0f, Math.min(1.0f, lightBase + (random.nextFloat() * 0.02f - 0.01f))); // +/- 0.01
+            }
+        }
     }
 
     @Override
