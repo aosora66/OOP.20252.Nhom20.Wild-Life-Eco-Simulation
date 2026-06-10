@@ -9,7 +9,7 @@ import java.util.List;
  * Component mô tả khả năng thích nghi môi trường của một sinh vật.
  */
 public class AdaptabilityComponent {
-    private final List<TerrainType> survivableEnvironments; // danh sách môi trường có thể tồn tại
+    private final List<TerrainType> survivableEnvironments; // danh sách môi trường có thể toòn tại
     private final ValueRange optimalRange;
     private final ValueRange toleranceRange;
     private final ValueRange lethalLimit;
