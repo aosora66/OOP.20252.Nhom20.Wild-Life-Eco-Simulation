@@ -32,6 +32,11 @@ public class GrowthComponent {
         }
     }
 
+    // Kiểm tra đã trưởng thành chưa
+    public boolean isAdult() {
+        return currentAge >= (maxAge * maturityRatio);
+    }
+
     // Kiểm tra có đang ở tuổi lão hóa không
     public boolean isDecaying() {
         return currentAge >= (maxAge * decayAgeRatio);

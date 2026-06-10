@@ -11,5 +11,6 @@ target/
 *.log
 .DS_Store
 
-# Bo qua agent review cua JetBrains
-qodana.yaml
+.cursor
+.junie
+GEMINI.md
