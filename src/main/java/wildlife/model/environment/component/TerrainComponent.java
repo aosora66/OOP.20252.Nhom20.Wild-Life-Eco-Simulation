@@ -96,16 +96,38 @@ public class TerrainComponent {
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
     }
 
-   public boolean isPassable(Vector2D pos, String species) {
+ public boolean isPassable(Vector2D pos, String species) {
         TerrainType terrain = getTerrainAt(pos);
 
-        // Cả 6 loài đều sống trên cạn, nên Nước Sâu và Vách Đá chặn tất cả.
-        if (terrain == TerrainType.DEEP_WATER || terrain == TerrainType.CLIFF) {
-            return false; 
+        // 1. Nếu không xác định được loài (phòng hờ lỗi null), áp dụng luật mặc định:
+        if (species == null) {
+            return terrain != TerrainType.DEEP_WATER && terrain != TerrainType.CLIFF;
         }
 
-        // Cỏ, Rừng, Nước nông đều có thể dẫm lên được.
-        return true; 
+        // 2. Xác định xem sinh vật có phải là hệ dưới nước không
+        boolean isAquatic = species.equalsIgnoreCase("Fish") || species.equalsIgnoreCase("Cá");
+
+        // --- NHÁNH DÀNH CHO CÁ ---
+        if (isAquatic) {
+            // Cá chỉ bơi được ở nước sâu và nước nông
+            return terrain == TerrainType.DEEP_WATER || terrain == TerrainType.SHALLOW_WATER;
+        }
+
+        // --- NHÁNH DÀNH CHO ĐỘNG VẬT TRÊN CẠN ---
+        switch (terrain) {
+            case DEEP_WATER:
+            case CLIFF:
+                return false; // Cấm tuyệt đối xuống nước sâu và leo vách đá vách núi
+                
+            case GRASSLAND:
+            case FOREST:
+            case ICE:
+            case SHALLOW_WATER:
+                return true;  // Trên cạn và lội nước nông thì thoải mái
+                
+            default:
+                return false;
+        }
     }
 
     public float getVisibilityModifier(Vector2D pos) {

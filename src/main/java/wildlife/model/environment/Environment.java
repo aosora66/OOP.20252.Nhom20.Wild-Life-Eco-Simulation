@@ -396,18 +396,7 @@ public abstract class Environment {
      * * @param currentPos Tọa độ hiện tại của động vật đang khát
      * @return Tọa độ của vùng nước gần nhất, hoặc null nếu không tìm thấy
      */
-public Vector2D getNearestWaterLocation(Vector2D currentPos) {
-        // Tìm cả Nước Nông và Nước Sâu
-        Vector2D shallow = terrain.findNearestTile(currentPos, TerrainType.SHALLOW_WATER);
-        Vector2D deep    = terrain.findNearestTile(currentPos, TerrainType.DEEP_WATER);
 
-        // Xử lý các trường hợp null (chỉ tìm thấy 1 loại hoặc không thấy gì)
-        if (shallow == null) return deep;
-        if (deep == null) return shallow;
-
-        // Nếu tìm thấy cả 2, so sánh khoảng cách và trả về vũng nước gần hơn
-        return (currentPos.distanceTo(shallow) < currentPos.distanceTo(deep)) ? shallow : deep;
-    }
 
     /**
      * Giảm độ nhận diện khi sinh vật ở nơi trú ẩn (bụi rậm, rừng sâu...).
