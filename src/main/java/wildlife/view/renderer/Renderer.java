@@ -44,7 +44,19 @@ public class Renderer {
      */
     public void submit(RenderData data) {
         if (!running) return;
+        /*
+        Giải thích thao tác:
+        renderQueue.computeIfAbsent(data.speciesName, ....):
+          trả về SpeciesGroup <S> lưu thông tin của nhóm sinh vật có speciesName là data.speciesName nằm trong IndexedMap renderQueue: nếu chưa tồn tại, khởi tạo SpeciesGroup đầu tiên để lưu thong tin về nhóm sinh vật đó
+        k -> new SpeciesGroup(k, new ArrayList<>()):
+            hàm lambda chỉ cách khởi tạo SpeciesGroup của loài trong IndexedMap: nhận vào tham số k là tên loài -> khởi tạo ra nhóm mới có key là tên loại
+
+            => renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>()): S
+            => S.positions().add(new Float[]{data.x, data.y}: chèn thêm tọa độ của 1 thực thể mới thuộc nhóm sinh vật S vào SpeciesGroup của nó
+
+         */
         renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>())).positions().add(new float[]{data.x, data.y});
+
     }
 
     public void renderAll() {
