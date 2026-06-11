@@ -6,6 +6,7 @@ import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
@@ -281,35 +282,59 @@ public abstract class Environment {
      * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
      * Kết hợp kiểm tra địa hình và vật cản tĩnh (Bụi rậm, đá).
      */
+/**
+     * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
+     * Kết hợp kiểm tra địa hình và vật cản tĩnh (Bụi rậm, đá).
+     */
     public boolean isPositionPassable(Vector2D pos, String species) {
-        // 1. Kiểm tra giới hạn địa hình (Nước sâu, vách núi)
+        // 1. Kiểm tra giới hạn địa hình gốc (Nước sâu, vách núi, Cá lên bờ...)
+        // Phương thức này đã gọi xuống TerrainComponent mà chúng ta vừa hoàn thiện
         if (!terrain.isPassable(pos, species)) return false;
 
-        // 2. Kiểm tra vật cản
+        // 2. Kiểm tra vật cản trên bề mặt
         List<ObstacleItem> obstacles = resources.getObstaclesNear(pos, 0.5f);
         if (!obstacles.isEmpty()) {
             
             if (species == null) return false;
 
-            // Động vật đầu bảng: Voi dẫm nát/bước qua vật cản dễ dàng
-            if (species.equalsIgnoreCase("Elephant")) {
-                return true;
-            }
+            // Kiểm tra từng vật cản tại vị trí này
+            for (ObstacleItem obstacle : obstacles) {
+                ObstacleType type = obstacle.getType(); 
 
-            // Động vật ăn thịt và Người: To xác, không lách vào bụi rậm được
-            if (species.equalsIgnoreCase("Wolf") || species.equalsIgnoreCase("Tiger") || species.equalsIgnoreCase("hunter")) {
-                return false;
-            }
+                // --- XỬ LÝ ĐÁ (ROCK) ---
+                if (type == ObstacleType.ROCK) {
+                    // Đá là vật thể rắn. Công tâm mà nói, loài nào cũng sẽ bị chặn lại ở đây.
+                    return false; 
+                }
+                // --- XỬ LÝ CÂY CỔ THỤ (TREE) ---
+                if (type == ObstacleType.TREE) {
+                    // Cây cổ thụ có thân rất to và cứng. 
+                    // Kể cả Voi cũng không dẫm qua được, mọi loài trên cạn đều phải đi vòng.
+                    return false; 
+                }
 
-            // Động vật ăn cỏ (Thỏ, Hươu): Được phép chui vào vật cản (bụi rậm) để trốn
-            if (species.equalsIgnoreCase("Rabbit") || species.equalsIgnoreCase("Hươu")) {
-                return true; 
+                // --- XỬ LÝ BỤI RẬM (BUSH) ---
+                if (type == ObstacleType.BUSH) {
+                    // Voi (Động vật đầu bảng): Dẫm nát và càn lướt qua bụi rậm dễ dàng
+                    if (species.equalsIgnoreCase("Elephant")) {
+                        continue; // Bỏ qua vật cản này, xét tiếp
+                    }
+
+                    // Động vật ăn cỏ (Thỏ, Hươu): Dáng nhỏ gọn, lách vào bụi rậm để trốn
+                    if (species.equalsIgnoreCase("Rabbit") || species.equalsIgnoreCase("Hươu") || species.equalsIgnoreCase("Deer")) {
+                        continue; 
+                    }
+
+                    // Động vật ăn thịt và Người: To xác, vướng víu không chui qua được
+                    if (species.equalsIgnoreCase("Wolf") || species.equalsIgnoreCase("Tiger") || species.equalsIgnoreCase("Hunter")) {
+                        return false; // Bị chặn lại
+                    }
+                }
             }
         }
 
-        return true;
+        return true; // Nếu qua được hết mọi bài test thì vị trí này hợp lệ để bước vào
     }
-
     /**
      * Đăng ký listener lắng nghe sự kiện của môi trường này.
      * ViewLogic hoặc SoundManager gọi phương thức này để đăng ký.
@@ -428,14 +453,10 @@ public abstract class Environment {
      * gom chung thành ObstacleItem, nhưng giữ tham số 
      * để dễ mở rộng hình ảnh/tính năng sau này.
      */
-    public void placeObstacle(Vector2D pos, String obstacleType) {
-        // Ủy quyền cho ResourceManager thêm vật cản vào danh sách
-        resources.addObstacle(pos);
-        
-        // Gợi ý mở rộng: Có thể thêm events.publish("EVENT_OBSTACLE_PLACED") 
-        // nếu sau này cậu muốn phát âm thanh tiếng cạch/lạch cạch khi đặt đá.
+    public void placeObstacle(Vector2D pos, ObstacleType type) {
+        // Ủy quyền cho ResourceManager thêm vật cản vào danh sách với đầy đủ 2 tham số
+        resources.addObstacle(pos, type);
     }
-
     /**
      * Sinh ra thức ăn (Táo rụng, thả miếng thịt...) và phát âm thanh.
      * * @param pos Vị trí xuất hiện thức ăn

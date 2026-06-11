@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.environment.enums.ObstacleType; // <-- THÊM DÒNG IMPORT NÀY
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -44,9 +45,9 @@ public class Grassland extends Environment {
         this.random = new Random();
 
         // Khởi tạo một vài vật cản tĩnh (đá) ban đầu để hỗ trợ sinh vật tương tác
-        // (Trong thực tế, bạn có thể truyền danh sách tọa độ hoặc random quanh khu vực quản lý)
-        resources.placeObstacle(new Vector2D(50, 50)); 
-        resources.placeObstacle(new Vector2D(120, 80));
+        // Đã cập nhật thêm tham số ObstacleType.ROCK để hết báo lỗi đỏ
+        resources.placeObstacle(new Vector2D(50, 50), ObstacleType.ROCK); 
+        resources.placeObstacle(new Vector2D(120, 80), ObstacleType.ROCK);
     }
 
     // ----------------------------------------------------------------
@@ -86,7 +87,7 @@ public class Grassland extends Environment {
 
     @Override
     protected void applyWeatherEffect() {
-    //cập nhật chỉ số môi trường theo thời tiết:
+        // Cập nhật chỉ số môi trường theo thời tiết:
         WeatherType weather = time.getCurrentWeather();
         if (weather == WeatherType.RAIN) {
             this.humidity = Math.min(100.0f, this.humidity + 10.0f);

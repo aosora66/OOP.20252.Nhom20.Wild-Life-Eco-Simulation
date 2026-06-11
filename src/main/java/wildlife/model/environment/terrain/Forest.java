@@ -12,6 +12,7 @@ import wildlife.util.Vector2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import wildlife.model.environment.enums.ObstacleType;
 
 /**
  * Môi trường Rừng Rậm (Forest)
@@ -52,21 +53,27 @@ public class Forest extends Environment {
     /**
      * Khởi tạo các cây cổ thụ và bụi rậm dựa trên kích thước thật của bản đồ.
      */
+    /**
+     * Khởi tạo các cây cổ thụ và bụi rậm dựa trên kích thước thật của bản đồ.
+     */
     private void initializeFlora() {
         // Trồng 3 cây cổ thụ ở các vị trí ngẫu nhiên hợp lệ trong bản đồ
         for (int i = 0; i < 3; i++) {
             Vector2D treePos = terrain.getRandomValidPosition(random);
             treeLocations.add(treePos);
-            resources.placeObstacle(treePos); 
+            
+            // Cây cổ thụ là vật thể rắn cản đường
+              resources.placeObstacle(treePos, ObstacleType.TREE);
         }
 
         // Rải thêm 5 bụi rậm làm nơi trú ẩn (Tương tác với getStealthModifier)
         for (int i = 0; i < 5; i++) {
             Vector2D bushPos = terrain.getRandomValidPosition(random);
-            resources.placeObstacle(bushPos);
+            
+            // Chỉ định rõ đây là Bụi rậm (Thỏ/Hươu lách qua được, Sói/Hổ bị chặn)
+            resources.placeObstacle(bushPos, ObstacleType.BUSH);
         }
     }
-
     // ----------------------------------------------------------------
     //  Ghi đè 3 hàm hợp đồng từ lớp cha
     // ----------------------------------------------------------------

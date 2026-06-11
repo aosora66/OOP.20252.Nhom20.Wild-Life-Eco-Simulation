@@ -2,6 +2,7 @@ package wildlife.model.environment.component;
 
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.ObstacleType;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
@@ -60,8 +61,8 @@ public class ResourceManager {
      *
      * @param pos tọa độ của vật cản
      */
-    public void placeObstacle(Vector2D pos) {
-        obstacles.add(new ObstacleItem(pos));
+   public void placeObstacle(Vector2D pos, ObstacleType type) {
+        obstacles.add(new ObstacleItem(pos, type));
     }
 
     // ----------------------------------------------------------------
@@ -164,13 +165,13 @@ public class ResourceManager {
     /**
      * Người dùng đặt thêm vật cản (đá, vách núi...) vào bản đồ.
      * @param position Tọa độ đặt vật cản
+     * @param type Loại vật cản
      */
-    public void addObstacle(Vector2D position) {
+    public void addObstacle(Vector2D position, ObstacleType type) {
         if (position != null) {
-            obstacles.add(new ObstacleItem(position));
+            obstacles.add(new ObstacleItem(position, type)); // Đã hết lỗi đỏ!
         }
     }
-
     /**
      * Người dùng xóa vật cản tại một khu vực (Click chuột).
      * @param targetPos Tọa độ click chuột

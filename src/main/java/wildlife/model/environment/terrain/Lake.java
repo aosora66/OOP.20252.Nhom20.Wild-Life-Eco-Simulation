@@ -52,9 +52,6 @@ public class Lake extends Environment {
         this.isFrozen = false;
         this.random = new Random();
 
-        // Khởi tạo các vật cản ngầm ngẫu nhiên (Rong rêu, đá ngầm)
-        // (Trong môi trường thực, chúng ta sẽ rải tọa độ dựa theo boundary)
-        resources.placeObstacle(new Vector2D(40, 40)); 
     }
 
     // ----------------------------------------------------------------
