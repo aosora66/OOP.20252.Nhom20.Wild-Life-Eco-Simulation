@@ -34,7 +34,7 @@ public class Grass extends Plant{
     }
 
     @Override
-    public Grass reproduce() {
-        return null;
+    protected void addOffspring(Vector2D pos) {
+
     }
 }

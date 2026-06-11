@@ -86,4 +86,50 @@ public abstract class Plant extends Organism {
         stats.consume(nutrients.nutritionalValue(), nutrients.isWater());
         currentEnvironment.getResources().consume(nutrients);
     }
+
+    protected boolean hasReproduced = false;
+
+    @Override
+    public void reproduce() {
+        if (hasReproduced || environment == null) return;
+
+        // check for maturity
+        if (!growth.isAdult()) return;
+
+        // check for health level (using a threshold from config)
+        float hungerThreshold = AppConfig.getFloat("plant.reproduce.hungerThreshold");
+        if (stats.getHungerLevel() > hungerThreshold) return;
+
+        // reproduce add number of offspring into enviroment
+        // every organism will only reproduce once in their life
+        hasReproduced = true;
+
+        // specific number of offspring will get from Appconfig
+        int offspringCount = AppConfig.getInt("plant.reproduce.offspringCount");
+        float spawnRadius = AppConfig.getFloat("plant.reproduce.spawnRadius");
+
+        for (int i = 0; i < offspringCount; i++) {
+            // Random spawn around the current plant
+            float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+            float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+            
+            // Calculate child position manually (Vector2D has no add method)
+            Vector2D childPos = new Vector2D(
+                position.getX() + offsetX,
+                position.getY() + offsetY
+            );
+
+            // Optional: check if position is passable before adding
+            if (environment.isPositionPassable(childPos, speciesName)) {
+                addOffspring(childPos);
+            }
+        }
+    }
+
+    /**
+     * Subclasses must implement this to create and add their specific instance to the environment.
+     */
+    protected abstract void addOffspring(Vector2D pos);
+
+
 }

@@ -10,6 +10,8 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
+import java.util.UUID;
+
 public class Rabbit extends Animal{
     public Rabbit(String id,
                   String speciesName,
@@ -32,10 +34,7 @@ public class Rabbit extends Animal{
 
     @Override
     protected void onTick(int currentTick) {
-
         executeStrategy(currentTick);
-
-        // call reproduce() base on age;
     }
 
     @Override

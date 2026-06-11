@@ -85,6 +85,10 @@ public abstract class Organism {
         this.onTick(currentTick);
         if (!isAlive()) return;
 
+        // 2. Logic sinh sản (sinh sản vào environment nếu đủ điều kiện)
+        this.reproduce();
+        if (!isAlive()) return;
+
         // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
         this.processSurvivalMetabolism();
     }
@@ -100,10 +104,11 @@ public abstract class Organism {
     protected abstract void onTick(int currentTick);
 
     /**
-     * Sinh sản: tạo ra một sinh vật con cùng loài.
-     * @return sinh vật con mới, hoặc null nếu chưa đủ điều kiện
+     * Sinh sản: xử lý logic tạo ra thế hệ tiếp theo.
+     * Có thể tạo ra 0, 1 hoặc nhiều sinh vật con và trực tiếp thêm vào environment thông qua addOrganism().
      */
-    public abstract Organism reproduce();
+    public abstract void reproduce();
+
 
     // ----------------------------------------------------------
     //  Concrete methods — hành vi mặc định dùng chung

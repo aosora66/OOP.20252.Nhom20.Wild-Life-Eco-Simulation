@@ -103,7 +103,7 @@ public class AppleTree extends Plant {
      * Currently returns null as complex plant reproduction logic is not yet implemented.
      */
     @Override
-    public AppleTree reproduce() {
-        return null;
+    protected void addOffspring(Vector2D pos) {
+
     }
 }
