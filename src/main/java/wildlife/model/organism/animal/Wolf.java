@@ -9,22 +9,22 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
-public class Tiger extends Animal{
-    public Tiger(String id,
-                 String speciesName,
-                 Vector2D startPos,
-                 TerrainType startTer,
-                 Environment startEnv,
-                 GrowthComponent growth,
-                 SurvivalStatsComponent stats,
-                 AdaptabilityComponent adaptability,
-                 String gender) {
+public class Wolf extends Animal {
+    public Wolf(String id,
+                String speciesName,
+                Vector2D startPos,
+                TerrainType startTer,
+                Environment startEnv,
+                GrowthComponent growth,
+                SurvivalStatsComponent stats,
+                AdaptabilityComponent adaptability,
+                String gender) {
         super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
         this.gender = gender;
-        this.combatPower = AppConfig.getFloat("animal.tiger.combatPower");
-        this.vision = AppConfig.getFloat("animal.tiger.vision");
-        this.speed = AppConfig.getFloat("animal.tiger.speed");
-        this.interactionRadius = AppConfig.getFloat("animal.tiger.eatRadius");
+        this.combatPower = AppConfig.getFloat("animal.wolf.combatPower");
+        this.vision = AppConfig.getFloat("animal.wolf.vision");
+        this.speed = AppConfig.getFloat("animal.wolf.speed");
+        this.interactionRadius = AppConfig.getFloat("animal.wolf.eatRadius");
         this.diet.add(FoodType.MEAT);
         initStrategies();
     }
@@ -36,8 +36,8 @@ public class Tiger extends Animal{
 
     @Override
     protected void addSurvivalStrategies() {
-        float huntSpeedMult = AppConfig.getFloat("animal.tiger.hunt.speedMultiplier");
-        float huntHungerThreshold = AppConfig.getFloat("animal.tiger.hunt.hungerThreshold");
+        float huntSpeedMult = AppConfig.getFloat("animal.wolf.hunt.speedMultiplier");
+        float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
 
         // 1. Săn mồi khi đói (Ưu tiên trung bình: 20)
         addStrategy(new wildlife.model.brain.HunterStrategy(
@@ -61,7 +61,6 @@ public class Tiger extends Animal{
 
     @Override
     public void reproduce() {
-
-
+        // Implementation for reproduction
     }
 }
