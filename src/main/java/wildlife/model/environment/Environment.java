@@ -472,16 +472,16 @@ public abstract class Environment {
         events.publish(EnvironmentEventPublisher.EVENT_FOOD_SPAWNED);
     }
     /**
-     * Trả về hệ số tốc độ di chuyển của sinh vật tại một vị trí cụ thể.
+     * Trả về lượng tốc độ BỊ GIẢM (lượng x) của sinh vật tại một vị trí cụ thể.
      * Ủy quyền hoàn toàn cho TerrainComponent để xử lý logic địa hình.
      *
      * @param pos Tọa độ sinh vật đang đứng
-     * @param species Tên hoặc phân loại loài (VD: "Wolf", "Rabbit", "Elephant")
-     * @return Hệ số tốc độ (1.0 = bình thường, < 1.0 = bị làm chậm)
+     * @param animal Đối tượng sinh vật đang di chuyển
+     * @return Lượng tốc độ bị trừ đi (0.0 = di chuyển bình thường)
      */
-    public float getMovementSpeedModifier(Vector2D pos, String species) {
+    public float getSpeedPenalty(Vector2D pos, Organism animal) {
         // Môi trường không tự tính mà chuyển "câu hỏi" này xuống cho bộ phận Địa hình
-        return terrain.getMovementSpeedModifier(pos, species);
-    }
+        return terrain.getSpeedPenalty(pos, animal);
     
+}
 }

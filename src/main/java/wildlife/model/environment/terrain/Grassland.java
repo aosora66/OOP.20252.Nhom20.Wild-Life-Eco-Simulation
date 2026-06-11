@@ -5,16 +5,12 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
-import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.enums.ObstacleType; // <-- THÊM DÒNG IMPORT NÀY
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 /**

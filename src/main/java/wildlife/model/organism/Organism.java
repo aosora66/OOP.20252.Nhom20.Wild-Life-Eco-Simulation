@@ -197,4 +197,5 @@ public abstract class Organism {
     public void setState(OrganismState newState) {
         this.state = newState; // Giả định biến lưu trạng thái của bạn tên là 'state'
     }
+    
 }

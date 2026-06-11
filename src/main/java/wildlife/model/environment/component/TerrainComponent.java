@@ -1,6 +1,7 @@
 package wildlife.model.environment.component;
 
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.Organism;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -190,32 +191,37 @@ public class TerrainComponent {
         return nearestPos;
     }
     /**
-     * Trả về hệ số tốc độ di chuyển dựa trên địa hình và loài sinh vật.
+     * Trả về lượng tốc độ BỊ GIẢM (lượng x) dựa trên địa hình và sinh vật.
      * @param pos Tọa độ sinh vật đang đứng
-     * @param species Phân loại sinh vật (Ví dụ: "Wolf", "Deer", "Elephant")
-     * @return Hệ số tốc độ (1.0 = bình thường, 0.5 = giảm nửa tốc độ)
+     * @param animal Đối tượng sinh vật đang di chuyển
+     * @return Lượng tốc độ bị trừ đi (0.0 = không bị trừ, di chuyển bình thường)
      */
-    public float getMovementSpeedModifier(Vector2D pos, String species) {
+    public float getSpeedPenalty(Vector2D pos, Organism animal) { // Truyền thẳng animal vào
         TerrainType terrain = getTerrainAt(pos);
+        
+        // Lấy tên loài từ object animal (Giả định Organism có hàm getSpecies())
+        String species = animal.getSpeciesName();
 
-        // Voi (Động vật đầu bảng) càn lướt mọi địa hình, không bị giảm tốc
+        // Voi (Động vật đầu bảng) càn lướt mọi địa hình, không bị trừ tốc độ
         if (species.equalsIgnoreCase("Elephant")) {
-            return 1.0f; 
+            return 0.0f; 
         }
 
         switch (terrain) {
-   
             case SHALLOW_WATER:
-                // Nước nông làm chậm vừa phải
-                return 0.7f;
+                // Trả về lượng x lấy từ file config
+                return AppConfig.getFloat("environment.terrain.penalty.shallow_water");
                 
             case FOREST:
-                // Rừng rậm: Sói di chuyển nhanh hơn Hươu một chút nhờ bản năng
-                if (species.equalsIgnoreCase("Wolf")) return 0.9f;
-                return 0.8f;
+                // Rừng rậm: Sói bị trừ ít tốc độ hơn nhờ bản năng
+                if (species.equalsIgnoreCase("Wolf")) {
+                    return AppConfig.getFloat("environment.terrain.penalty.forest.wolf");
+                }
+                return AppConfig.getFloat("environment.terrain.penalty.forest");
                 
-            default: // GRASSLAND
-                return 1.0f; // Tốc độ tối đa trên đồng cỏ
+            default: 
+                // GRASSLAND hoặc các địa hình bình thường: Không bị trừ tốc (lượng giảm = 0)
+                return 0.0f; 
         }
     }
     public Vector2D getRandomValidPosition(Random random) {

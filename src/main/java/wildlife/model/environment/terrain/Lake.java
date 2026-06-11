@@ -2,7 +2,6 @@ package wildlife.model.environment.terrain;
 
 import wildlife.model.environment.Environment; // <-- THÊM DÒNG NÀY ĐỂ HẾT LỖI ENVIRONMENT
 import wildlife.model.environment.component.*;
-import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
