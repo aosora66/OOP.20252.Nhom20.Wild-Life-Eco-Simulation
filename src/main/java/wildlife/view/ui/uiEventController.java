@@ -6,11 +6,13 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.util.Duration;
@@ -116,6 +118,12 @@ public class uiEventController {
     //Pane nay de render scene
     @FXML
     public AnchorPane sceneCanvas;
+
+    @FXML
+    public StackPane rootStackPane;
+
+    @FXML
+    public Group uiGroup;
 
     private volatile boolean running = true;
     private ImageView renderImageView;
@@ -320,16 +328,44 @@ public class uiEventController {
     }
 
     
-    //responsive
-    public double getImageHeight() {
-        Screen screen = Screen.getPrimary();
-        Rectangle2D bounds = screen.getVisualBounds();
-        return bounds.getHeight() * 0.2;
+    //responsive scaling
+    private void setupScaling() {
+        if (rootStackPane == null || uiGroup == null) return;
+
+        javafx.beans.value.ChangeListener<Number> resizeListener = (obs, oldVal, newVal) -> {
+            double windowWidth = rootStackPane.getWidth();
+            double windowHeight = rootStackPane.getHeight();
+
+            if (windowWidth <= 0 || windowHeight <= 0) return;
+
+            // Reference resolution is 1920x1080
+            double scaleX = windowWidth / 1920.0;
+            double scaleY = windowHeight / 1080.0;
+
+            // Preserve aspect ratio (uniform scaling)
+            double scale = Math.min(scaleX, scaleY);
+
+            uiGroup.setScaleX(scale);
+            uiGroup.setScaleY(scale);
+        };
+
+        rootStackPane.widthProperty().addListener(resizeListener);
+        rootStackPane.heightProperty().addListener(resizeListener);
+
+        // Run once for initial scaling if layout is already calculated
+        if (rootStackPane.getWidth() > 0 && rootStackPane.getHeight() > 0) {
+            double scaleX = rootStackPane.getWidth() / 1920.0;
+            double scaleY = rootStackPane.getHeight() / 1080.0;
+            double scale = Math.min(scaleX, scaleY);
+            uiGroup.setScaleX(scale);
+            uiGroup.setScaleY(scale);
+        }
     }
 
     public void initialize() {
         organism_list_load();
         environment_materials_load();
         setupLWJGLCanvas();
+        setupScaling();
     }
 }
