@@ -20,7 +20,7 @@
                <Insets bottom="20" left="20" right="20" top="20" />
             </padding>
             <!-- Image -->
-            <ImageView fitHeight="216.0" fitWidth="216.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true">
                <Image url="@../assets/images/Fox.png" />
             </ImageView>
          <!-- Info -->
