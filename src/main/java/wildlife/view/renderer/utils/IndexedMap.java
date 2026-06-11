@@ -25,11 +25,6 @@ public class IndexedMap<K, V> {
         }
     }
 
-    /**
-     * @param key   key của phần tử cần tìm
-     * @param factory   hàm generate ra phần tử mới trong trường hợp trong map chưa có phần tử nào mang key {@link key}
-     * @return ô nhớ đang chứa phần tử có key là {@link key}, nếu chưa tồn tại, khởi tạo ô nhớ đầu tiên và trả về ô nhớ đó
-     */
     public V computeIfAbsent(K key, Function<K, V> factory) {
         Integer idx = indexMap.get(key);
         if (idx != null) {
