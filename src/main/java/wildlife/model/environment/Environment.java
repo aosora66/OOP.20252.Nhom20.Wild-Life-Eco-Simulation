@@ -5,6 +5,9 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.ObstacleType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
@@ -143,13 +146,36 @@ public abstract class Environment {
         // 2. Cập nhật cường độ ánh sáng theo ngày/đêm
         float dayLight = AppConfig.getFloat("environment.light.day");
         float nightLight = AppConfig.getFloat("environment.light.night");
-        lightLevel = time.isDaytime() ? dayLight : nightLight;
+
+        // Lưu chỉ số cũ trước khi tính toán mục tiêu mới
+        float prevTemp = this.temperature;
+        float prevHumid = this.humidity;
+        float prevLight = this.lightLevel;
+
+        // Đặt mục tiêu ánh sáng cơ bản
+        this.lightLevel = time.isDaytime() ? dayLight : nightLight;
 
         // 3. Hiệu ứng mùa đặc trưng của từng môi trường
         applySeasonEffect();
 
         // 4. Hiệu ứng thời tiết đặc trưng của từng môi trường
         applyWeatherEffect();
+
+        // Thực hiện nội suy tuyến tính (lerp) để làm mượt các chỉ số môi trường
+        float targetTemp = this.temperature;
+        float targetHumid = this.humidity;
+        float targetLight = this.lightLevel;
+
+        float lerpTemp = AppConfig.getFloat("environment.transition.temperature");
+        float lerpHumid = AppConfig.getFloat("environment.transition.humidity");
+        float lerpLight = AppConfig.getFloat("environment.transition.lightLevel");
+
+        this.temperature = prevTemp + (targetTemp - prevTemp) * lerpTemp;
+        this.humidity = prevHumid + (targetHumid - prevHumid) * lerpHumid;
+        this.lightLevel = prevLight + (targetLight - prevLight) * lerpLight;
+
+        // Gọi hook xử lý sau khi làm mượt
+        postClimateUpdate();
 
         // 5. Tick toàn bộ sinh vật
         for (Organism o : registry.getAllAlive()) {
@@ -169,6 +195,14 @@ public abstract class Environment {
     // ----------------------------------------------------------------
     //  Abstract Methods — Design Contract cho lớp con
     // ----------------------------------------------------------------
+
+    /**
+     * Hook method cho phép lớp con thực hiện logic sau khi các chỉ số môi trường
+     * đã được cập nhật và làm mượt (ví dụ: đóng băng hồ nước).
+     */
+    protected void postClimateUpdate() {
+        // Mặc định không làm gì
+    }
 
     /**
      * Áp dụng tác động của mùa hiện tại lên chỉ số môi trường.
@@ -200,13 +234,63 @@ public abstract class Environment {
      * @param species tên loài (để TerrainComponent kiểm tra đặc thù loài)
      * @return true nếu có thể di chuyển đến
      */
+    /**
+     * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
+     * Kết hợp kiểm tra địa hình và vật cản tĩnh (Bụi rậm, đá).
+     */
+/**
+     * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
+     * Kết hợp kiểm tra địa hình và vật cản tĩnh (Bụi rậm, đá).
+     */
     public boolean isPositionPassable(Vector2D pos, String species) {
-        // Kiểm tra địa hình
+        // 1. Kiểm tra giới hạn địa hình gốc (Nước sâu, vách núi, Cá lên bờ...)
+        // Phương thức này đã gọi xuống TerrainComponent mà chúng ta vừa hoàn thiện
         if (!terrain.isPassable(pos, species)) return false;
-        // Kiểm tra vật cản tĩnh (bán kính nhỏ để phát hiện va chạm)
-        return resources.getObstaclesNear(pos, 0.5f).isEmpty();
-    }
 
+        // 2. Kiểm tra vật cản trên bề mặt
+        List<ObstacleItem> obstacles = resources.getObstaclesNear(pos, 0.5f);
+        if (!obstacles.isEmpty()) {
+            
+            if (species == null) return false;
+
+            // Kiểm tra từng vật cản tại vị trí này
+            for (ObstacleItem obstacle : obstacles) {
+                ObstacleType type = obstacle.getType(); 
+
+                // --- XỬ LÝ ĐÁ (ROCK) ---
+                if (type == ObstacleType.ROCK) {
+                    // Đá là vật thể rắn. Công tâm mà nói, loài nào cũng sẽ bị chặn lại ở đây.
+                    return false; 
+                }
+                // --- XỬ LÝ CÂY CỔ THỤ (TREE) ---
+                if (type == ObstacleType.TREE) {
+                    // Cây cổ thụ có thân rất to và cứng. 
+                    // Kể cả Voi cũng không dẫm qua được, mọi loài trên cạn đều phải đi vòng.
+                    return false; 
+                }
+
+                // --- XỬ LÝ BỤI RẬM (BUSH) ---
+                if (type == ObstacleType.BUSH) {
+                    // Voi (Động vật đầu bảng): Dẫm nát và càn lướt qua bụi rậm dễ dàng
+                    if (species.equalsIgnoreCase("Elephant")) {
+                        continue; // Bỏ qua vật cản này, xét tiếp
+                    }
+
+                    // Động vật ăn cỏ (Thỏ, Hươu): Dáng nhỏ gọn, lách vào bụi rậm để trốn
+                    if (species.equalsIgnoreCase("Rabbit") || species.equalsIgnoreCase("Hươu") || species.equalsIgnoreCase("Deer")) {
+                        continue; 
+                    }
+
+                    // Động vật ăn thịt và Người: To xác, vướng víu không chui qua được
+                    if (species.equalsIgnoreCase("Wolf") || species.equalsIgnoreCase("Tiger") || species.equalsIgnoreCase("Hunter")) {
+                        return false; // Bị chặn lại
+                    }
+                }
+            }
+        }
+
+        return true; // Nếu qua được hết mọi bài test thì vị trí này hợp lệ để bước vào
+    }
     /**
      * Xử lý các sinh vật đang ở trạng thái DEAD:
      * - Nếu là Động vật (Animal): Chuyển vị trí thành FoodItem (thịt).
@@ -293,4 +377,87 @@ public abstract class Environment {
                 time.getCurrentWeather(),
                 registry.count());
     }
+    // ====================================================================
+    //  NHÓM HÀM HỖ TRỢ SINH VẬT (GIÁC QUAN & CẢM NHẬN)
+    // ====================================================================
+
+    /**
+     * Cấp danh sách sinh vật trong tầm nhìn.
+     * * @param center Tọa độ của sinh vật đang nhìn (tâm)
+     * @param radius Bán kính tầm nhìn
+     * @return Danh sách các sinh vật đang sống nằm trong bán kính đó
+     */
+    public List<Organism> getOrganismsInVision(Vector2D center, float radius) {
+        // Gọi thẳng hàm findNear đã được tối ưu trong OrganismRegistry
+        return registry.findNear(center, radius);
+    }
+
+    /**
+     * Cung cấp hướng/tọa độ đi tới nguồn nước gần nhất.
+     * * @param currentPos Tọa độ hiện tại của động vật đang khát
+     * @return Tọa độ của vùng nước gần nhất, hoặc null nếu không tìm thấy
+     */
+
+
+    /**
+     * Giảm độ nhận diện khi sinh vật ở nơi trú ẩn (bụi rậm, rừng sâu...).
+     * * @param pos Tọa độ sinh vật đang đứng
+     * @return Tỉ lệ % độ lộ diện (1.0 = bình thường, < 1.0 = đang trốn)
+     */
+    public float getStealthModifier(Vector2D pos) {
+        // 1. Kiểm tra lợi thế tàng hình từ bản thân loại địa hình (VD: Rừng rậm)
+        float terrainModifier = terrain.getVisibilityModifier(pos);
+
+        // 2. Kiểm tra xem ngay vị trí đó có vật cản tĩnh nào để nấp không (VD: Bụi rậm)
+        // Dùng bán kính rất nhỏ (0.5f) để xác định sinh vật đang thực sự nấp sau vật cản
+        if (!resources.getObstaclesNear(pos, 0.5f).isEmpty()) {
+            // Nếu có bụi rậm, độ lộ diện giảm mạnh xuống 30% (0.3f)
+            // Lấy giá trị nhỏ nhất giữa địa hình và vật cản để sinh vật có lợi thế nấp tốt nhất
+            return Math.min(terrainModifier, 0.3f);
+        }
+
+        return terrainModifier;
+    }
+    // ====================================================================
+    //  NHÓM HÀM THAO TÁC, ÂM THANH (TƯƠNG TÁC TỪ NGOÀI)
+    // ====================================================================
+
+    /**
+     * Người chơi (hoặc hệ thống) đặt vật cản tĩnh vào bản đồ.
+     * * @param pos Tọa độ đặt vật cản
+     * @param obstacleType Loại vật cản (đá, bụi rậm...). Hiện tại hệ thống 
+     * gom chung thành ObstacleItem, nhưng giữ tham số 
+     * để dễ mở rộng hình ảnh/tính năng sau này.
+     */
+    public void placeObstacle(Vector2D pos, ObstacleType type) {
+        // Ủy quyền cho ResourceManager thêm vật cản vào danh sách với đầy đủ 2 tham số
+        resources.addObstacle(pos, type);
+    }
+    /**
+     * Sinh ra thức ăn (Táo rụng, thả miếng thịt...) và phát âm thanh.
+     * * @param pos Vị trí xuất hiện thức ăn
+     * @param foodType Loại thức ăn (Táo, Thịt...)
+     * @param nutrition Giá trị dinh dưỡng của thức ăn đó
+     */
+    public void spawnFood(Vector2D pos, String foodType, float nutrition) {
+        // Gọi hàm sinh thức ăn thủ công đã được định nghĩa trong ResourceManager
+        resources.spawnFoodManual(pos, nutrition);
+
+        // QUAN TRỌNG: Báo cáo sự kiện ra loa phường!
+        // ViewLogic đang vểnh tai nghe, thấy sự kiện này sẽ tự động phát tiếng "bụp"
+        events.publish(EnvironmentEventPublisher.EVENT_FOOD_SPAWNED);
+    }
+    /**
+     * Trả về lượng tốc độ BỊ GIẢM (lượng x) của sinh vật tại một vị trí cụ thể.
+     * Ủy quyền hoàn toàn cho TerrainComponent để xử lý logic địa hình.
+     *
+     * @param pos Tọa độ sinh vật đang đứng
+     * @param animal Đối tượng sinh vật đang di chuyển
+     * @return Lượng tốc độ bị trừ đi (0.0 = di chuyển bình thường)
+     */
+    public float getSpeedPenalty(Vector2D pos, Organism animal) {
+        // Môi trường không tự tính mà chuyển "câu hỏi" này xuống cho bộ phận Địa hình
+        return terrain.getSpeedPenalty(pos, animal);
+    
+}
 }
