@@ -128,19 +128,6 @@ public class TerrainComponent {
                 : VISIBILITY_NORMAL;
     }
 
-    /** Check địa hình cản trở
-     *
-     * @param pos
-     * @param species
-     * @return true nếu không có cản trở
-     */
-    public boolean isPassable(Vector2D pos, String species) {
-        TerrainType terrain = getTerrainAt(pos);
-        // thêm logic cho species đặc biệt
-        return !DEFAULT_IMPASSABLE.contains(terrain);
-    }
-
-
     public boolean containsPosition(Vector2D pos) {
         return boundary.contains(pos);
     }

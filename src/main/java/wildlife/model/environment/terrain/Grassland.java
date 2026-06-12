@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.enums.ObstacleType; // <-- THÊM DÒNG IMPORT NÀY
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -102,7 +103,7 @@ public class Grassland extends Environment {
             Vector2D grassPos = new Vector2D(random.nextInt(100), random.nextInt(100));
             if (terrain.containsPosition(grassPos)) {
                 // Sinh ra thức ăn thực vật (nutrition thấp, tồn tại lâu)
-                resources.spawnFood(grassPos, 5.0f, false, 500); 
+                resources.spawnFood(grassPos, 5.0f, FoodType.APPLE, 500); 
             }
         }
     }

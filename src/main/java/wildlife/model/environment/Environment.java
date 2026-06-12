@@ -15,7 +15,7 @@ import wildlife.model.organism.OrganismState;
 import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
-
+import wildlife.model.environment.enums.FoodType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -440,8 +440,16 @@ public abstract class Environment {
      * @param nutrition Giá trị dinh dưỡng của thức ăn đó
      */
     public void spawnFood(Vector2D pos, String foodType, float nutrition) {
+        FoodType type = FoodType.APPLE;
+        if (foodType != null) {
+            try {
+                type = FoodType.valueOf(foodType.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // fallback to APPLE
+            }
+        }
         // Gọi hàm sinh thức ăn thủ công đã được định nghĩa trong ResourceManager
-        resources.spawnFoodManual(pos, nutrition);
+        resources.spawnFoodManual(pos, type, nutrition);
 
         // QUAN TRỌNG: Báo cáo sự kiện ra loa phường!
         // ViewLogic đang vểnh tai nghe, thấy sự kiện này sẽ tự động phát tiếng "bụp"

@@ -1,9 +1,10 @@
 package wildlife.model.environment.terrain;
 
-import wildlife.model.environment.Environment; // <-- THÊM DÒNG NÀY ĐỂ HẾT LỖI ENVIRONMENT
+import wildlife.model.environment.Environment; 
 import wildlife.model.environment.component.*;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
@@ -120,7 +121,7 @@ public class Lake extends Environment {
             Vector2D weedPos = new Vector2D(random.nextInt(100), random.nextInt(100));
             if (terrain.containsPosition(weedPos)) {
                 // Rong rêu: Sinh dưỡng thấp, tồn tại lâu trong môi trường nước
-                resources.spawnFood(weedPos, 2.0f, false, 800);
+                resources.spawnFood(weedPos, 2.0f, FoodType.APPLE, 800);
             }
         }
     }
@@ -138,9 +139,9 @@ public class Lake extends Environment {
 
         // Ép tử toàn bộ sinh vật hiện tại trong hồ
         for (Organism o : registry.getAllAlive()) {
-            // Chuyển sang trạng thái TRANSFORMING (Environment lớp cha sẽ tự quét 
+            // Chuyển sang trạng thái DEAD (Environment lớp cha sẽ tự quét 
             // biến chúng thành thịt và phát âm thanh ORGANISM_DIED)
-            o.setState(OrganismState.TRANSFORMING);
+            o.setState(OrganismState.DEAD);
         }
 
         // TODO: (Mở rộng) Có thể yêu cầu TerrainComponent chuyển hàng loạt 

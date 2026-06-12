@@ -8,7 +8,7 @@ import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
-
+import wildlife.model.environment.enums.FoodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -132,7 +132,7 @@ public class Forest extends Environment {
 
                 if (terrain.containsPosition(mushroomPos)) {
                     // Sinh ra nấm: Tồn tại ngắn hạn (ví dụ: 200 tick) rồi héo
-                    resources.spawnFood(mushroomPos, 3.0f, false, 200);
+                    resources.spawnFood(mushroomPos, 3.0f, FoodType.APPLE, 200);
                 }
             }
         }
@@ -164,7 +164,7 @@ public class Forest extends Environment {
 
             if (terrain.containsPosition(applePos)) {
                 // Sinh ra quả táo: Dinh dưỡng tốt, tồn tại khá lâu
-                resources.spawnFood(applePos, 5.0f, false, 600);
+                resources.spawnFood(applePos, 5.0f, FoodType.APPLE, 600);
             }
         }
     }

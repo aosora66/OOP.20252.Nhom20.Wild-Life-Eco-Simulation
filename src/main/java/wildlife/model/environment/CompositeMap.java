@@ -243,7 +243,7 @@ public class CompositeMap extends Environment {
         }
 
         organism.setPosition(newPosition);
-        organism.setCurrentEnvironment(target.getTerrain().getTerrainAt(newPosition));
+        organism.setCurrentTerrain(target.getTerrain().getTerrainAt(newPosition));
         return true;
     }
 

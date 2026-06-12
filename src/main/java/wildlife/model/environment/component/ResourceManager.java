@@ -2,10 +2,10 @@ package wildlife.model.environment.component;
 
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
