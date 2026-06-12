@@ -24,6 +24,7 @@ import java.util.List;
 public abstract class Animal extends Organism {
 
     protected String gender;
+    protected String animalType;
     protected float vision;
     protected float combatPower;
     protected float speed;
@@ -64,12 +65,30 @@ public abstract class Animal extends Organism {
         addSurvivalStrategies();
     }
 
+    protected int lastReproduceTick = 0;
+
     /** Thêm một strategy vào danh sách. Có thể gọi nhiều lần để gắn nhiều strategy. */
     public void addStrategy(SurvivalStrategy strategy) {
         this.strategies.add(strategy);
     }
 
-    /** Kiểm tra xem động vật có thể ăn loại thức ăn này không. */
+    /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
+    protected boolean canReproduce(int currentTick) {
+        float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");
+        float thirstThreshold = AppConfig.getFloat("animal.reproduce.thirstThreshold");
+        int cooldown = AppConfig.getInt("animal.reproduce.cooldownTicks");
+        float chance = AppConfig.getFloat("animal.reproduce.chance");
+
+        return growth.isAdult() &&
+               stats.getHungerLevel() < hungerThreshold &&
+               stats.getThirstLevel() < thirstThreshold &&
+               (currentTick - lastReproduceTick) >= cooldown &&
+               Math.random() < chance;
+    }
+
+    @Override
+    public abstract void reproduce();
+
     public boolean canEat(FoodType type) {
         if (type == FoodType.WATER) return true;
         return diet.contains(type);
@@ -97,5 +116,6 @@ public abstract class Animal extends Organism {
         stats.consume(food.nutritionalValue(), food.isWater());
         environment.getResources().consume(food);
     }
+
 
 }

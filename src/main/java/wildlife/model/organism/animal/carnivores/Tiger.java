@@ -1,15 +1,17 @@
-package wildlife.model.organism.animal;
+package wildlife.model.organism.animal.carnivores;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.AnimalTypes;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
-public class Tiger extends Animal{
+public class Tiger extends Animal {
     public Tiger(String id,
                  String speciesName,
                  Vector2D startPos,
@@ -21,6 +23,7 @@ public class Tiger extends Animal{
                  String gender) {
         super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
         this.gender = gender;
+        this.animalType = AnimalTypes.CARNIVORE;
         this.combatPower = AppConfig.getFloat("animal.tiger.combatPower");
         this.vision = AppConfig.getFloat("animal.tiger.vision");
         this.speed = AppConfig.getFloat("animal.tiger.speed");
@@ -60,7 +63,8 @@ public class Tiger extends Animal{
     }
 
     @Override
-    public Tiger reproduce() {
-        return null;
+    public void reproduce() {
+
+
     }
 }
