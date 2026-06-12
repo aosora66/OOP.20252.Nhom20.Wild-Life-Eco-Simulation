@@ -22,7 +22,8 @@ import wildlife.model.dto.RenderData;
 import wildlife.model.organism.OrganismState;
 import wildlife.view.renderer.Renderer;
 import wildlife.view.renderer.SpriteBatch;
-import wildlife.view.renderer.testWindow;
+import wildlife.view.renderer.SimpleTexture;
+import wildlife.view.renderer.SimpleTextureRegistry;
 
 import java.nio.ByteBuffer;
 
@@ -30,8 +31,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
 //Dieu khien cac thao tac tren man hinh UI (va animation) va ghi nhan cac event tac dong vao scene canvas de gui sang lwjgl
-public class uiEventController {
-    private static boolean sceneModeIsBasic = true;
+public class UIEventController {
+    public static boolean sceneModeIsBasic = true;
     private Timeline timelineForAnimation;
     
     //view button
@@ -131,6 +132,7 @@ public class uiEventController {
     private volatile int canvasWidth = 800;
     private volatile int canvasHeight = 600;
 
+    private volatile Renderer renderer;
     private void setupLWJGLCanvas() {
         // Create the ImageView for rendering
         renderImageView = new ImageView();
@@ -204,20 +206,20 @@ public class uiEventController {
             glfwMakeContextCurrent(window);
             GL.createCapabilities();
 
-            // Create mock textures (16x16 pixels with solid colors)
-            testWindow.MockTexture wolfTexture = new testWindow.MockTexture(16, 16, (byte) 255, (byte) 50, (byte) 50, (byte) 255);
-            testWindow.MockTexture grassTexture = new testWindow.MockTexture(16, 16, (byte) 50, (byte) 200, (byte) 50, (byte) 255);
-            testWindow.MockTexture rabbitTexture = new testWindow.MockTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255);
+            // Create default textures (16x16 pixels with solid colors)
+            SimpleTexture wolfTexture = new SimpleTexture(16, 16, (byte) 255, (byte) 50, (byte) 50, (byte) 255);
+            SimpleTexture grassTexture = new SimpleTexture(16, 16, (byte) 50, (byte) 200, (byte) 50, (byte) 255);
+            SimpleTexture rabbitTexture = new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255);
 
             // Create registry and register our textures
-            testWindow.MockTextureRegistry textureRegistry = new testWindow.MockTextureRegistry();
+            SimpleTextureRegistry textureRegistry = new SimpleTextureRegistry();
             textureRegistry.register("Wolf", wolfTexture);
             textureRegistry.register("Grass", grassTexture);
             textureRegistry.register("Rabbit", rabbitTexture);
 
             // Initialize SpriteBatch and Renderer
             SpriteBatch spriteBatch = new SpriteBatch(width, height);
-            Renderer renderer = new Renderer(spriteBatch, textureRegistry);
+            this.renderer = new Renderer(spriteBatch, textureRegistry);
 
             // Set the clear color
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -243,20 +245,6 @@ public class uiEventController {
 
                 // Clear the framebuffer
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                // Submit Mock RenderData for demo purposes (matching testWindow)
-                renderer.submit(new RenderData("g1", "Grass", 400, 300, OrganismState.ALIVE));
-                renderer.submit(new RenderData("g2", "Grass", 432, 300, OrganismState.ALIVE));
-                renderer.submit(new RenderData("g3", "Grass", 400, 332, OrganismState.ALIVE));
-
-                double time = glfwGetTime();
-                float wolfX = 400f + (float) Math.cos(time) * 150f;
-                float wolfY = 300f + (float) Math.sin(time) * 150f;
-                renderer.submit(new RenderData("w1", "Wolf", wolfX, wolfY, OrganismState.ALIVE));
-
-                float rabbitX = 200f + (float) (time * 50 % 400);
-                float rabbitY = 150f + (float) Math.abs(Math.sin(time * 3)) * 80f;
-                renderer.submit(new RenderData("r1", "Rabbit", rabbitX, rabbitY, OrganismState.ALIVE));
 
                 // Draw all submitted organisms
                 renderer.renderAll();
@@ -303,9 +291,7 @@ public class uiEventController {
             // Clean up resources inside the render thread
             renderer.stop();
             spriteBatch.dispose();
-            wolfTexture.dispose();
-            grassTexture.dispose();
-            rabbitTexture.dispose();
+            textureRegistry.clear();
 
             glfwDestroyWindow(window);
             glfwTerminate();
@@ -314,7 +300,6 @@ public class uiEventController {
         renderThread.setDaemon(true);
         renderThread.start();
     }
-
     private void updateJavaFXImage(int[] pixels, int w, int h) {
         if (writableImage == null || (int) writableImage.getWidth() != w || (int) writableImage.getHeight() != h) {
             writableImage = new WritableImage(w, h);
@@ -362,6 +347,9 @@ public class uiEventController {
         }
     }
 
+    public Renderer getRenderer(){
+        return this.renderer;
+    }
     public void initialize() {
         organism_list_load();
         environment_materials_load();

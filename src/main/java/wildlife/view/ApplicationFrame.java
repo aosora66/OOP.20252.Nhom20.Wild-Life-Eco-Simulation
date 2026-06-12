@@ -6,12 +6,16 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import wildlife.view.renderer.Renderer;
+import wildlife.view.ui.UIEventController;
+
 import java.util.Objects;
 
 /*
  this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for lwjgl embedding (renderer).
  */
 public class ApplicationFrame extends Application {
+    private Renderer renderer;
     @Override
     public void start(Stage primaryStage) throws Exception {
         //we load the frame from fxml file, set it as root node on javafx
@@ -19,7 +23,7 @@ public class ApplicationFrame extends Application {
         Parent root = loader.load();
         primaryStage.setMaximized(true);
         primaryStage.setResizable(false);
-
+        renderer = loader.<UIEventController>getController().getRenderer();
         Scene scene = new Scene(root);
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/wildlife/view/ui/css/style.css")));
 
@@ -30,6 +34,9 @@ public class ApplicationFrame extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
+    }
+    public Renderer getRenderer() {
+        return this.renderer;
     }
 
     public void show(String[] args){

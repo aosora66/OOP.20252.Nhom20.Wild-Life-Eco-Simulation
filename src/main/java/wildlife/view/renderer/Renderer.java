@@ -15,8 +15,6 @@ public class Renderer {
     private static final float DEFAULT_SPRITE_WIDTH  = 32f;
     private static final float DEFAULT_SPRITE_HEIGHT = 32f;
 
-    private static final int BATCH_FLUSH_LIMIT = 512;
-
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
 
@@ -44,31 +42,24 @@ public class Renderer {
      */
     public void submit(RenderData data) {
         if (!running) return;
-        /*
-        Giải thích thao tác:
-        renderQueue.computeIfAbsent(data.speciesName, ....):
-          trả về SpeciesGroup <S> lưu thông tin của nhóm sinh vật có speciesName là data.speciesName nằm trong IndexedMap renderQueue: nếu chưa tồn tại, khởi tạo SpeciesGroup đầu tiên để lưu thong tin về nhóm sinh vật đó
-        k -> new SpeciesGroup(k, new ArrayList<>()):
-            hàm lambda chỉ cách khởi tạo SpeciesGroup của loài trong IndexedMap: nhận vào tham số k là tên loài -> khởi tạo ra nhóm mới có key là tên loại
-
-            => renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>()): S
-            => S.positions().add(new Float[]{data.x, data.y}: chèn thêm tọa độ của 1 thực thể mới thuộc nhóm sinh vật S vào SpeciesGroup của nó
-
-         */
-        renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>())).positions().add(new float[]{data.x, data.y});
-
+        synchronized (renderQueue) {
+            renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>())).positions().add(new float[]{data.x, data.y});
+        }
     }
 
     public void renderAll() {
-        if (renderQueue.isEmpty()) {
-            return;
+        List<SpeciesGroup> groupsToRender;
+        synchronized (renderQueue) {
+            if (renderQueue.isEmpty()) {
+                return;
+            }
+            groupsToRender = new ArrayList<>(renderQueue.values());
+            renderQueue.clear();
         }
 
         spriteBatch.begin();
 
-        int processed = 0;
-
-        for (SpeciesGroup group : renderQueue.values()) {
+        for (SpeciesGroup group : groupsToRender) {
             ITexture texture = textureRegistry.getTexture(group.speciesName());
             if (texture == null) {
                 continue;
@@ -82,18 +73,11 @@ public class Renderer {
                         DEFAULT_SPRITE_WIDTH,
                         DEFAULT_SPRITE_HEIGHT
                 );
-                processed++;
             }
-
-            if (processed >= BATCH_FLUSH_LIMIT) {
-                spriteBatch.end();
-                spriteBatch.begin();
-                processed = 0;
-            }
+            spriteBatch.flush();
         }
 
         spriteBatch.end();
-        renderQueue.clear();
     }
 
     /**
@@ -101,11 +85,5 @@ public class Renderer {
      */
     public void stop() {
         this.running = false;
-    }
-    public boolean isRunning() {
-        return running;
-    }
-    public int getQueueSize() {
-        return renderQueue.size();
     }
 }

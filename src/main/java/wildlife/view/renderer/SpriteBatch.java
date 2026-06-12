@@ -117,8 +117,8 @@ public class SpriteBatch {
 
         // ── Emit 4 vertices (top-left, top-right, bottom-right, bottom-left) ──
         // đặt x, y làm tâm của quad
-        float top = y+height/2;
-        float bottom = y-height/2;
+        float top = y - height/2;
+        float bottom = y + height/2;
         float right = x + width/2;
         float left = x - width/2;
 
@@ -181,7 +181,7 @@ public class SpriteBatch {
         vertices[vertexIndex++] = colorA;
     }
 
-    private void flush() {
+    public void flush() {
         if (spriteCount == 0) {
             return;
         }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import wildlife.model.organism.Organism;
 import wildlife.util.AppConfig;
+import wildlife.view.renderer.Renderer;
 
 public class Main {
 
@@ -56,21 +57,11 @@ public class Main {
             // TODO: Tạo instance Sói và add vào ecosystem
             // ecosystem.add(new Soi("Soi_" + i, pos, ...));
         }
-        //goi man hinh giao dien ra
-        ApplicationFrame myWindow = new ApplicationFrame();
-        myWindow.show(args);
-    }
-}
-
-        // BƯỚC 4: KHỞI TẠO GIAO DIỆN (VIEW)
-        // TODO: Khởi tạo class View, truyền kích thước bản đồ vào để setup Window
-        // SimulationView view = new SimulationView(mapWidth, mapHeight);
-        // view.initWindow();
-
+        // BƯỚC 4: KHỞI TẠO VÀ CHẠY GIAO DIỆN (VIEW)
         System.out.println("--- KHỞI TẠO HOÀN TẤT! ---");
         System.out.println("Tổng số sinh vật: " + ecosystem.size());
 
-        // TODO: Bắt đầu gọi vòng lặp Tick System (Game Loop) ở đây
-        // runTickSystem(ecosystem, view);
+        // Chạy JavaFX Application. Phương thức này sẽ chặn cho đến khi cửa sổ đóng.
+        ApplicationFrame.launch(ApplicationFrame.class, args);
     }
 }
