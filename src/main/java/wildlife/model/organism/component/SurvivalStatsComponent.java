@@ -42,11 +42,18 @@ public class SurvivalStatsComponent {
         thirstLevel = Math.min(100f, thirstLevel + (thirstDecayRate * thirstMultiplier));
     }
 
-    // Giảm hp khi đến ngưỡng đói/khát
-    public boolean checkHpThreshold() {
+    /**
+     * Trả về lượng HP phạt mỗi tick nếu đói/khát vượt ngưỡng, ngược lại trả 0.
+     */
+    public float getStarvationPenalty() {
         if (hungerLevel >= HUNGER_HP_THRESHOLD || thirstLevel >= THIRST_HP_THRESHOLD) {
-            hp = Math.max(0f, hp - HP_PENALTY_PER_TICK);
+            return HP_PENALTY_PER_TICK;
         }
+        return 0f;
+    }
+
+    /** kiểm tra sinh vật đã hết HP chưa */
+    public boolean checkHpThreshold() {
         return hp <= 0f;
     }
 

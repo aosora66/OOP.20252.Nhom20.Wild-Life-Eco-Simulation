@@ -1,6 +1,8 @@
 package wildlife.model.organism;
 
 import wildlife.model.dto.RenderData;
+import wildlife.model.environment.Environment;
+import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -10,16 +12,10 @@ import wildlife.util.Vector2D;
 
 /**
  * Abstract class trung tâm đại diện cho mọi sinh vật
- *
- * Nguyên tắc thiết kế:
- * - Logic sinh tồn (BioLogic) hoàn toàn tách khỏi ViewLogic.
- * - Các chỉ số cụ thể được ủy quyền cho 3 Component, tránh class phình to.
- * - Áp dụng Template Method Pattern ở hàm tick() để quản lý luồng sống chết cơ bản.
- * - Subclass CHỈ cần implement onTick() và reproduce().
  */
 public abstract class Organism {
     // Lấy chỉ số trừ HP khi lão hóa từ file config
-    private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.stats.hpPenaltyPerTick");
+    private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.growth.decayHpPenalty");
 
     // ----------------------------------------------------------
     //  5 thuộc tính nhận diện cơ bản
@@ -27,7 +23,8 @@ public abstract class Organism {
     protected final String id;
     protected final String speciesName;
     protected Vector2D position;
-    protected TerrainType currentEnvironment;
+    protected TerrainType currentTerrain;
+    protected Environment environment;
     protected OrganismState state;
 
     // ----------------------------------------------------------
@@ -45,6 +42,7 @@ public abstract class Organism {
      * @param id             ID duy nhất (nên dùng UUID)
      * @param speciesName    tên loài ("Tho", "Soi", "Co"...)
      * @param startPos       tọa độ xuất phát
+     * @param startTer       dia hinh ban đầu
      * @param startEnv       môi trường ban đầu
      * @param growth         component sinh trưởng
      * @param stats          component chỉ số sinh tồn
@@ -53,14 +51,16 @@ public abstract class Organism {
     protected Organism(String id,
                        String speciesName,
                        Vector2D startPos,
-                       TerrainType startEnv,
+                       TerrainType startTer,
+                       Environment startEnv,
                        GrowthComponent growth,
                        SurvivalStatsComponent stats,
                        AdaptabilityComponent adaptability) {
         this.id                 = id;
         this.speciesName        = speciesName;
         this.position           = startPos;
-        this.currentEnvironment = startEnv;
+        this.currentTerrain = startTer;
+        this.environment = startEnv;
         this.state              = OrganismState.ALIVE;
         this.growth             = growth;
         this.stats              = stats;
@@ -73,20 +73,20 @@ public abstract class Organism {
 
     /**
      * Cập nhật toàn bộ trạng thái sinh vật mỗi tick.
-     * Hàm này bị khóa (final) để ép luồng logic cốt lõi của hệ sinh thái.
-     *
      * @param currentTick  số thứ tự tick hiện tại
      */
-    public final void tick(int currentTick) {
+    public final void updateOrganism(int currentTick) {
         if (!isAlive()) return;
 
         // 1. Logic hệ thống bắt buộc (sinh vật tự động lớn lên và lão hóa)
         this.growUp();
+        if (!isAlive()) return;
 
-        // 2. Logic hành vi riêng của từng loài (nếu sinh vật vẫn còn sống sau khi growUp)
-        if (isAlive()) {
-            this.onTick(currentTick);
-        }
+        this.onTick(currentTick);
+        if (!isAlive()) return;
+
+        // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
+        this.processSurvivalMetabolism();
     }
 
     // ----------------------------------------------------------
@@ -95,15 +95,12 @@ public abstract class Organism {
 
     /**
      * Hành vi cụ thể của từng loài trong mỗi tick.
-     * Được gọi tự động bởi hàm tick() chung.
      * @param currentTick số thứ tự tick hiện tại
      */
     protected abstract void onTick(int currentTick);
 
     /**
      * Sinh sản: tạo ra một sinh vật con cùng loài.
-     * Subclass trả về đúng kiểu của mình (covariant return).
-     *
      * @return sinh vật con mới, hoặc null nếu chưa đủ điều kiện
      */
     public abstract Organism reproduce();
@@ -111,6 +108,60 @@ public abstract class Organism {
     // ----------------------------------------------------------
     //  Concrete methods — hành vi mặc định dùng chung
     // ----------------------------------------------------------
+
+    /**
+     * Tính và áp dụng decay đói/khát + toàn bộ HP drain mỗi tick.
+     * Gộp 3 nguồn drain: base drain cơ bản + stress nhiệt độ + starvation penalty.
+     * Thirst multiplier tính thêm yếu tố độ ẩm — môi trường khô làm khát nhanh hơn.
+     */
+    protected void processSurvivalMetabolism() {
+        if (environment == null) return;
+
+        float seasonMultiplier = environment.getTime().getSeasonMultiplier();
+        float humidityFactor   = environment.getHumidity() / 100f;
+        float thirstMultiplier = seasonMultiplier
+                * (1f + (1f - humidityFactor)
+                * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
+
+        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+
+        float hpDrain      = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
+        float stressPenalty = getEnvironmentalStressHpPenalty();
+        // Mùa khắc nghiệt làm stress tệ hơn
+        if (stressPenalty > 0f && seasonMultiplier > 1f) {
+            stressPenalty *= seasonMultiplier;
+        }
+        hpDrain += stressPenalty;
+        hpDrain += stats.getStarvationPenalty();
+
+        if (stats.reduceHp(hpDrain)) {
+            die();
+        }
+    }
+
+    /**
+     * HP phạt thêm mỗi tick khi môi trường không phù hợp với khả năng thích nghi.
+     * Hai mức kiểm tra:
+     *   1. Terrain không thuộc danh sách sinh tồn được (vd. cá trên cạn) → lethal
+     *   2. Nhiệt độ nằm ngoài vùng tolerance → lethal; ngoài optimal → suboptimal
+     */
+    protected float getEnvironmentalStressHpPenalty() {
+        if (environment == null) return 0f;
+
+        // Terrain check trước — sai môi trường thì coi như chết ngay, bất kể nhiệt độ
+        if (currentTerrain != null && !adaptability.canSurviveIn(currentTerrain)) {
+            return AppConfig.getFloat("organism.stats.lethalStressHpPenalty");
+        }
+
+        float temperature = environment.getTemperature();
+        if (adaptability.isLethal(temperature) || !adaptability.canTolerate(temperature)) {
+            return AppConfig.getFloat("organism.stats.lethalStressHpPenalty");
+        }
+        if (!adaptability.isOptimal(temperature)) {
+            return AppConfig.getFloat("organism.stats.suboptimalStressHpPenalty");
+        }
+        return 0f;
+    }
 
     /**
      * Tăng tuổi và cập nhật kích thước mỗi tick.
@@ -137,6 +188,19 @@ public abstract class Organism {
     }
 
     /**
+     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
+     * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
+     *
+     * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
+     */
+    protected void die() {
+        if (state == OrganismState.ALIVE) {
+            state = OrganismState.DEAD;
+            // Environment sẽ lắng nghe trạng thái này và xóa sau N tick
+        }
+    }
+
+    /**
      * Đóng gói dữ liệu tối thiểu để ViewLogic render.
      * Không lộ bất kỳ thuộc tính nội bộ nào và không chứa logic xử lý chuỗi của View.
      *
@@ -152,19 +216,6 @@ public abstract class Organism {
         );
     }
 
-    /**
-     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
-     * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
-     *
-     * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
-     */
-    protected void die() {
-        if (state == OrganismState.ALIVE) {
-            state = OrganismState.TRANSFORMING;
-            // Environment sẽ lắng nghe trạng thái này và xóa sau N tick
-        }
-    }
-
     // ----------------------------------------------------------
     //  Getters / Setters
     // ----------------------------------------------------------
@@ -173,13 +224,15 @@ public abstract class Organism {
     public String getSpeciesName()               { return speciesName; }
     public OrganismState getState()              { return state; }
     public Vector2D getPosition()                { return position; }
-    public TerrainType getCurrentEnvironment() { return currentEnvironment; }
+    public TerrainType getCurrentTerrain() { return currentTerrain; }
+    public Environment getEnvironment()   { return environment; }
     public GrowthComponent getGrowth()           { return growth; }
     public SurvivalStatsComponent getStats()     { return stats; }
     public AdaptabilityComponent getAdaptability() { return adaptability; }
 
     public void setPosition(Vector2D pos)                    { this.position = pos; }
-    public void setCurrentEnvironment(TerrainType env)   { this.currentEnvironment = env; }
+    public void setCurrentTerrain(TerrainType ter)   { this.currentTerrain = ter; }
+    public void setEnvironment(Environment evn)   { this.environment = evn; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
 

@@ -1,5 +1,6 @@
 package wildlife.model.environment.dto;
 
+import wildlife.model.environment.enums.FoodType;
 import wildlife.util.Vector2D;
 
 /**
@@ -17,10 +18,22 @@ public record FoodItem(
         float nutritionalValue,
 
         /** true = nguồn nước, false = thức ăn rắn */
-        boolean isWater,
+        FoodType type,
 
-        /** Số tick còn lại trước khi tài nguyên này biến mất (thối rữa/bốc hơi) */
+        /** Số tick duy trì tồn tại */
         int ticksUntilExpiry
 ) {
-   
+    public boolean isWater() {
+        return this.type == FoodType.WATER;
+    }
+
+    /**
+     * Kiểm tra xem tài nguyên này đã hết hạn chưa.
+     * @param currentTick tick hiện tại của hệ thống
+     * @param spawnTick   tick lúc tài nguyên được tạo ra
+     * @return true nếu đã hết hạn
+     */
+    public boolean isExpired(int currentTick, int spawnTick) {
+        return (currentTick - spawnTick) >= ticksUntilExpiry;
+    }
 }

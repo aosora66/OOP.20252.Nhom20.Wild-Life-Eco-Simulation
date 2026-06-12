@@ -1,0 +1,7 @@
+package wildlife.model.environment.enums;
+
+public enum FoodType {
+    APPLE,
+    MEAT,
+    WATER  // Nguồn nước
+}
