@@ -24,6 +24,7 @@ import java.util.List;
 public abstract class Animal extends Organism {
 
     protected String gender;
+    protected String animalType;
     protected float vision;
     protected float combatPower;
     protected float speed;
@@ -87,6 +88,7 @@ public abstract class Animal extends Organism {
 
     @Override
     public abstract void reproduce();
+
     public boolean canEat(FoodType type) {
         if (type == FoodType.WATER) return true;
         return diet.contains(type);

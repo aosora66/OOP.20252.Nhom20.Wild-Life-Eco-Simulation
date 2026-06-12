@@ -1,8 +1,10 @@
-package wildlife.model.organism.animal;
+package wildlife.model.organism.animal.carnivores;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.AnimalTypes;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
@@ -21,6 +23,7 @@ public class Wolf extends Animal {
                 String gender) {
         super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
         this.gender = gender;
+        this.animalType = AnimalTypes.CARNIVORE;
         this.combatPower = AppConfig.getFloat("animal.wolf.combatPower");
         this.vision = AppConfig.getFloat("animal.wolf.vision");
         this.speed = AppConfig.getFloat("animal.wolf.speed");
