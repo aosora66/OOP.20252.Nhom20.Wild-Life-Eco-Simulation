@@ -203,3 +203,69 @@ Sau fix: `AppConfig.getFloat("organism.growth.decayHpPenalty")` (0.5, đúng key
 Trước fix: `eating()` chỉ có ở `Animal`. Strategy muốn gọi phải `instanceof Animal` rồi cast (theo cách của nhánh kia) hoặc gọi thẳng `stats.consume() + resources.consume()` (mất polymorphism).
 
 Sau fix: `eating(FoodItem)` định nghĩa ở `Organism` với default impl. `Animal` kế thừa, có thể override nếu cần. `PassiveStrategy` và `HunterStrategy.eatCorpse` gọi `self.eating(food)` polymorphic — không cần `instanceof`, subclass override sẽ tự được gọi.
+
+---
+
+## Refactor tiếp theo (session 2)
+
+### 1. Strategy code xuống `Animal` — bỏ khỏi `Organism`
+
+Thực vật không có strategy nên không cần `strategies`, `addStrategy()`, `executeStrategy()` ở `Organism`.
+
+Sau refactor:
+- `Organism`: chỉ còn `eating()`, `processSurvivalMetabolism()` và các method sinh tồn chung
+- `Animal`: chứa `strategies` list, `addStrategy()`, `executeStrategy()`, `getCombatPower()`
+
+### 2. `SurvivalStrategy` chuyển package
+
+`wildlife/util/SurvivalStrategy.java` → `wildlife/model/brain/SurvivalStrategy.java`
+
+`util` dành cho công cụ kỹ thuật (`AppConfig`, `Vector2D`). `SurvivalStrategy` là domain contract — đặt cùng package với các implementation của nó hợp lý hơn.
+
+### 3. `Organism self` → `Animal self` trong toàn bộ strategy
+
+Interface và tất cả implementation (`AbstractSurvivalStrategy`, `HunterStrategy`, `PassiveStrategy`, `ScaredStrategy`) đổi tham số `self` từ `Organism` sang `Animal`.
+
+Lý do: chỉ `Animal` mới có strategy. Dùng `Animal` cho phép strategy truy cập trực tiếp `combatPower`, `speed`, `vision` mà không cần cast hay truyền thêm tham số.
+
+`AbstractSurvivalStrategy.RNG` đổi từ `private` → `protected` để subclass dùng được.
+
+### 4. Multi-species — `String` → `List<String>` varargs
+
+`ScaredStrategy.predatorSpecies` và `HunterStrategy.preySpecies` đổi từ `String` (1 loài) sang `List<String>` (nhiều loài).
+
+Constructor dùng varargs:
+
+```java
+new ScaredStrategy(speed, vision, 3, range, 0.3f, 0.5f, "Wolf", "Tiger");
+new HunterStrategy(speed, vision, range, damage, threshold, "Rabbit", "Deer");
+```
+
+- `ScaredStrategy`: chạy trốn con **gần nhất** trong tất cả loài kẻ thù
+- `HunterStrategy`: săn con **gần nhất** trong tất cả loài con mồi
+
+### 5. Cơ chế phản kháng — `ScaredStrategy`
+
+Khi HP thấp và kẻ thù đã áp sát, con mồi có tỉ lệ đánh lại thay vì chỉ chạy.
+
+Điều kiện kích hoạt (3 điều kiện AND):
+1. Kẻ thù trong `attackRange` (= `counterAttackRange` truyền vào constructor)
+2. `hp / maxHp <= counterHpThreshold`
+3. `RNG.nextFloat() < counterAttackChance`
+
+Sát thương = `self.getCombatPower()` — không cần truyền thêm tham số.
+
+**Cooldown** chống spam: sau mỗi lần phản kháng, phải chờ `organism.scared.counterAttackCooldown` tick mới được phản kháng tiếp. Giá trị đọc từ config thay vì hardcode trong constructor.
+
+```java
+// setting.properties
+organism.scared.counterAttackCooldown=20
+```
+
+Constructor mới:
+
+```java
+new ScaredStrategy(speed, vision, sprintSteps,
+                   counterAttackRange, counterHpThreshold, counterAttackChance,
+                   "Wolf", "Tiger");
+```

@@ -87,5 +87,7 @@ public abstract class Animal extends Organism {
                 .ifPresent(s -> s.execute(this, environment));
     }
 
+    public float getCombatPower() { return combatPower; }
+
     // eating(FoodItem) được kế thừa từ Organism — override ở đây nếu cần thêm hành vi animal-specific
 }

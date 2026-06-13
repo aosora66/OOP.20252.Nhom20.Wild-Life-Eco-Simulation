@@ -16,7 +16,7 @@ import java.util.Random;
  */
 public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
-    private static final Random RNG = new Random();
+    protected static final Random RNG = new Random();
 
     protected final float stepSize;
     // Bán kính quan sát — dùng để tìm mồi, kẻ thù, thức ăn
