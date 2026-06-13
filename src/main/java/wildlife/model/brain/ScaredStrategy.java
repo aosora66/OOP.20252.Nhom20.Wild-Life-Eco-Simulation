@@ -1,7 +1,7 @@
 package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
-import wildlife.model.organism.Organism;
+import wildlife.model.organism.Animal;
 
 import java.util.Comparator;
 import java.util.List;
@@ -28,7 +28,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
 
     /** Kích hoạt khi có BẤT KỲ loài kẻ thù nào xuất hiện trong fearRadius. */
     @Override
-    public boolean isApplicable(Organism self, Environment env) {
+    public boolean isApplicable(Animal self, Environment env) {
         return predatorSpecies.stream()
                 .anyMatch(s -> findNearestBySpecies(self, env, s).isPresent());
     }
@@ -38,7 +38,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
 
     /** Chạy sprintSteps bước liên tiếp ra xa kẻ thù GẦN NHẤT trong tất cả các loài nguy hiểm. */
     @Override
-    public void execute(Organism self, Environment env) {
+    public void execute(Animal self, Environment env) {
         predatorSpecies.stream()
                 .map(s -> findNearestBySpecies(self, env, s))
                 .filter(Optional::isPresent)

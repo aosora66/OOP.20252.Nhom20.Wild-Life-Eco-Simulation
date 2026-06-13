@@ -1,7 +1,7 @@
 package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
-import wildlife.model.organism.Organism;
+import wildlife.model.organism.Animal;
 
 /**
  * Strategy sinh tồn cơ bản — tìm nước/thức ăn khi cần, wander khi đủ no.
@@ -23,7 +23,7 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
 
     /** Luôn true — đây là hành vi mặc định khi không có strategy ưu tiên cao hơn nào áp dụng. */
     @Override
-    public boolean isApplicable(Organism self, Environment env) { return true; }
+    public boolean isApplicable(Animal self, Environment env) { return true; }
 
     @Override
     public int getPriority() { return 10; }
@@ -34,7 +34,7 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
      * Khi đã vào nhánh khát/đói, dùng return sớm để không đồng thời tìm cả hai.
      */
     @Override
-    public void execute(Organism self, Environment env) {
+    public void execute(Animal self, Environment env) {
         if (self.getStats().getThirstLevel() >= thirstSearchThreshold) {
             findNearestFood(self, env, true).ifPresentOrElse(
                 water -> {

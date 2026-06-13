@@ -2,8 +2,8 @@ package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.organism.Animal;
 import wildlife.model.organism.Organism;
-import wildlife.model.brain.SurvivalStrategy;
 import wildlife.util.Vector2D;
 
 import java.util.Comparator;
@@ -31,7 +31,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /** Di chuyển ngẫu nhiên một bước, bỏ qua nếu ô đích không đi được. */
-    protected void wander(Organism self, Environment env) {
+    protected void wander(Animal self, Environment env) {
         float angle = RNG.nextFloat() * 2f * (float) Math.PI;
         Vector2D next = new Vector2D(
             self.getPosition().getX() + (float) Math.cos(angle) * stepSize,
@@ -43,7 +43,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /** Tiến về phía target tối đa stepSize, dừng khi đã chạm. */
-    protected void moveToward(Organism self, Vector2D target, Environment env) {
+    protected void moveToward(Animal self, Vector2D target, Environment env) {
         Vector2D pos = self.getPosition();
         float dist   = pos.distanceTo(target);
         if (dist < 0.001f) return;
@@ -65,7 +65,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
      * Chạy ra xa khỏi threat một bước stepSize.
      * Nếu hướng ngược lại bị chặn, fallback sang wander để tránh bị kẹt góc.
      */
-    protected void moveAwayFrom(Organism self, Vector2D threat, Environment env) {
+    protected void moveAwayFrom(Animal self, Vector2D threat, Environment env) {
         Vector2D pos = self.getPosition();
         float dist   = pos.distanceTo(threat);
         if (dist < 0.001f) { wander(self, env); return; }
@@ -89,7 +89,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
      * loại trừ bản thân và xác đã chết (TRANSFORMING).
      * Lọc isAlive() để hunter không tấn công xác và scared không chạy khỏi predator đã chết.
      */
-    protected Optional<Organism> findNearestBySpecies(Organism self, Environment env,
+    protected Optional<Organism> findNearestBySpecies(Animal self, Environment env,
                                                        String targetSpecies) {
         return env.getRegistry()
                   .findNear(self.getPosition(), sightRadius)
@@ -102,7 +102,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
-    protected Optional<FoodItem> findNearestFood(Organism self, Environment env,
+    protected Optional<FoodItem> findNearestFood(Animal self, Environment env,
                                                   boolean wantWater) {
         return env.getResources()
                   .getFoodNear(self.getPosition(), sightRadius)

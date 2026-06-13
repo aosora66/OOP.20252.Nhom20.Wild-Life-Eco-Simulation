@@ -2,6 +2,7 @@ package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.organism.Animal;
 import wildlife.model.organism.Organism;
 
 import java.util.Comparator;
@@ -31,7 +32,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
 
     /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
     @Override
-    public boolean isApplicable(Organism self, Environment env) {
+    public boolean isApplicable(Animal self, Environment env) {
         return self.getStats().getHungerLevel() >= hungerSearchThreshold;
     }
 
@@ -45,7 +46,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
      * Nếu không tìm thấy con mồi nào thì wander chờ tick sau.
      */
     @Override
-    public void execute(Organism self, Environment env) {
+    public void execute(Animal self, Environment env) {
         // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
         Optional<Organism> prey = preySpecies.stream()
                 .map(s -> findNearestBySpecies(self, env, s))
@@ -69,7 +70,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     }
 
     /** Chuyển xác con mồi thành FoodItem, xóa khỏi registry, ăn ngay nếu tìm thấy thịt. */
-    private void eatCorpse(Organism self, Organism target, Environment env) {
+    private void eatCorpse(Animal self, Organism target, Environment env) {
         float nutrition = target.getStats().getNutritionalValue();
         env.getResources().convertDeadToMeat(target.getPosition(), nutrition);
         env.getRegistry().remove(target.getId());
