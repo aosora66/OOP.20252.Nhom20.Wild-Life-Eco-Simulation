@@ -5,12 +5,16 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.ObstacleType;
+import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
 import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
+import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
@@ -37,17 +41,18 @@ public abstract class Environment {
     /**
      * Độ ẩm hiện tại [0.0 – 100.0].
      */
-    protected float humidity;
-
+    protected float currentHumidity;
+    protected float humidity; // base
     /**
      * Nhiệt độ hiện tại (độ C).
      */
-    protected float temperature;
-
+    protected float currentTemp;
+    protected float temperature; // base
     /**
      * Cường độ ánh sáng [0.0 – 1.0].
-     * 0.0 = tối hoàn toàn (đêm sâu), 1.0 = ban ngày nắng gắt.
+     * 0.0 = tối hoàn toàn (đêm), 1.0 = ban ngày nắng gắt.
      */
+    protected float currentLight;
     protected float lightLevel;
 
     // ----------------------------------------------------------------
@@ -66,9 +71,6 @@ public abstract class Environment {
     /** Component quản lý tài nguyên (thức ăn, nước, vật cản) */
     protected final ResourceManager resources;
 
-    /** Component phát sự kiện (Observer Pattern) */
-    protected final EnvironmentEventPublisher events;
-
     // ----------------------------------------------------------------
     //  Constructor
     // ----------------------------------------------------------------
@@ -85,7 +87,6 @@ public abstract class Environment {
      * @param terrain     Component địa hình (không được null)
      * @param registry    Component sinh vật (không được null)
      * @param resources   Component tài nguyên (không được null)
-     * @param events      Component sự kiện (không được null)
      */
     protected Environment(String id,
                           String name,
@@ -95,14 +96,12 @@ public abstract class Environment {
                           TimeComponent time,
                           TerrainComponent terrain,
                           OrganismRegistry registry,
-                          ResourceManager resources,
-                          EnvironmentEventPublisher events) {
+                          ResourceManager resources) {
         // Kiểm tra null để phát hiện lỗi cấu hình sớm
         if (time == null)      throw new IllegalArgumentException("TimeComponent không được null");
         if (terrain == null)   throw new IllegalArgumentException("TerrainComponent không được null");
         if (registry == null)  throw new IllegalArgumentException("OrganismRegistry không được null");
         if (resources == null) throw new IllegalArgumentException("ResourceManager không được null");
-        if (events == null)    throw new IllegalArgumentException("EnvironmentEventPublisher không được null");
 
         this.id          = id;
         this.name        = name;
@@ -113,7 +112,6 @@ public abstract class Environment {
         this.terrain     = terrain;
         this.registry    = registry;
         this.resources   = resources;
-        this.events      = events;
     }
 
     // ----------------------------------------------------------------
@@ -131,8 +129,7 @@ public abstract class Environment {
      *   4. Áp dụng hiệu ứng thời tiết (lớp con implement)
      *   5. Tick toàn bộ sinh vật còn sống
      *   6. Xử lý sinh vật DEAD (chuyển thành thịt + xóa)
-     *   7. Sinh tài nguyên thiên nhiên (lớp con implement)
-     *   8. Dọn dẹp tài nguyên hết hạn
+     *   7. Dọn dẹp tài nguyên hết hạn
      *
      * @param currentTick tick hiện tại của hệ thống
      */
@@ -152,24 +149,25 @@ public abstract class Environment {
         applyWeatherEffect();
 
         // 5. Tick toàn bộ sinh vật
-        for (Organism o : registry.getAllAlive()) {
+        for (Organism o : registry.getAllAlive(Organism.class)) {
             o.updateOrganism(currentTick);
         }
 
         // 6. Xử lý xác sinh vật DEAD
         processDeadOrganisms(currentTick);
 
-        // 7. Sinh tài nguyên tự nhiên theo đặc trưng môi trường
-        generateNaturalResources();
-
-        // 8. Dọn dẹp tài nguyên hết hạn
+        // 7. Dọn dẹp tài nguyên hết hạn
         resources.removeExpiredFood(currentTick);
     }
 
     // ----------------------------------------------------------------
     //  Abstract Methods — Design Contract cho lớp con
     // ----------------------------------------------------------------
-
+    /**
+     *
+     * Khoi tao môi trường
+     */
+    protected abstract void initialize();
     /**
      * Áp dụng tác động của mùa hiện tại lên chỉ số môi trường.
      */
@@ -180,31 +178,93 @@ public abstract class Environment {
      */
     protected abstract void applyWeatherEffect();
 
-    /**
-     *
-     * Sinh tài nguyên thiên nhiên đặc trưng của môi trường này.
 
-     */
-    protected abstract void generateNaturalResources();
 
     // ----------------------------------------------------------------
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
 
+    /**
+     * Cập nhật các chỉ số vật lý dựa trên sự giao thoa của Thời gian, Mùa và Thời tiết.
+     */
+    private void updateClimateMetrics() {
+        // --- 1. Ánh sáng ---
+        // Ban ngày sáng (max), ban đêm mờ (max-0.6)
+        this.lightLevel = time.isDaytime() ? this.lightLevel : (this.lightLevel - 0.6f);
+
+    }
 
     /**
      * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
      * Kết hợp kiểm tra địa hình và vật cản.
      *
      * @param pos     tọa độ đích
-     * @param species tên loài (để TerrainComponent kiểm tra đặc thù loài)
+     * @param self     loài
      * @return true nếu có thể di chuyển đến
      */
-    public boolean isPositionPassable(Vector2D pos, String species) {
-        // Kiểm tra địa hình
-        if (!terrain.isPassable(pos, species)) return false;
-        // Kiểm tra vật cản tĩnh (bán kính nhỏ để phát hiện va chạm)
-        return resources.getObstaclesNear(pos, 0.5f).isEmpty();
+    public boolean isPositionPassable(Vector2D pos, Animal self) {
+        if (self == null) return false;
+        // 1. Kiểm tra địa hình
+        if (!terrain.isPassable(pos, self)) return false;
+
+        // 2. Kiểm tra vật cản trên bề mặt
+        List<ObstacleItem> obstacles = resources.getObstaclesNear(pos, 0.5f);
+        if (!obstacles.isEmpty()) {
+            // Kiểm tra từng vật cản tại vị trí này
+            for (ObstacleItem obstacle : obstacles) {
+                // --- XỬ LÝ ĐÁ (ROCK) ---
+                if (obstacle.type() == ObstacleType.ROCK) {
+                    return false;
+                }
+                // --- XỬ LÝ BỤI RẬM (BUSH) ---
+                if (obstacle.type() == ObstacleType.BUSH) {
+                    // Voi (Động vật đầu bảng): Dẫm nát và càn lướt qua bụi rậm dễ dàng
+                    if (self instanceof Elephant) {
+                        continue; // Bỏ qua vật cản này, xét tiếp
+                    }
+
+                    // Động vật ăn cỏ (Thỏ, Hươu): Dáng nhỏ gọn, lách vào bụi rậm để trốn
+                    if (self instanceof Rabbit || self instanceof Deer) {
+                        continue;
+                    }
+
+                    // Động vật ăn thịt và Người: To xác, vướng víu không chui qua được
+                    if (self instanceof Wolf || self instanceof Tiger || self.getSpeciesName().equalsIgnoreCase("Hunter")) {
+                        return false; // Bị chặn lại
+                    }
+                }
+            }
+        }
+
+        // 3. Kiem tra cay
+        List<Organism> trees = registry.findNear(pos, 0.5f, Tree.class);
+        if (!trees.isEmpty()) {
+            return false;
+        }
+
+        return true; // Nếu qua được hết mọi bài test thì vị trí này hợp lệ để bước vào
+    }
+
+    /**
+     * Trả về hệ số độ nhận diện của một vị trí trong môi trường.
+     * Hiệu ứng được cộng dồn từ địa hình và vật cản (bụi rậm).
+     */
+    public float getVisibilityModifier(Vector2D pos) {
+        // Hệ số cơ bản do địa hình quyết định.
+        float modifier = terrain.getVisibility(pos);
+
+        // Nếu có bụi rậm tại vị trí này thì giảm thêm 0.3.
+        for (ObstacleItem obstacle : resources.getObstaclesNear(pos, 0.5f)) {
+            if (obstacle.type() == ObstacleType.BUSH) {
+                modifier -= 0.4f;
+                break;
+            }
+        }
+
+        if(!time.isDaytime()) modifier -= 0.3f;
+
+            // Đảm bảo hệ số không âm.
+        return Math.max(modifier, 0.0f);
     }
 
     /**
@@ -216,13 +276,13 @@ public abstract class Environment {
     private void processDeadOrganisms(int currentTick) {
         List<String> toRemove = new ArrayList<>();
 
-        for (Organism o : registry.getAll()) {
+        for (Organism o : registry.getAll(Organism.class)) {
             if (o.getState() == OrganismState.DEAD) {
                 if (o instanceof Animal) {
                     // Chuyển xác thành thịt
                     float nutrition = o.getStats().getNutritionalValue();
                     resources.convertDeadToMeat(o.getPosition(), nutrition);
-                    events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_DIED);
+                    //events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_DIED);
                 }
                 toRemove.add(o.getId());
             }
@@ -242,31 +302,7 @@ public abstract class Environment {
      */
     public void addOrganism(Organism organism) {
         registry.add(organism);
-        events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_BORN);
-    }
 
-    /**
-     * Đăng ký listener lắng nghe sự kiện của môi trường này.
-     * ViewLogic hoặc SoundManager gọi phương thức này để đăng ký.
-     *
-     * @param listener listener cần đăng ký
-     */
-    public void addEventListener(EnvironmentEventListener listener) {
-        events.addListener(listener);
-    }
-
-    /**
-     * Lấy snapshot dữ liệu render của toàn bộ sinh vật còn sống trong môi trường.
-     * Đây là ĐIỂM ViewLogic giao tiếp với Environment.
-     *
-     * @return danh sách RenderData để ViewLogic vẽ lên màn hình
-     */
-    public List<RenderData> getRenderSnapshot() {
-        List<RenderData> snapshot = new ArrayList<>();
-        for (Organism o : registry.getAll()) {
-            snapshot.add(o.getRenderData());
-        }
-        return snapshot;
     }
 
     // ----------------------------------------------------------------
@@ -275,15 +311,14 @@ public abstract class Environment {
 
     public String getId()             { return id; }
     public String getName()           { return name; }
-    public float getHumidity()        { return humidity; }
-    public float getTemperature()     { return temperature; }
-    public float getLightLevel()      { return lightLevel; }
+    public float getHumidity()        { return currentHumidity; }
+    public float getTemperature()     { return currentTemp; }
+    public float getLightLevel()      { return currentLight; }
 
     public TimeComponent getTime()                    { return time; }
     public TerrainComponent getTerrain()              { return terrain; }
     public OrganismRegistry getRegistry()             { return registry; }
     public ResourceManager getResources()             { return resources; }
-    public EnvironmentEventPublisher getEvents()      { return events; }
 
     @Override
     public String toString() {

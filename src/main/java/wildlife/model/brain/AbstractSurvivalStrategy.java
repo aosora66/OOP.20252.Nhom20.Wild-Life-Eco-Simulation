@@ -44,7 +44,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 self.getPosition().getX() + (float) Math.cos(angle) * stepSize,
                 self.getPosition().getY() + (float) Math.sin(angle) * stepSize
         );
-        if (env.isPositionPassable(next, self.getSpeciesName())) {
+        if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
         }
     }
@@ -63,7 +63,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 pos.getX() + dx * step,
                 pos.getY() + dy * step
         );
-        if (env.isPositionPassable(next, self.getSpeciesName())) {
+        if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
         }
     }
@@ -84,7 +84,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 pos.getX() + dx * stepSize,
                 pos.getY() + dy * stepSize
         );
-        if (env.isPositionPassable(next, self.getSpeciesName())) {
+        if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
         } else {
             wander(self, env);
@@ -92,18 +92,15 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /**
-     * Tìm sinh vật còn sống gần nhất cùng loài targetSpecies trong sightRadius,
-     * loại trừ bản thân và xác đã chết (DEAD).
-     * Lọc isAlive() để hunter không tấn công xác và scared không chạy khỏi predator đã chết.
+     * Tìm sinh vật còn sống gần nhất thuộc kiểu/loài targetType trong sightRadius,
+     * loại trừ bản thân.
      */
-    protected Optional<Organism> findNearestBySpecies(Animal self, Environment env,
-                                                      String targetSpecies) {
+    protected <T extends Organism> Optional<T> findNearestByType(Animal self, Environment env,
+                                                                 Class<T> targetType) {
         return env.getRegistry()
-                .findNear(self.getPosition(), sightRadius)
+                .findNear(self.getPosition(), sightRadius, targetType) // Đã lọc sẵn ALIVE và đúng Class
                 .stream()
-                .filter(o -> o.isAlive()
-                        && !o.getId().equals(self.getId())
-                        && o.getSpeciesName().equals(targetSpecies))
+                .filter(o -> !o.getId().equals(self.getId())) // Chỉ cần loại trừ chính bản thân mình
                 .min(Comparator.comparingDouble(
                         o -> o.getPosition().distanceTo(self.getPosition())));
     }

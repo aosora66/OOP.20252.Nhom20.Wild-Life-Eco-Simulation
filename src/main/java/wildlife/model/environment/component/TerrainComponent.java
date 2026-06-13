@@ -1,15 +1,12 @@
 package wildlife.model.environment.component;
 
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Component quản lý địa hình của một môi trường.
@@ -24,10 +21,6 @@ public class TerrainComponent {
     private static final float VISIBILITY_NORMAL  = AppConfig.getFloat("environment.terrain.visibility.normal");
     private static final Set<TerrainType> LOW_VISIBILITY_TERRAINS = Set.of(
             TerrainType.FOREST, TerrainType.DEEP_WATER
-    );
-
-    private static final Set<TerrainType> DEFAULT_IMPASSABLE = Set.of(
-            TerrainType.DEEP_WATER, TerrainType.CLIFF
     );
 
     // Kích thước 1 ô vuông ảo để tránh lỗi số thực float khi dùng HashMap
@@ -74,7 +67,7 @@ public class TerrainComponent {
     public TerrainType getTerrainAt(Vector2D pos) {
         // 1. Rớt ra ngoài ranh giới vùng -> Coi như đụng vách núi
         if (!containsPosition(pos)) {
-            return TerrainType.CLIFF;
+            return TerrainType.MOUNTAIN;
         }
 
         // 2. Ép tọa độ thực tế thành tọa độ ô vuông
@@ -85,7 +78,7 @@ public class TerrainComponent {
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
     }
 
-    public float getVisibilityModifier(Vector2D pos) {
+    public float getVisibility(Vector2D pos) {
         TerrainType terrain = getTerrainAt(pos);
         return LOW_VISIBILITY_TERRAINS.contains(terrain)
                 ? VISIBILITY_REDUCED
@@ -95,18 +88,43 @@ public class TerrainComponent {
     /** Check địa hình cản trở
      *
      * @param pos
-     * @param species
+     * @param self
      * @return true nếu không có cản trở
      */
-    public boolean isPassable(Vector2D pos, String species) {
+    public boolean isPassable(Vector2D pos, Animal self) {
         TerrainType terrain = getTerrainAt(pos);
-        // thêm logic cho species đặc biệt
-        return !DEFAULT_IMPASSABLE.contains(terrain);
-    }
+        if (self == null) {
+            return terrain != TerrainType.DEEP_WATER && terrain != TerrainType.MOUNTAIN;
+        }
 
+        boolean isAquatic = self instanceof fish;
+        // --- NHÁNH DÀNH CHO CÁ ---
+        if (isAquatic) {
+            // Cá chỉ bơi được ở nước sâu và nước nông
+            return terrain == TerrainType.DEEP_WATER;
+        }
+
+        // --- NHÁNH DÀNH CHO ĐỘNG VẬT TRÊN CẠN ---
+        switch (terrain) {
+            case DEEP_WATER:
+            case MOUNTAIN:
+                return false; // Cấm tuyệt đối xuống nước sâu và leo vách đá vách núi
+
+            case GRASSLAND:
+            case FOREST:
+            case MUD:
+                return true;  // Trên cạn và lội nước nông thì thoải mái
+
+            default:
+                return false;
+        }
+    }
 
     public boolean containsPosition(Vector2D pos) {
         return boundary.contains(pos);
+    }
+    public Vector2D getRandomValidPosition() {
+        return boundary.getRandomPoint(new Random());
     }
 
 
@@ -114,10 +132,47 @@ public class TerrainComponent {
         return containedTerrains.contains(type);
     }
 
+    /**
+     * Trả về lượng tốc độ BỊ GIẢM dựa trên địa hình và sinh vật.
+     * @param pos Tọa độ sinh vật đang đứng
+     * @param self Đối tượng sinh vật đang di chuyển
+     * @return Lượng tốc độ bị trừ đi (0.0 = không bị trừ, di chuyển bình thường)
+     */
+    public float getSpeedPenalty(Vector2D pos, Animal self) { // Truyền thẳng animal vào
+        TerrainType terrain = getTerrainAt(pos);
+
+        // Lấy tên loài từ object animal (Giả định Organism có hàm getSpecies())
+        String species = self.getSpeciesName();
+
+        // Voi (Động vật đầu bảng) càn lướt mọi địa hình, không bị trừ tốc độ
+        if (species.equalsIgnoreCase("Elephant")) {
+            return 0.0f;
+        }
+
+        switch (terrain) {
+            case MUD:
+                // Trả về lượng x lấy từ file config
+                return AppConfig.getFloat("environment.terrain.penalty.shallow_water");
+
+            case FOREST:
+                // Rừng rậm: Sói bị trừ ít tốc độ hơn nhờ bản năng
+                if (species.equalsIgnoreCase("Wolf")) {
+                    return AppConfig.getFloat("environment.terrain.penalty.forest.wolf");
+                }
+                return AppConfig.getFloat("environment.terrain.penalty.forest");
+
+            default:
+                return 0.0f;
+        }
+    }
+
+
+
     // ----------------------------------------------------------------
     //  Getters
     // ----------------------------------------------------------------
     public Set<TerrainType> getContainedTerrains() {
         return Collections.unmodifiableSet(containedTerrains);
     }
+    public Boundary getBoundary()                  { return boundary; }
 }

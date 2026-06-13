@@ -41,18 +41,14 @@ public class CompositeMap extends Environment {
         super(
                 id, name,
                 0f, 0f, 1f,
-                new TimeComponent(
-                        AppConfig.getInt("environment.time.ticksPerDayCycle"),
-                        AppConfig.getInt("environment.time.ticksPerSeason")
-                ),
+                new TimeComponent(),
                 // --- DÒNG ĐƯỢC SỬA ---
                 // Bản đồ tổng hợp bao trọn toàn bộ thế giới (0 đến 1000)
                 new TerrainComponent(new wildlife.util.RectBoundary(0, 1000, 0, 1000), TerrainType.GRASSLAND),
                 // ---------------------
 
                 new OrganismRegistry(),
-                new ResourceManager(),
-                new EnvironmentEventPublisher("sounds/world_ambient.wav")
+                new ResourceManager()
         );
         this.subEnvironments = new ArrayList<>();
     }

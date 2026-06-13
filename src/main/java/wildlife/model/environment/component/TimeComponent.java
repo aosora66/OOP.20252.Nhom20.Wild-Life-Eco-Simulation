@@ -32,10 +32,10 @@ public class TimeComponent {
     private int currentTick;
 
     /** Số tick tương đương một chu kỳ ngày-đêm đầy đủ */
-    private final int ticksPerDayCycle;
+    private final int ticksPerDayCycle = AppConfig.getInt("environment.time.ticksPerDayCycle");
 
     /** Số tick để chuyển sang một mùa mới */
-    private final int ticksPerSeason;
+    private final int ticksPerSeason = AppConfig.getInt("environment.time.ticksPerSeason");
 
     /** Mùa hiện tại */
     private Season currentSeason;
@@ -49,13 +49,7 @@ public class TimeComponent {
     //  Constructor
     // ----------------------------------------------------------------
 
-    /**
-     * @param ticksPerDayCycle  số tick cho 1 chu kỳ ngày-đêm (VD: 24)
-     * @param ticksPerSeason    số tick cho 1 mùa (VD: 240)
-     */
-    public TimeComponent(int ticksPerDayCycle, int ticksPerSeason) {
-        this.ticksPerDayCycle = ticksPerDayCycle;
-        this.ticksPerSeason   = ticksPerSeason;
+    public TimeComponent() {
         this.currentTick      = 0;
         this.currentSeason    = Season.NORMAL;
         this.currentWeather   = WeatherType.NORMAL;
@@ -78,6 +72,7 @@ public class TimeComponent {
 
     /**
      * Cập nhật mùa dựa theo số tick đã qua.
+     * Thứ tự mùa: NORMAL → BREEDING → DROUGHT →NORMAL
      */
     private void updateSeason() {
         // Lấy vị trí trong chu kỳ 3 mùa

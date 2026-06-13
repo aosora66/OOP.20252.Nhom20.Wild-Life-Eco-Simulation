@@ -1,0 +1,143 @@
+package wildlife.model.environment.envType;
+
+import wildlife.model.environment.Environment;
+import wildlife.model.environment.component.OrganismRegistry;
+import wildlife.model.environment.component.ResourceManager;
+import wildlife.model.environment.component.TerrainComponent;
+import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.Organism;
+import wildlife.util.Boundary;
+import wildlife.util.Vector2D;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Môi trường Hồ Nước (Lake)
+ * Đặc trưng: Mực nước thay đổi theo thời tiết
+ */
+public class Lake extends Environment {
+
+    // ----------------------------------------------------------------
+    //  Trạng thái riêng của Hồ Nước
+    // ----------------------------------------------------------------
+    // Thêm biến này ở đầu class Lake
+    private ResourceManager mainWaterSource;
+    private final float maxWaterLevel;
+    private float currentWaterLevel;
+    private final Random random;
+
+    // ----------------------------------------------------------------
+    //  Constructor
+    // ----------------------------------------------------------------
+    public Lake(String id, String name, Boundary boundary, float maxWaterLevel) {
+        super(
+                id, name,
+                80.0f, // Độ ẩm mặc định rất cao
+                22.0f, // Nhiệt độ trung bình, mát mẻ
+                0.8f,  // Ánh sáng phản chiếu mặt nước
+                new TimeComponent(),
+                new TerrainComponent(boundary, TerrainType.DEEP_WATER), // Phủ mặt định là nước sâu
+                new OrganismRegistry(),
+                new ResourceManager()
+        );
+
+        this.maxWaterLevel = maxWaterLevel;
+        this.currentWaterLevel = maxWaterLevel * 0.8f; // Bắt đầu với 80% thể tích
+
+        initialize();
+    }
+
+    // ----------------------------------------------------------------
+    //  Ghi đè 3 hàm hợp đồng từ lớp cha
+    // ----------------------------------------------------------------
+
+    @Override
+    protected void initialize() {
+        int numberOfWaterNodes = 16;
+
+        // Lấy danh sách các tọa độ nằm TRÊN ĐƯỜNG VIỀN (Boundary) của hồ
+        List<Vector2D> shorelinePoints = generateShorelinePoints(numberOfWaterNodes);
+
+        // Rải FoodItem (Nước) vào các tọa độ ven bờ này
+        for (Vector2D pos : shorelinePoints) {
+            this.resources.spawnFood(
+                    pos,
+                    20.0f,            // Giá trị dinh dưỡng: Mỗi ngụm giảm 20 độ khát
+                    FoodType.WATER,
+                    Integer.MAX_VALUE              // Tồn tại vĩnh viễn
+            );
+        }
+
+    }
+
+    @Override
+    protected void applySeasonEffect() {
+        // Hồ nước có "nhiệt dung" lớn, nên nhiệt độ ổn định hơn đồng cỏ
+        switch (time.getCurrentSeason()) {
+            case BREEDING -> {
+                // Mùa sinh sản: thời tiết ôn hòa, nhiệt độ dao động nhỏ, độ ẩm dao động nhẹ
+                this.currentTemp = this.temperature + (random.nextFloat() * 1.5f - 0.75f); // +/- 0.75 độ C
+                this.currentHumidity = Math.max(0.0f, Math.min(100.0f, this.humidity + (random.nextFloat() * 4.0f - 2.0f))); // +/- 2%
+                this.currentLight = Math.max(0.0f, Math.min(1.0f, this.lightLevel + (random.nextFloat() * 0.04f - 0.02f))); // +/- 0.02
+                this.currentWaterLevel = Math.min(maxWaterLevel, this.currentWaterLevel + 0.1f);
+            }
+            case DROUGHT -> {
+                // Mùa hạn hán: nhiệt độ ấm hơn, độ ẩm giảm nhẹ ngẫu nhiên, ánh sáng phản chiếu mạnh hơn
+                this.currentTemp = this.temperature + (random.nextFloat() * 2.5f - 0.5f); // -0.5 đến +2.0 độ C
+                this.currentHumidity = Math.max(0.0f, Math.min(100.0f, this.humidity - random.nextFloat() * 4.0f)); // giảm thêm tới 4%
+                this.currentLight = Math.max(0.0f, Math.min(1.0f, this.lightLevel + random.nextFloat() * 0.06f)); // tăng thêm tới 0.06
+                this.currentWaterLevel = Math.max(0.0f, this.currentWaterLevel - 0.3f);
+            }
+            default -> { // NORMAL
+                // Mùa bình thường: biến động rất nhỏ
+                this.currentTemp = this.temperature + (random.nextFloat() * 1.0f - 0.5f); // +/- 0.5 độ C
+                this.currentHumidity = Math.max(0.0f, Math.min(100.0f, this.humidity + (random.nextFloat() * 2.0f - 1.0f))); // +/- 1%
+                this.currentLight = Math.max(0.0f, Math.min(1.0f, this.lightLevel + (random.nextFloat() * 0.02f - 0.01f))); // +/- 0.01
+            }
+        }
+    }
+
+    @Override
+    protected void applyWeatherEffect() {
+        WeatherType weather = time.getCurrentWeather();
+
+        if (weather == WeatherType.RAIN) {
+            currentWaterLevel = Math.min(maxWaterLevel, currentWaterLevel + 0.5f);
+        } else if (weather == WeatherType.DROUGHT) {
+            currentWaterLevel = Math.max(0, currentWaterLevel - 0.2f);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    //  Các phương thức phụ trợ đặc thù của Hồ Nước
+    // ----------------------------------------------------------------
+
+    /**
+     * Yêu cầu từ thiết kế: Tính tổng giá trị dinh dưỡng của sinh quyển trong hồ.
+     * @return Tổng dinh dưỡng của tất cả sinh vật còn sống.
+     */
+    public float getTotalBiosphereNutrition() {
+        float totalNutrition = 0f;
+        for (Organism o : registry.getAllAlive(Organism.class)) {
+            // Giả định đối tượng Stats của sinh vật có hàm getNutritionalValue()
+            totalNutrition += o.getStats().getNutritionalValue();
+        }
+        return totalNutrition;
+    }
+
+    /**
+     * Thuật toán sinh các điểm nằm cách đều nhau trên đường viền của hồ.
+     */
+    private List<Vector2D> generateShorelinePoints(int count) {
+
+    }
+
+    // --- Getters ---
+    public float getCurrentWaterLevel() { return currentWaterLevel; }
+}
