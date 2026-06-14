@@ -42,7 +42,6 @@ public abstract class Organism {
      * @param id             ID duy nhất (nên dùng UUID)
      * @param speciesName    tên loài ("Tho", "Soi", "Co"...)
      * @param startPos       tọa độ xuất phát
-     * @param startTer       dia hinh ban đầu
      * @param startEnv       môi trường ban đầu
      * @param growth         component sinh trưởng
      * @param stats          component chỉ số sinh tồn
@@ -51,7 +50,6 @@ public abstract class Organism {
     protected Organism(String id,
                        String speciesName,
                        Vector2D startPos,
-                       TerrainType startTer,
                        Environment startEnv,
                        GrowthComponent growth,
                        SurvivalStatsComponent stats,
@@ -59,8 +57,7 @@ public abstract class Organism {
         this.id                 = id;
         this.speciesName        = speciesName;
         this.position           = startPos;
-        this.currentTerrain = startTer;
-        this.environment = startEnv;
+        this.environment        = startEnv;
         this.state              = OrganismState.ALIVE;
         this.growth             = growth;
         this.stats              = stats;
@@ -85,6 +82,9 @@ public abstract class Organism {
         this.onTick(currentTick);
         if (!isAlive()) return;
 
+        this.reproduce();
+        if (!isAlive()) return;
+
         // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
         this.processSurvivalMetabolism();
     }
@@ -100,10 +100,10 @@ public abstract class Organism {
     protected abstract void onTick(int currentTick);
 
     /**
-     * Sinh sản: tạo ra một sinh vật con cùng loài.
-     * @return sinh vật con mới, hoặc null nếu chưa đủ điều kiện
+     * Sinh sản: xử lý logic tạo ra thế hệ tiếp theo.
+     * Có thể tạo ra 0, 1 hoặc nhiều sinh vật con và trực tiếp thêm vào environment thông qua addOrganism().
      */
-    public abstract Organism reproduce();
+    public abstract void reproduce();
 
     // ----------------------------------------------------------
     //  Concrete methods — hành vi mặc định dùng chung

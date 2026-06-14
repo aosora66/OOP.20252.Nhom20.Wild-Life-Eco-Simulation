@@ -3,7 +3,7 @@ package wildlife.model.organism.animal;
 import wildlife.model.brain.SurvivalStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
-import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -22,10 +22,11 @@ import java.util.List;
  */
 public abstract class Animal extends Organism {
 
-    protected String gender;
+    protected String animalType;
     protected float vision;
     protected float combatPower;
     protected float speed;
+    protected int lastReproduceTick = 0;
     // Bán kính dùng chung cho ăn, uống, tấn công
     protected float interactionRadius;
     // Ngưỡng mặc định lấy từ config — subclass có thể override nếu muốn tinh chỉnh
@@ -33,19 +34,26 @@ public abstract class Animal extends Organism {
     protected float defaultThirstSearchThreshold;
     // Danh sách strategy gắn vào động vật — thứ tự thêm vào không quan trọng,
     protected final List<SurvivalStrategy> strategies = new ArrayList<>();
+    // Chế độ ăn uống: danh sách các loại thức ăn có thể ăn
+    protected final List<FoodType> diet = new ArrayList<>();
 
     protected Animal(String id,
                      String speciesName,
                      Vector2D startPos,
-                     TerrainType startTer,
                      Environment startEnv,
                      GrowthComponent growth,
                      SurvivalStatsComponent stats,
-                     AdaptabilityComponent adaptability) {
-        super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
+                     AdaptabilityComponent adaptability,
+                     String animalType) {
+        super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+        this.animalType = animalType;
         this.defaultHungerSearchThreshold = AppConfig.getFloat("organism.stats.hungerHpThreshold");
         this.defaultThirstSearchThreshold = AppConfig.getFloat("organism.stats.thirstHpThreshold");
     }
+
+    @Override
+    public abstract void reproduce();
+
 
     // abstract
     /**
@@ -89,4 +97,22 @@ public abstract class Animal extends Organism {
         environment.getResources().consume(food);
     }
 
+    public boolean canEat(FoodType type) {
+        if (type == FoodType.WATER) return true;
+        return diet.contains(type);
+    }
+
+    /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
+    protected boolean canReproduce(int currentTick) {
+        float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");
+        float thirstThreshold = AppConfig.getFloat("animal.reproduce.thirstThreshold");
+        int cooldown = AppConfig.getInt("animal.reproduce.cooldownTicks");
+        float chance = AppConfig.getFloat("animal.reproduce.chance");
+
+        return growth.isAdult() &&
+                stats.getHungerLevel() < hungerThreshold &&
+                stats.getThirstLevel() < thirstThreshold &&
+                (currentTick - lastReproduceTick) >= cooldown &&
+                Math.random() < chance;
+    }
 }

@@ -1,7 +1,9 @@
 package wildlife.model.environment.component;
 
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.hebivores.Fish;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -91,13 +93,13 @@ public class TerrainComponent {
      * @param self
      * @return true nếu không có cản trở
      */
-    public boolean isPassable(Vector2D pos, Animal self) {
+    public boolean isPassable(Vector2D pos, Organism self) {
         TerrainType terrain = getTerrainAt(pos);
         if (self == null) {
             return terrain != TerrainType.DEEP_WATER && terrain != TerrainType.MOUNTAIN;
         }
 
-        boolean isAquatic = self instanceof fish;
+        boolean isAquatic = self instanceof Fish;
         // --- NHÁNH DÀNH CHO CÁ ---
         if (isAquatic) {
             // Cá chỉ bơi được ở nước sâu và nước nông

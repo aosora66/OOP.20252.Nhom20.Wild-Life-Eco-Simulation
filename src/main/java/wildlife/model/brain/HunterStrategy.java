@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 public class HunterStrategy extends AbstractSurvivalStrategy {
 
-    private final List<String> preySpecies;
+    private final List<Class<? extends Animal>> preySpecies;
     private final float  attackDamage;
 
     // Mức đói tối thiểu để bắt đầu săn (0–100)
@@ -24,7 +24,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
 
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
-                          String... preySpecies) {
+                          Class<? extends Animal>... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
@@ -68,12 +68,10 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
             }
         }
         // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
-        Optional<Organism> prey = preySpecies.stream()
-                .map(s -> findNearestBySpecies(self, env, s))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
-
+        Optional<? extends Animal> prey = preySpecies.stream()
+                .flatMap(species -> findNearestBySpecies(self, env, species).stream())
+                .min(Comparator.comparingDouble(
+                        o -> o.getPosition().distanceTo(self.getPosition())));
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
         // =================================================================

@@ -92,13 +92,13 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /**
-     * Tìm sinh vật còn sống gần nhất thuộc kiểu/loài targetType trong sightRadius,
+     * Tìm sinh vật còn sống gần nhất thuộc kiểu/loài targetSpecies trong sightRadius,
      * loại trừ bản thân.
      */
-    protected <T extends Organism> Optional<T> findNearestByType(Animal self, Environment env,
-                                                                 Class<T> targetType) {
+    protected <T extends Organism> Optional<T> findNearestBySpecies(Animal self, Environment env,
+                                                                 Class<T> targetSpecies) {
         return env.getRegistry()
-                .findNear(self.getPosition(), sightRadius, targetType) // Đã lọc sẵn ALIVE và đúng Class
+                .findNear(self.getPosition(), sightRadius, targetSpecies) // Đã lọc sẵn ALIVE và đúng Class
                 .stream()
                 .filter(o -> !o.getId().equals(self.getId())) // Chỉ cần loại trừ chính bản thân mình
                 .min(Comparator.comparingDouble(
@@ -111,7 +111,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         return env.getResources()
                 .getFoodNear(self.getPosition(), sightRadius)
                 .stream()
-                .filter(f -> f.isWater() == wantWater)
+                .filter(f -> f.isWater() == wantWater && self.canEat(f.type()))
                 .min(Comparator.comparingDouble(
                         f -> f.position().distanceTo(self.getPosition())));
     }

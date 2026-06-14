@@ -13,6 +13,10 @@ import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
+import wildlife.model.organism.animal.hebivores.Deer;
+import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -195,7 +199,7 @@ public abstract class Environment {
     }
 
     /**
-     * Kiểm tra một vị trí có hợp lệ để sinh vật di chuyển đến không.
+     * Kiểm tra một vị trí có hợp lệ để dong vật di chuyển đến không.
      * Kết hợp kiểm tra địa hình và vật cản.
      *
      * @param pos     tọa độ đích
