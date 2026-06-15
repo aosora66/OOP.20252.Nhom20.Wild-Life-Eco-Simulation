@@ -29,6 +29,7 @@ public class Rabbit extends Animal {
         this.speed       = AppConfig.getFloat("animal.rabbit.speed");
         this.interactionRadius = AppConfig.getFloat("animal.rabbit.eatRadius");
         this.diet.add(FoodType.APPLE);
+        this.diet.add(FoodType.GRASS);
         initStrategies();
     }
 

@@ -11,23 +11,23 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
-public class Deer extends Animal {
-    public Deer(String id,
-                String speciesName,
-                Vector2D startPos,
-                TerrainType startTer,
-                Environment startEnv,
-                GrowthComponent growth,
-                SurvivalStatsComponent stats,
-                AdaptabilityComponent adaptability,
-                String gender) {
+public class Elephant extends Animal {
+    public Elephant(String id,
+                    String speciesName,
+                    Vector2D startPos,
+                    TerrainType startTer,
+                    Environment startEnv,
+                    GrowthComponent growth,
+                    SurvivalStatsComponent stats,
+                    AdaptabilityComponent adaptability,
+                    String gender) {
         super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
         this.gender = gender;
         this.animalType = AnimalTypes.HEBIVORE;
-        this.combatPower = AppConfig.getFloat("animal.deer.combatPower");
-        this.vision = AppConfig.getFloat("animal.deer.vision");
-        this.speed = AppConfig.getFloat("animal.deer.speed");
-        this.interactionRadius = AppConfig.getFloat("animal.deer.eatRadius");
+        this.combatPower = AppConfig.getFloat("animal.elephant.combatPower");
+        this.vision = AppConfig.getFloat("animal.elephant.vision");
+        this.speed = AppConfig.getFloat("animal.elephant.speed");
+        this.interactionRadius = AppConfig.getFloat("animal.elephant.eatRadius");
         this.diet.add(FoodType.APPLE);
         this.diet.add(FoodType.GRASS);
         initStrategies();
@@ -40,18 +40,8 @@ public class Deer extends Animal {
 
     @Override
     protected void addSurvivalStrategies() {
-        float fleeSpeedMult = AppConfig.getFloat("animal.deer.flee.speedMultiplier");
-        int fleeSprintSteps = AppConfig.getInt("animal.deer.flee.sprintSteps");
-
-        // 1. Chạy trốn khi thấy Tiger hoặc Wolf (Ưu tiên cao nhất: 30)
-        addStrategy(new wildlife.model.brain.ScaredStrategy(
-                this.speed * fleeSpeedMult,
-                this.vision,
-                fleeSprintSteps,
-                "Tiger", "Wolf"
-        ));
-
-        // 2. Tìm thức ăn/nước uống mặc định (Ưu tiên thấp: 10)
+        // Elephant is not afraid of anything, so it only has PassiveStrategy
+        // to search for food and water.
         addStrategy(new wildlife.model.brain.PassiveStrategy(
                 this.speed,
                 this.vision,
@@ -63,6 +53,7 @@ public class Deer extends Animal {
 
     @Override
     public void reproduce() {
-        // Reproduce logic base on age/stats
+        // Elephant reproduction logic could be added here if needed
+        // For now, it follows the base canReproduce check in Animal.
     }
 }
