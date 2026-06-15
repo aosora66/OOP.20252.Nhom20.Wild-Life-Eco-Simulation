@@ -25,7 +25,7 @@ public class Fish extends Animal {
                 String gender) {
         super(id, speciesName, startPos,startTer, startEnv, growth, stats, adaptability);
         this.gender      = gender;
-        this.animalType  = AnimalTypes.HEBIVORE;
+        this.animalType  = AnimalTypes.SEAFOOD;
         this.combatPower = AppConfig.getFloat("animal.rabbit.combatPower");
         this.vision      = AppConfig.getFloat("animal.rabbit.vision");
         this.speed       = AppConfig.getFloat("animal.rabbit.speed");
