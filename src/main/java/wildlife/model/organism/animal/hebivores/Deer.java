@@ -39,10 +39,14 @@ public class Deer extends Animal {
         int fleeSprintSteps = AppConfig.getInt("animal.deer.flee.sprintSteps");
 
         // 1. Chạy trốn khi thấy Tiger hoặc Wolf (Ưu tiên cao nhất: 30)
+        // phản kháng khi HP <= 25% với 20% xác suất
         addStrategy(new wildlife.model.brain.ScaredStrategy(
                 this.speed * fleeSpeedMult,
                 this.vision,
                 fleeSprintSteps,
+                this.interactionRadius,
+                0.25f,
+                0.2f,
                 "Tiger", "Wolf"
         ));
 

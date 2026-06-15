@@ -55,6 +55,9 @@ public class Fish extends Animal {
                 speed * fleeMultiplier,
                 vision,
                 sprintSteps,
+                interactionRadius,
+                0.25f,
+                0.2f,
                 "Tiger", "Wolf"
         ));
     }
