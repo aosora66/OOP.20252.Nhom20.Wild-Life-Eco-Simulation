@@ -24,6 +24,7 @@ public class Grass extends Plant{
         photosynthesisRate         = AppConfig.getFloat("plant.grass.photosynthesisRate");
         lightLevelToPhotosynthesis = AppConfig.getFloat("plant.grass.minLightLevel");
         nutritionAsorbRadius       = AppConfig.getFloat("plant.grass.nutrientsAsorbRadius");
+        offspringCount             = AppConfig.getInt("plant.grass.offspringCount");
     }
 
     @Override

@@ -17,6 +17,8 @@ public abstract class Plant extends Organism {
     protected float photosynthesisRate;
     protected float lightLevelToPhotosynthesis;
     protected float nutritionAsorbRadius;
+    protected int offspringCount;
+
     /**
      * Constructor for Plant entities.
      */
@@ -104,8 +106,6 @@ public abstract class Plant extends Organism {
         // every organism will only reproduce once in their life
         hasReproduced = true;
 
-        // specific number of offspring will get from Appconfig
-        int offspringCount = AppConfig.getInt("plant.reproduce.offspringCount");
         float spawnRadius = AppConfig.getFloat("plant.reproduce.spawnRadius");
 
         for (int i = 0; i < offspringCount; i++) {
@@ -130,6 +130,4 @@ public abstract class Plant extends Organism {
      * Subclasses must implement this to create and add their specific instance to the environment.
      */
     protected abstract void addOffspring(Vector2D pos);
-
-
 }

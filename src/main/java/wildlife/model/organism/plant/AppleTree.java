@@ -49,6 +49,7 @@ public class AppleTree extends Plant {
         this.lightLevelToPhotosynthesis = AppConfig.getFloat("plant.appletree.minLightLevel");
         this.nutritionAsorbRadius       = AppConfig.getFloat("plant.appletree.nutrientsAsorbRadius");
         this.appleDropRadius            = AppConfig.getFloat("plant.appletree.appleDropRadius");
+        this.offspringCount             = AppConfig.getInt("plant.reproduce.offspringCount");
     }
 
     /**
