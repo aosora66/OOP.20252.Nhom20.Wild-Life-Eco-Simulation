@@ -79,7 +79,7 @@ public class AppleTree extends Plant {
 
         // Load fruit properties from configuration
         float nutrition = AppConfig.getFloat("food.apple.nutritionalValue");
-        int expiry      = AppConfig.getInt("food.apple.expiryTicks=100");
+        int expiry      = AppConfig.getInt("food.apple.expiryTicks");
 
         // Calculate a random displacement within the drop radius
         // nextFloat() * 2 - 1 provides a range between [-1, 1]
