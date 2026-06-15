@@ -125,7 +125,7 @@ public abstract class Environment {
     /**
      * Cập nhật toàn bộ trạng thái môi trường mỗi tick.
      *
-     * Thứ tự thực thi được ĐÓng gói cố định (final) để đảm bảo tính nhất quán:
+     * Thứ tự thực thi được đóng gói cố định (final) để đảm bảo tính nhất quán:
      *
      *   1. Cập nhật thời gian (mùa, thời tiết)
      *   2. Cập nhật chỉ số theo ánh sáng ngày/đêm
@@ -183,7 +183,6 @@ public abstract class Environment {
     protected abstract void applyWeatherEffect();
 
 
-
     // ----------------------------------------------------------------
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
@@ -195,11 +194,10 @@ public abstract class Environment {
         // --- 1. Ánh sáng ---
         // Ban ngày sáng (max), ban đêm mờ (max-0.6)
         this.lightLevel = time.isDaytime() ? this.lightLevel : (this.lightLevel - 0.6f);
-
     }
 
     /**
-     * Kiểm tra một vị trí có hợp lệ để dong vật di chuyển đến không.
+     * Kiểm tra một vị trí có hợp lệ để động vật di chuyển đến không.
      * Kết hợp kiểm tra địa hình và vật cản.
      *
      * @param pos     tọa độ đích
@@ -222,11 +220,6 @@ public abstract class Environment {
                 }
                 // --- XỬ LÝ BỤI RẬM (BUSH) ---
                 if (obstacle.type() == ObstacleType.BUSH) {
-                    // Voi (Động vật đầu bảng): Dẫm nát và càn lướt qua bụi rậm dễ dàng
-                    if (self instanceof Elephant) {
-                        continue; // Bỏ qua vật cản này, xét tiếp
-                    }
-
                     // Động vật ăn cỏ (Thỏ, Hươu): Dáng nhỏ gọn, lách vào bụi rậm để trốn
                     if (self instanceof Rabbit || self instanceof Deer) {
                         continue;
@@ -240,12 +233,6 @@ public abstract class Environment {
             }
         }
 
-        // 3. Kiem tra cay
-        List<Organism> trees = registry.findNear(pos, 0.5f, Tree.class);
-        if (!trees.isEmpty()) {
-            return false;
-        }
-
         return true; // Nếu qua được hết mọi bài test thì vị trí này hợp lệ để bước vào
     }
 
@@ -257,7 +244,7 @@ public abstract class Environment {
         // Hệ số cơ bản do địa hình quyết định.
         float modifier = terrain.getVisibility(pos);
 
-        // Nếu có bụi rậm tại vị trí này thì giảm thêm 0.3.
+        // Nếu có bụi rậm tại vị trí này thì giảm thêm 0.4.
         for (ObstacleItem obstacle : resources.getObstaclesNear(pos, 0.5f)) {
             if (obstacle.type() == ObstacleType.BUSH) {
                 modifier -= 0.4f;
@@ -265,16 +252,16 @@ public abstract class Environment {
             }
         }
 
-        if(!time.isDaytime()) modifier -= 0.3f;
+        if (!time.isDaytime()) modifier -= 0.3f;
 
-            // Đảm bảo hệ số không âm.
+        // Đảm bảo hệ số không âm.
         return Math.max(modifier, 0.0f);
     }
 
     /**
      * Xử lý các sinh vật đang ở trạng thái DEAD:
      * - Nếu là Động vật (Animal): Chuyển vị trí thành FoodItem (thịt).
-     * - Dù là Động vật hay Thực vật: Xóa chúng khỏi registry.* - Xóa chúng khỏi registry.
+     * - Dù là Động vật hay Thực vật: Xóa chúng khỏi registry.
      * Private — không lộ ra ngoài, không ghi đè được.
      */
     private void processDeadOrganisms(int currentTick) {
@@ -286,7 +273,6 @@ public abstract class Environment {
                     // Chuyển xác thành thịt
                     float nutrition = o.getStats().getNutritionalValue();
                     resources.convertDeadToMeat(o.getPosition(), nutrition);
-                    //events.publish(EnvironmentEventPublisher.EVENT_ORGANISM_DIED);
                 }
                 toRemove.add(o.getId());
             }
@@ -300,13 +286,13 @@ public abstract class Environment {
 
     /**
      * Đăng ký một sinh vật vào môi trường này.
-     * Phát sự kiện ORGANISM_BORN để ViewLogic / SoundManager phản ứng.
+     * Tự động gắn environment reference vào sinh vật (bindEnvironment).
      *
      * @param organism sinh vật cần thêm
      */
     public void addOrganism(Organism organism) {
         registry.add(organism);
-
+        organism.bindEnvironment(this);
     }
 
     // ----------------------------------------------------------------

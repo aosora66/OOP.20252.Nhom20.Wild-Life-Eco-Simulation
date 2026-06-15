@@ -40,16 +40,15 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     @Override
     public int getPriority() { return 20; }
 
-
     /**
      * Thực thi chiến lược săn mồi:
-     * * 1. Ưu tiên ăn nếu có thịt sẵn
-     * * 2. Bản năng săn mồi (Săn):tìm kiếm con mồi gần nhất.
-     * - Trong tầm đánh: Cắn mục tiêu (trừ HP). Nếu mục tiêu chết, hệ thống (Environment)
-     * sẽ tự động dọn xác và sinh ra thịt (FoodItem) để nhặt vào tick tiếp theo.
-     * - Ngoài tầm đánh: Di chuyển bám theo con mồi.
-     * * 3. Trạng thái nghỉ (Wander): Nếu không có thịt và cũng không tìm thấy mồi,
-     * di chuyển lang thang ngẫu nhiên.
+     * 1. Ưu tiên ăn nếu có thịt sẵn trong phạm vi attackRange
+     * 2. Bản năng săn mồi sống: tìm kiếm con mồi gần nhất.
+     *    - Trong tầm đánh: Cắn mục tiêu (trừ HP). Nếu mục tiêu chết, Environment
+     *      sẽ tự động dọn xác và sinh ra thịt (FoodItem) để nhặt vào tick tiếp theo.
+     *    - Ngoài tầm đánh: Di chuyển bám theo con mồi.
+     * 3. Trạng thái nghỉ (Wander): Nếu không có thịt và cũng không tìm thấy mồi,
+     *    di chuyển lang thang ngẫu nhiên.
      *
      * @param self Thực thể động vật đang thực hiện chiến lược này.
      * @param env  Môi trường sống hiện tại chứa các danh sách thực thể và tài nguyên.
@@ -92,5 +91,4 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 () -> wander(self, env)
         );
     }
-
 }

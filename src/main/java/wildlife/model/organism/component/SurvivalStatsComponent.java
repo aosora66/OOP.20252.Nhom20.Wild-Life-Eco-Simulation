@@ -44,6 +44,7 @@ public class SurvivalStatsComponent {
 
     /**
      * Trả về lượng HP phạt mỗi tick nếu đói/khát vượt ngưỡng, ngược lại trả 0.
+     * Caller (processSurvivalMetabolism) chịu trách nhiệm trừ HP — tránh trừ hai lần.
      */
     public float getStarvationPenalty() {
         if (hungerLevel >= HUNGER_HP_THRESHOLD || thirstLevel >= THIRST_HP_THRESHOLD) {
@@ -52,7 +53,7 @@ public class SurvivalStatsComponent {
         return 0f;
     }
 
-    /** kiểm tra sinh vật đã hết HP chưa */
+    // Chỉ kiểm tra sinh vật đã hết HP chưa — không tự trừ HP
     public boolean checkHpThreshold() {
         return hp <= 0f;
     }

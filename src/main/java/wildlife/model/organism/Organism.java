@@ -14,7 +14,7 @@ import wildlife.util.Vector2D;
  * Abstract class trung tâm đại diện cho mọi sinh vật
  */
 public abstract class Organism {
-    // Lấy chỉ số trừ HP khi lão hóa từ file config
+    // HP bị trừ mỗi tick khi sinh vật vào giai đoạn lão hóa (key riêng, không dùng chung với starvation penalty)
     private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.growth.decayHpPenalty");
 
     // ----------------------------------------------------------
@@ -70,6 +70,12 @@ public abstract class Organism {
 
     /**
      * Cập nhật toàn bộ trạng thái sinh vật mỗi tick.
+     * Hàm này bị khóa (final) để ép luồng logic cốt lõi của hệ sinh thái.
+     *
+     * Thứ tự cố định: growUp → onTick (hành động) → reproduce → processSurvivalMetabolism (decay).
+     * Hành động (ăn/uống) chạy trước decay để kết quả ăn trong tick này
+     * được tính vào trước khi trừ HP.
+     *
      * @param currentTick  số thứ tự tick hiện tại
      */
     public final void updateOrganism(int currentTick) {
@@ -188,7 +194,7 @@ public abstract class Organism {
     }
 
     /**
-     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
+     * Xử lý khi sinh vật chết: chuyển trạng thái → DEAD,
      * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
      *
      * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
@@ -235,6 +241,14 @@ public abstract class Organism {
     public void setEnvironment(Environment evn)   { this.environment = evn; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
+
+    /**
+     * Phải gọi sau khi thêm sinh vật vào Environment để các method phụ thuộc môi trường hoạt động.
+     * Cập nhật environment reference mà không cần tạo lại sinh vật.
+     */
+    public void bindEnvironment(Environment env) {
+        this.environment = env;
+    }
 
     @Override
     public String toString() {

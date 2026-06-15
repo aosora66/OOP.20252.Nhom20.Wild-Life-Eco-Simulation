@@ -12,14 +12,14 @@ import java.util.Random;
 
 /**
  * Lớp abstract đại diện "bộ não hành vi", cung cấp các hành động di chuyển và tìm kiếm dùng chung.
- * Method abstract là implement isApplicable(), getPriority() và execute().
+ * Subclass chỉ cần implement isApplicable(), getPriority() và execute().
  */
 public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
-    /** sinh số random */
-    private static final Random RNG = new Random();
+    /** Sinh số random — protected để ScaredStrategy có thể dùng trực tiếp */
+    protected static final Random RNG = new Random();
 
-    /** độ dài bước đi */
+    /** Độ dài bước đi */
     protected final float stepSize;
 
     /** Bán kính quan sát — dùng để tìm mồi, kẻ thù, thức ăn */
@@ -38,7 +38,6 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
     /** Di chuyển ngẫu nhiên một bước, bỏ qua nếu ô đích không đi được. */
     protected void wander(Animal self, Environment env) {
-        // RNG.nextFloat() rd 0->1.0
         float angle = RNG.nextFloat() * 2f * (float) Math.PI;
         Vector2D next = new Vector2D(
                 self.getPosition().getX() + (float) Math.cos(angle) * stepSize,
@@ -94,20 +93,38 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     /**
      * Tìm sinh vật còn sống gần nhất thuộc kiểu/loài targetSpecies trong sightRadius,
      * loại trừ bản thân.
+     * Dùng Class<T> để tích hợp với OrganismRegistry.findNear(pos, radius, Class).
      */
     protected <T extends Organism> Optional<T> findNearestBySpecies(Animal self, Environment env,
-                                                                 Class<T> targetSpecies) {
+                                                                     Class<T> targetSpecies) {
         return env.getRegistry()
-                .findNear(self.getPosition(), sightRadius, targetSpecies) // Đã lọc sẵn ALIVE và đúng Class
+                .findNear(self.getPosition(), sightRadius, targetSpecies)
                 .stream()
-                .filter(o -> !o.getId().equals(self.getId())) // Chỉ cần loại trừ chính bản thân mình
+                .filter(o -> !o.getId().equals(self.getId()))
+                .min(Comparator.comparingDouble(
+                        o -> o.getPosition().distanceTo(self.getPosition())));
+    }
+
+    /**
+     * Tìm sinh vật còn sống gần nhất theo tên loài (speciesName) trong sightRadius,
+     * loại trừ bản thân.
+     * Dùng cho ScaredStrategy với String predator species names.
+     */
+    protected Optional<Organism> findNearestBySpecies(Animal self, Environment env,
+                                                       String targetSpecies) {
+        return env.getRegistry()
+                .findNear(self.getPosition(), sightRadius, Organism.class)
+                .stream()
+                .filter(o -> o.isAlive()
+                          && !o.getId().equals(self.getId())
+                          && o.getSpeciesName().equals(targetSpecies))
                 .min(Comparator.comparingDouble(
                         o -> o.getPosition().distanceTo(self.getPosition())));
     }
 
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
     protected Optional<FoodItem> findNearestFood(Animal self, Environment env,
-                                                 boolean wantWater) {
+                                                  boolean wantWater) {
         return env.getResources()
                 .getFoodNear(self.getPosition(), sightRadius)
                 .stream()

@@ -102,6 +102,12 @@ public abstract class Animal extends Organism {
         return diet.contains(type);
     }
 
+
+    /** Getter dùng cho ScaredStrategy counter-attack. */
+    public float getCombatPower() { return combatPower; }
+    public float getVision()      { return vision; }
+    public float getSpeed()       { return speed; }
+
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
     protected boolean canReproduce(int currentTick) {
         float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");
