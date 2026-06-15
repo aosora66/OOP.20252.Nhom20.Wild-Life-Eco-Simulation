@@ -91,25 +91,38 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
     /**
-     * Tìm sinh vật còn sống gần nhất thuộc kiểu/loài targetSpecies trong sightRadius,
-     * loại trừ bản thân.
-     * Dùng Class<T> để tích hợp với OrganismRegistry.findNear(pos, radius, Class).
+     * Độ nhận diện của một mục tiêu — kết hợp visibility và khoảng cách.
+     *
+     * detectability = visibility / (1 + distance)
+     *
+     * Ý nghĩa:
+     *  - visibility = 0  → detectability = 0  (vô hình hoàn toàn)
+     *  - distance = 0    → detectability = visibility (tối đa, cùng vị trí)
+     *  - distance tăng   → detectability giảm dần
+     *  - +1 tránh chia-cho-0 khi hai sinh vật đứng cùng ô
+     *
+     * Nếu sau này thêm stealthFactor per-animal:
+     *   return (visibility * stealthFactor) / (1 + distance)
+     * — công thức không thay đổi.
+     *
+     * Dùng .max(detectability) để chọn mục tiêu "dễ phát hiện nhất".
      */
+    private double detectability(Organism target, Animal self, Environment env) {
+        float visibility = env.getVisibilityModifier(target.getPosition());
+        double distance  = target.getPosition().distanceTo(self.getPosition());
+        return visibility / (1.0 + distance);
+    }
+
     protected <T extends Organism> Optional<T> findNearestBySpecies(Animal self, Environment env,
                                                                      Class<T> targetSpecies) {
         return env.getRegistry()
                 .findNear(self.getPosition(), sightRadius, targetSpecies)
                 .stream()
                 .filter(o -> !o.getId().equals(self.getId()))
-                .min(Comparator.comparingDouble(
-                        o -> o.getPosition().distanceTo(self.getPosition())));
+                .filter(o -> detectability(o, self, env) > 0)
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
     }
 
-    /**
-     * Tìm sinh vật còn sống gần nhất theo tên loài (speciesName) trong sightRadius,
-     * loại trừ bản thân.
-     * Dùng cho ScaredStrategy với String predator species names.
-     */
     protected Optional<Organism> findNearestBySpecies(Animal self, Environment env,
                                                        String targetSpecies) {
         return env.getRegistry()
@@ -118,21 +131,17 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 .filter(o -> o.isAlive()
                           && !o.getId().equals(self.getId())
                           && o.getSpeciesName().equals(targetSpecies))
-                .min(Comparator.comparingDouble(
-                        o -> o.getPosition().distanceTo(self.getPosition())));
+                .filter(o -> detectability(o, self, env) > 0)
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
     }
 
-    /**
-     * Tìm động vật apex (isApexPredator() == true) gần nhất trong sightRadius, loại trừ bản thân.
-     * Dùng trong ScaredStrategy để tự động phát hiện Elephant và các apex khác.
-     */
     protected Optional<Animal> findNearestApex(Animal self, Environment env) {
         return env.getRegistry()
                 .findNear(self.getPosition(), sightRadius, Animal.class)
                 .stream()
                 .filter(a -> !a.getId().equals(self.getId()) && a.isApexPredator())
-                .min(Comparator.comparingDouble(
-                        a -> a.getPosition().distanceTo(self.getPosition())));
+                .filter(a -> detectability(a, self, env) > 0)
+                .max(Comparator.comparingDouble(a -> detectability(a, self, env)));
     }
 
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
