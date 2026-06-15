@@ -90,7 +90,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
                 .map(s -> findNearestBySpecies(self, env, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
 
         Optional<Organism> nearestApex = findNearestApex(self, env)
                 .map(a -> (Organism) a);
@@ -98,8 +98,8 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
         if (nearestNamed.isEmpty()) return nearestApex;
         if (nearestApex.isEmpty()) return nearestNamed;
 
-        float d1 = nearestNamed.get().getPosition().distanceTo(self.getPosition());
-        float d2 = nearestApex.get().getPosition().distanceTo(self.getPosition());
-        return d1 <= d2 ? nearestNamed : nearestApex;
+        double det1 = detectability(nearestNamed.get(), self, env);
+        double det2 = detectability(nearestApex.get(), self, env);
+        return det1 >= det2 ? nearestNamed : nearestApex;
     }
 }

@@ -69,8 +69,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
         // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
         Optional<? extends Animal> prey = preySpecies.stream()
                 .flatMap(species -> findNearestBySpecies(self, env, species).stream())
-                .min(Comparator.comparingDouble(
-                        o -> o.getPosition().distanceTo(self.getPosition())));
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
         // =================================================================

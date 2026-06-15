@@ -107,7 +107,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
      *
      * Dùng .max(detectability) để chọn mục tiêu "dễ phát hiện nhất".
      */
-    private double detectability(Organism target, Animal self, Environment env) {
+    protected double detectability(Organism target, Animal self, Environment env) {
         float visibility = env.getVisibilityModifier(target.getPosition());
         double distance  = target.getPosition().distanceTo(self.getPosition());
         return visibility / (1.0 + distance);
