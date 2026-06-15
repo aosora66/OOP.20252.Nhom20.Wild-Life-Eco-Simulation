@@ -108,6 +108,12 @@ public abstract class Animal extends Organism {
     public float getVision()      { return vision; }
     public float getSpeed()       { return speed; }
 
+    /**
+     * Trả về true nếu loài này là "apex" — khiến MỌI động vật có ScaredStrategy phải chạy trốn.
+     * Chỉ cần override trong các lớp đặc biệt (ví dụ: Elephant). Mặc định là false.
+     */
+    public boolean isApexPredator() { return false; }
+
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
     protected boolean canReproduce(int currentTick) {
         float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");

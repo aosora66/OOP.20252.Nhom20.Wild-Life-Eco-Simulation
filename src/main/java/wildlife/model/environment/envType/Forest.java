@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.plant.TreeForest;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
 
@@ -35,6 +36,7 @@ public class Forest extends Environment {
                 new OrganismRegistry(),
                 new ResourceManager()
         );
+        this.random = new Random();  // fix: final field phải khởi tạo trước khi dùng
         initialize();
     }
 
@@ -47,9 +49,7 @@ public class Forest extends Environment {
         // Khởi tạo 20 cây cổ thụ
         for (int i = 0; i < 20; i++) {
             Vector2D treePos = terrain.getRandomValidPosition();
-
-            // Tạo thực thể Plant tương ứng
-            registry.add(new TreeForest(treePos));
+            registry.add(TreeForest.create(treePos, this));
         }
 
         // Rải thêm 10 bụi rậm làm nơi trú ẩn

@@ -1,6 +1,7 @@
 package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
 
@@ -9,9 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Strategy chạy trốn — kích hoạt ngay khi phát hiện kẻ thù trong tầm nhìn, ưu tiên 30.
- * Ưu tiên cao nhất để đảm bảo sinh tồn luôn được đặt trước săn mồi hay ăn uống.
- * Hỗ trợ nhiều loài kẻ thù — chạy khỏi con gần nhất trong tất cả các loài nguy hiểm.
+ * Strategy chạy trốn — kích hoạt khi phát hiện kẻ thù trong tầm nhìn, ưu tiên 30.
+ * Kẻ thù bao gồm: (1) named predators theo speciesName, (2) bất kỳ apex predator nào (vd. Voi).
  *
  * Khi HP thấp và kẻ thù áp sát (trong attackRange), có tỉ lệ phản kháng thay vì chỉ chạy.
  * Sát thương phản kháng = combatPower của bản thân.
@@ -20,13 +20,9 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
 
     private final List<String> predatorSpecies;
     private final int          sprintSteps;
-    // Ngưỡng HP (0–1) để kích hoạt phản kháng, vd. 0.3 = còn 30% HP
     private final float        counterHpThreshold;
-    // Xác suất phản kháng mỗi lần cơ hội xuất hiện (0–1), không phải mỗi tick
     private final float        counterAttackChance;
-    // Số tick phải chờ giữa hai lần phản kháng — đọc từ config, tránh spam mỗi tick
     private final int          cooldownTicks;
-    // Đếm ngược tick còn lại trước khi được phản kháng tiếp
     private int                counterAttackCooldown = 0;
 
     /**
@@ -36,7 +32,8 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
      * @param counterAttackRange  khoảng cách để phản kháng (dùng làm attackRange)
      * @param counterHpThreshold  ngưỡng HP ratio để có thể phản kháng (0–1)
      * @param counterAttackChance xác suất phản kháng mỗi lần cơ hội (0–1)
-     * @param predatorSpecies     các loài kẻ thù (tên loài theo speciesName)
+     * @param predatorSpecies     các loài kẻ thù theo speciesName (có thể để trống —
+     *                            khi đó chỉ chạy trốn apex predator như Voi)
      */
     public ScaredStrategy(float stepSize, float fearRadius, int sprintSteps,
                           float counterAttackRange, float counterHpThreshold,
@@ -49,51 +46,60 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
         this.cooldownTicks       = AppConfig.getInt("organism.scared.counterAttackCooldown");
     }
 
-    /** Kích hoạt khi có BẤT KỲ loài kẻ thù nào xuất hiện trong fearRadius. */
     @Override
     public boolean isApplicable(Animal self, Environment env) {
-        return predatorSpecies.stream()
-                .anyMatch(s -> findNearestBySpecies(self, env, s).isPresent());
+        return findNearestThreat(self, env).isPresent();
     }
 
     @Override
     public int getPriority() { return 30; }
 
-    /**
-     * Tìm kẻ thù gần nhất (theo loài) rồi quyết định hành động:
-     * - Nếu còn trong cooldown → chỉ chạy, bỏ qua cơ hội phản kháng
-     * - Nếu kẻ thù áp sát (≤ attackRange) + HP thấp + may mắn → đánh lại, reset cooldown
-     * - Ngược lại → chạy sprintSteps bước ra xa
-     */
     @Override
     public void execute(Animal self, Environment env) {
-        predatorSpecies.stream()
+        findNearestThreat(self, env).ifPresent(threat -> {
+            if (counterAttackCooldown > 0) {
+                counterAttackCooldown--;
+                for (int i = 0; i < sprintSteps; i++) {
+                    moveAwayFrom(self, threat.getPosition(), env);
+                }
+                return;
+            }
+
+            float dist    = self.getPosition().distanceTo(threat.getPosition());
+            float hpRatio = self.getStats().getHp() / self.getStats().getMaxHp();
+
+            if (dist <= attackRange
+                    && hpRatio <= counterHpThreshold
+                    && RNG.nextFloat() < counterAttackChance) {
+                threat.decreaseHp(self.getCombatPower());
+                counterAttackCooldown = cooldownTicks;
+            } else {
+                for (int i = 0; i < sprintSteps; i++) {
+                    moveAwayFrom(self, threat.getPosition(), env);
+                }
+            }
+        });
+    }
+
+    /**
+     * Gộp named predators và apex predators, trả về mối đe dọa gần nhất.
+     * Named predators: tìm theo speciesName. Apex: tìm qua isApexPredator().
+     */
+    private Optional<Organism> findNearestThreat(Animal self, Environment env) {
+        Optional<Organism> nearestNamed = predatorSpecies.stream()
                 .map(s -> findNearestBySpecies(self, env, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())))
-                .ifPresent(threat -> {
-                    if (counterAttackCooldown > 0) {
-                        counterAttackCooldown--;
-                        for (int i = 0; i < sprintSteps; i++) {
-                            moveAwayFrom(self, threat.getPosition(), env);
-                        }
-                        return;
-                    }
+                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
 
-                    float dist    = self.getPosition().distanceTo(threat.getPosition());
-                    float hpRatio = self.getStats().getHp() / self.getStats().getMaxHp();
+        Optional<Organism> nearestApex = findNearestApex(self, env)
+                .map(a -> (Organism) a);
 
-                    if (dist <= attackRange
-                            && hpRatio <= counterHpThreshold
-                            && RNG.nextFloat() < counterAttackChance) {
-                        threat.decreaseHp(self.getCombatPower());
-                        counterAttackCooldown = cooldownTicks;
-                    } else {
-                        for (int i = 0; i < sprintSteps; i++) {
-                            moveAwayFrom(self, threat.getPosition(), env);
-                        }
-                    }
-                });
+        if (nearestNamed.isEmpty()) return nearestApex;
+        if (nearestApex.isEmpty()) return nearestNamed;
+
+        float d1 = nearestNamed.get().getPosition().distanceTo(self.getPosition());
+        float d2 = nearestApex.get().getPosition().distanceTo(self.getPosition());
+        return d1 <= d2 ? nearestNamed : nearestApex;
     }
 }

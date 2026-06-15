@@ -122,6 +122,19 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                         o -> o.getPosition().distanceTo(self.getPosition())));
     }
 
+    /**
+     * Tìm động vật apex (isApexPredator() == true) gần nhất trong sightRadius, loại trừ bản thân.
+     * Dùng trong ScaredStrategy để tự động phát hiện Elephant và các apex khác.
+     */
+    protected Optional<Animal> findNearestApex(Animal self, Environment env) {
+        return env.getRegistry()
+                .findNear(self.getPosition(), sightRadius, Animal.class)
+                .stream()
+                .filter(a -> !a.getId().equals(self.getId()) && a.isApexPredator())
+                .min(Comparator.comparingDouble(
+                        a -> a.getPosition().distanceTo(self.getPosition())));
+    }
+
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
     protected Optional<FoodItem> findNearestFood(Animal self, Environment env,
                                                   boolean wantWater) {

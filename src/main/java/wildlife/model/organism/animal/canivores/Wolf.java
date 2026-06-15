@@ -40,7 +40,17 @@ public class Wolf extends Animal {
         float huntSpeedMult = AppConfig.getFloat("animal.wolf.hunt.speedMultiplier");
         float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
 
-        // 1. Săn mồi khi đói (Ưu tiên trung bình: 20)
+        // 1. Tránh apex predator (vd. Voi) — ưu tiên cao nhất: 30, không có named predator
+        addStrategy(new wildlife.model.brain.ScaredStrategy(
+                this.speed * 1.3f,
+                this.vision,
+                2,
+                this.interactionRadius,
+                0.4f,
+                0.4f
+        ));
+
+        // 2. Săn mồi khi đói (Ưu tiên trung bình: 20)
         addStrategy(new wildlife.model.brain.HunterStrategy(
                 this.speed * huntSpeedMult,
                 this.vision,
