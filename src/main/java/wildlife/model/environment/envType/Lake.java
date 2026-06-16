@@ -10,6 +10,7 @@ import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.organism.Organism;
+import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
 
@@ -49,6 +50,7 @@ public class Lake extends Environment {
 
         this.maxWaterLevel = maxWaterLevel;
         this.currentWaterLevel = maxWaterLevel * 0.8f; // Bắt đầu với 80% thể tích
+        this.random = new Random(); // fix: final field phải khởi tạo trước khi dùng
 
         initialize();
     }
@@ -114,6 +116,30 @@ public class Lake extends Environment {
         }
     }
 
+    /**
+     * Mỗi tick: chạy cập nhật chuẩn của Environment, sau đó rải thêm tảo (Algae)
+     * ngẫu nhiên trong hồ — nguồn thức ăn liên tục cho Cá, tránh bị tuyệt chủng vì đói.
+     */
+    @Override
+    public void updateEnvironment(int currentTick) {
+        super.updateEnvironment(currentTick);
+        trySpawnAlgae(currentTick);
+    }
+
+    private void trySpawnAlgae(int currentTick) {
+        int interval = AppConfig.getInt("plant.algae.spawnInterval");
+        if (currentTick % interval != 0) return;
+
+        int spawnCount   = AppConfig.getInt("plant.algae.spawnCount");
+        float nutrition  = AppConfig.getFloat("food.algae.nutritionalValue");
+        int expiryTicks  = AppConfig.getInt("food.algae.expiryTicks");
+
+        for (int i = 0; i < spawnCount; i++) {
+            Vector2D pos = terrain.getRandomValidPosition();
+            resources.spawnFood(pos, nutrition, FoodType.ALGAE, expiryTicks);
+        }
+    }
+
     // ----------------------------------------------------------------
     //  Các phương thức phụ trợ đặc thù của Hồ Nước
     // ----------------------------------------------------------------
@@ -132,10 +158,17 @@ public class Lake extends Environment {
     }
 
     /**
-     * Thuật toán sinh các điểm nằm cách đều nhau trên đường viền của hồ.
+     * Sinh các điểm ngẫu nhiên hợp lệ trong hồ để rải nước uống.
+     * (Đơn giản hóa: Boundary hiện chỉ hỗ trợ random point trong vùng,
+     * chưa có API lấy điểm trên đường viền — toàn bộ mặt hồ là DEEP_WATER
+     * nên rải ngẫu nhiên trong vùng vẫn hợp lý.)
      */
     private List<Vector2D> generateShorelinePoints(int count) {
-
+        List<Vector2D> points = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            points.add(terrain.getRandomValidPosition());
+        }
+        return points;
     }
 
     // --- Getters ---

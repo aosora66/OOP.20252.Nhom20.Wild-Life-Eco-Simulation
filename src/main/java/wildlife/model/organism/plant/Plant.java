@@ -24,6 +24,15 @@ public abstract class Plant extends Organism {
     }
 
     /**
+     * Cây không có khái niệm đói — năng lượng đến từ quang hợp (photosynthesis()),
+     * không phải ăn. Chỉ decay mức khát mỗi tick, hungerLevel luôn giữ ở 0.
+     */
+    @Override
+    protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
+        stats.applyThirstOnlyDecay(thirstMultiplier);
+    }
+
+    /**
      * Simulates the biological process of photosynthesis.
      * <p>
      * The process is governed by the following logic:
@@ -96,8 +105,9 @@ public abstract class Plant extends Organism {
         if (!growth.isAdult()) return;
 
         // check for health level (using a threshold from config)
-        float hungerThreshold = AppConfig.getFloat("plant.reproduce.hungerThreshold");
-        if (stats.getHungerLevel() > hungerThreshold) return;
+        // Cây không có khái niệm đói — dùng mức khát để quyết định có đủ điều kiện sinh sản không
+        float thirstThreshold = AppConfig.getFloat("plant.reproduce.thirstThreshold");
+        if (stats.getThirstLevel() > thirstThreshold) return;
 
         // reproduce add number of offspring into enviroment
         // every organism will only reproduce once in their life

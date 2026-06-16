@@ -43,6 +43,14 @@ public class SurvivalStatsComponent {
     }
 
     /**
+     * Cập nhật chỉ mức khát — dùng cho sinh vật không có khái niệm đói (vd. Plant).
+     * hungerLevel giữ nguyên 0, không bao giờ tăng.
+     */
+    public void applyThirstOnlyDecay(float thirstMultiplier) {
+        thirstLevel = Math.min(100f, thirstLevel + (thirstDecayRate * thirstMultiplier));
+    }
+
+    /**
      * Trả về lượng HP phạt mỗi tick nếu đói/khát vượt ngưỡng, ngược lại trả 0.
      * Caller (processSurvivalMetabolism) chịu trách nhiệm trừ HP — tránh trừ hai lần.
      */

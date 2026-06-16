@@ -129,7 +129,7 @@ public abstract class Organism {
                 * (1f + (1f - humidityFactor)
                 * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
 
-        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+        applyMetabolismDecay(seasonMultiplier, thirstMultiplier);
 
         float hpDrain      = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
         float stressPenalty = getEnvironmentalStressHpPenalty();
@@ -143,6 +143,15 @@ public abstract class Organism {
         if (stats.reduceHp(hpDrain)) {
             die();
         }
+    }
+
+    /**
+     * Áp dụng decay đói/khát mỗi tick. Mặc định cả đói và khát.
+     * Subclass override nếu không có khái niệm đói (vd. Plant — chỉ khát, dùng năng lượng
+     * từ quang hợp thay cho ăn).
+     */
+    protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
+        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
     }
 
     /**
