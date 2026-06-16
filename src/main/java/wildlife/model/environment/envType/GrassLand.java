@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.plant.Grass;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
 
@@ -51,7 +52,7 @@ public class GrassLand extends Environment {
             Vector2D grassPos = terrain.getRandomValidPosition();
 
             // Tạo thực thể Plant tương ứng
-            registry.add(new Grass(grassPos));
+            registry.add(Grass.create(grassPos, this));
         }
 
         // Rải bụi rậm làm nơi trú ẩn
