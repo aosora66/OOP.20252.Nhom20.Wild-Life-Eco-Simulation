@@ -124,33 +124,24 @@ public abstract class Environment {
 
     /**
      * Cập nhật toàn bộ trạng thái môi trường mỗi tick.
-     *
-     * Thứ tự thực thi được đóng gói cố định (final) để đảm bảo tính nhất quán:
-     *
-     *   1. Cập nhật thời gian (mùa, thời tiết)
-     *   2. Cập nhật chỉ số theo ánh sáng ngày/đêm
-     *   3. Áp dụng hiệu ứng mùa (lớp con implement)
-     *   4. Áp dụng hiệu ứng thời tiết (lớp con implement)
-     *   5. Tick toàn bộ sinh vật còn sống
-     *   6. Xử lý sinh vật DEAD (chuyển thành thịt + xóa)
-     *   7. Dọn dẹp tài nguyên hết hạn
-     *
      * @param currentTick tick hiện tại của hệ thống
      */
     public void updateEnvironment(int currentTick) {
         // 1. Cập nhật thời gian
         time.advance(currentTick);
 
-        // 2. Cập nhật cường độ ánh sáng theo ngày/đêm
-        float dayLight = AppConfig.getFloat("environment.light.day");
-        float nightLight = AppConfig.getFloat("environment.light.night");
-        lightLevel = time.isDaytime() ? dayLight : nightLight;
-
-        // 3. Hiệu ứng mùa đặc trưng của từng môi trường
+        // 2. Hiệu ứng mùa đặc trưng của từng môi trường
         applySeasonEffect();
 
-        // 4. Hiệu ứng thời tiết đặc trưng của từng môi trường
+        // 3. Hiệu ứng thời tiết đặc trưng của từng môi trường
         applyWeatherEffect();
+
+        // 4. Cập nhật theo ngày/đêm
+        if (!time.isDaytime()) {
+            this.currentTemp = this.currentTemp - 5.0f;
+            this.currentHumidity = this.currentHumidity + 15.0f;
+            this.currentLight = this.lightLevel - 0.6f; // +/- 0.05
+        }
 
         // 5. Tick toàn bộ sinh vật
         for (Organism o : registry.getAllAlive(Organism.class)) {
@@ -186,15 +177,6 @@ public abstract class Environment {
     // ----------------------------------------------------------------
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
-
-    /**
-     * Cập nhật các chỉ số vật lý dựa trên sự giao thoa của Thời gian, Mùa và Thời tiết.
-     */
-    private void updateClimateMetrics() {
-        // --- 1. Ánh sáng ---
-        // Ban ngày sáng (max), ban đêm mờ (max-0.6)
-        this.lightLevel = time.isDaytime() ? this.lightLevel : (this.lightLevel - 0.6f);
-    }
 
     /**
      * Kiểm tra một vị trí có hợp lệ để động vật di chuyển đến không.
