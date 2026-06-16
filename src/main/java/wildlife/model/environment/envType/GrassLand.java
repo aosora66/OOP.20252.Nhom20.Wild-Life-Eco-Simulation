@@ -25,7 +25,7 @@ public class GrassLand extends Environment {
     // ----------------------------------------------------------------
     //  Constructor
     // ----------------------------------------------------------------
-    public GrassLand(String id, String name, Boundary boundary, Random random) {
+    public GrassLand(String id, String name, Boundary boundary) {
         // Cung cấp các tham số tĩnh mặc định cho Đồng Cỏ
         super(
                 id, name,
@@ -37,7 +37,7 @@ public class GrassLand extends Environment {
                 new OrganismRegistry(),
                 new ResourceManager()
         );
-        this.random = random;
+        this.random = new Random();
 
         initialize();
     }
