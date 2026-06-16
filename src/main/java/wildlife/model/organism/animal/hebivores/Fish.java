@@ -22,11 +22,11 @@ public class Fish extends Animal {
                 AdaptabilityComponent adaptability,
                 String gender) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HEBIVORE");
-        this.combatPower = AppConfig.getFloat("animal.rabbit.combatPower");
-        this.vision      = AppConfig.getFloat("animal.rabbit.vision");
-        this.speed       = AppConfig.getFloat("animal.rabbit.speed");
-        this.interactionRadius = AppConfig.getFloat("animal.rabbit.eatRadius");
-        this.diet.add(FoodType.APPLE);
+        this.combatPower = AppConfig.getFloat("animal.fish.combatPower");
+        this.vision      = AppConfig.getFloat("animal.fish.vision");
+        this.speed       = AppConfig.getFloat("animal.fish.speed");
+        this.interactionRadius = AppConfig.getFloat("animal.fish.eatRadius");
+        this.diet.add(FoodType.ALGAE);
         initStrategies();
     }
 
@@ -47,9 +47,8 @@ public class Fish extends Animal {
         ));
 
         // Scared: Flee from predators (Tiger, Wolf)
-        // Borrowing rabbit flee config as default
-        float fleeMultiplier = AppConfig.getFloat("animal.rabbit.flee.speedMultiplier");
-        int sprintSteps = AppConfig.getInt("animal.rabbit.flee.sprintSteps");
+        float fleeMultiplier = AppConfig.getFloat("animal.fish.flee.speedMultiplier");
+        int sprintSteps = AppConfig.getInt("animal.fish.flee.sprintSteps");
 
         this.addStrategy(new ScaredStrategy(
                 speed * fleeMultiplier,
