@@ -17,7 +17,7 @@ import wildlife.model.environment.enums.ObstacleType;
 /**
  * Môi trường Rừng Rậm (Forest)
  * Đặc trưng: Nhiều rào cản tự nhiên, ánh sáng thấp, có lợi thế tàng hình cực cao.
- * Sinh tài nguyên (quả, nấm) phụ thuộc chặt chẽ vào gốc cây và thời tiết.
+ * Sinh tài nguyên phụ thuộc chặt chẽ vào gốc cây và thời tiết.
  */
 public class Forest extends Environment {
 
@@ -53,9 +53,6 @@ public class Forest extends Environment {
     /**
      * Khởi tạo các cây cổ thụ và bụi rậm dựa trên kích thước thật của bản đồ.
      */
-    /**
-     * Khởi tạo các cây cổ thụ và bụi rậm dựa trên kích thước thật của bản đồ.
-     */
     private void initializeFlora() {
         // Trồng 3 cây cổ thụ ở các vị trí ngẫu nhiên hợp lệ trong bản đồ
         for (int i = 0; i < 3; i++) {
@@ -63,7 +60,7 @@ public class Forest extends Environment {
             treeLocations.add(treePos);
             
             // Cây cổ thụ là vật thể rắn cản đường
-              resources.placeObstacle(treePos, ObstacleType.TREE);
+            resources.placeObstacle(treePos, ObstacleType.TREE);
         }
 
         // Rải thêm 5 bụi rậm làm nơi trú ẩn (Tương tác với getStealthModifier)
@@ -74,6 +71,7 @@ public class Forest extends Environment {
             resources.placeObstacle(bushPos, ObstacleType.BUSH);
         }
     }
+
     // ----------------------------------------------------------------
     //  Ghi đè 3 hàm hợp đồng từ lớp cha
     // ----------------------------------------------------------------
@@ -118,23 +116,6 @@ public class Forest extends Environment {
 
         if (weather == WeatherType.RAIN) {
             this.humidity = 100.0f; // Mưa làm độ ẩm bão hòa
-
-            // CƠ CHẾ ĐẶC TRƯNG: Nấm mọc sau mưa dưới gốc cây
-            if (random.nextFloat() < 0.05f && !treeLocations.isEmpty()) {
-                // Lấy ngẫu nhiên một cây cổ thụ
-                Vector2D treePos = treeLocations.get(random.nextInt(treeLocations.size()));
-                
-                // Mọc nấm cách gốc cây một khoảng nhỏ (Dùng nextFloat thay vì nextInt)
-                Vector2D mushroomPos = new Vector2D(
-                        treePos.getX() + (random.nextFloat() * 10 - 5), // Lệch [-5.0 đến 5.0]
-                        treePos.getY() + (random.nextFloat() * 10 - 5)
-                );
-
-                if (terrain.containsPosition(mushroomPos)) {
-                    // Sinh ra nấm: Tồn tại ngắn hạn (ví dụ: 200 tick) rồi héo
-                    resources.spawnFood(mushroomPos, 3.0f, false, 200);
-                }
-            }
         }
     }
 
@@ -168,5 +149,4 @@ public class Forest extends Environment {
             }
         }
     }
-    
 }
