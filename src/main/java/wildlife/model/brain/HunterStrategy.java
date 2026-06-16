@@ -66,9 +66,12 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 return;
             }
         }
-        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
+        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được.
+        // Loại trừ apex predator (vd. Voi) — không loài nào săn được apex,
+        // dù preySpecies có khai báo Animal.class bắt tất cả subclass.
         Optional<? extends Animal> prey = preySpecies.stream()
                 .flatMap(species -> findNearestBySpecies(self, env, species).stream())
+                .filter(a -> !a.isApexPredator())
                 .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
