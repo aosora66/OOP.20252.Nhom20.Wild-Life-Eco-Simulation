@@ -20,14 +20,14 @@
                <Insets bottom="20" left="20" right="20" top="20" />
             </padding>
             <!-- Image -->
-            <ImageView fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="entityImageView" fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true">
                <Image url="@../assets/images/Fox.png" />
             </ImageView>
          <!-- Info -->
          <VBox fx:id="info" alignment="CENTER_LEFT" managed="false" spacing="5.0" visible="false">
 
             <!-- id section -->
-            <Label styleClass="title-text" text="ID: #0001" />
+            <Label fx:id="entityIdLabel" styleClass="title-text" text="ID: #0001" />
 
             <!-- HP Section -->
             <VBox spacing="5">
@@ -43,8 +43,8 @@
                </HBox>
                <!-- value bar -->
                <StackPane alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="500" styleClass="stat-bar-container">
-                  <Region maxWidth="-Infinity" minWidth="-Infinity" prefWidth="480.0" styleClass="stat-bar-fill, hp-fill" />
-                  <Label styleClass="stat-value-text" text="480">
+                  <Region fx:id="hpBarFill" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="480.0" styleClass="stat-bar-fill, hp-fill" />
+                  <Label fx:id="hpValueLabel" styleClass="stat-value-text" text="480">
                      <StackPane.margin>
                         <Insets left="5.5" />
                      </StackPane.margin>
@@ -75,8 +75,8 @@
                </HBox>
                <!-- value bar -->
                <StackPane alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="500" styleClass="stat-bar-container">
-                  <Region maxWidth="-Infinity" minWidth="-Infinity" prefWidth="270.0" styleClass="stat-bar-fill, hunger-fill" />
-                  <Label styleClass="stat-value-text" text="270">
+                  <Region fx:id="hungerBarFill" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="270.0" styleClass="stat-bar-fill, hunger-fill" />
+                  <Label fx:id="hungerValueLabel" styleClass="stat-value-text" text="270">
                      <StackPane.margin>
                         <Insets left="5.5" />
                      </StackPane.margin>
@@ -98,8 +98,8 @@
                </HBox>
                <!-- value bar -->
                <StackPane alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="500" styleClass="stat-bar-container">
-                  <Region maxWidth="-Infinity" minWidth="-Infinity" prefWidth="90.0" styleClass="stat-bar-fill, thirsty-fill" />
-                  <Label styleClass="stat-value-text" text="90">
+                  <Region fx:id="thirstyBarFill" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="90.0" styleClass="stat-bar-fill, thirsty-fill" />
+                  <Label fx:id="thirstyValueLabel" styleClass="stat-value-text" text="90">
                      <StackPane.margin>
                         <Insets left="5.5" />
                      </StackPane.margin>

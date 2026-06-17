@@ -12,6 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
@@ -84,11 +85,23 @@ public class UIEventController {
     public HBox entityPanel;
     @FXML
     public VBox info;
-    
-//    public void entityPanelShow(boolean anAnimalFocused){
-//        entityPanel.setManaged(anAnimalFocused);
-//        entityPanel.setVisible(anAnimalFocused);
-//    }
+
+    @FXML
+    public ImageView entityImageView;
+    @FXML
+    public Label entityIdLabel;
+    @FXML
+    public Region hpBarFill;
+    @FXML
+    public Label hpValueLabel;
+    @FXML
+    public Region hungerBarFill;
+    @FXML
+    public Label hungerValueLabel;
+    @FXML
+    public Region thirstyBarFill;
+    @FXML
+    public Label thirstyValueLabel;
     
     public void entityPanelFormChange() {
         entityPanelIsExpanded = !entityPanelIsExpanded;
@@ -136,6 +149,12 @@ public class UIEventController {
     private volatile int canvasHeight = 600;
 
     private volatile Renderer renderer;
+
+    private static volatile java.util.List<wildlife.model.organism.Organism> activeOrganisms;
+
+    public static void setActiveOrganisms(java.util.List<wildlife.model.organism.Organism> list) {
+        activeOrganisms = list;
+    }
 
     private final wildlife.view.renderer.utils.Camera camera = new wildlife.view.renderer.utils.Camera(400, 300, 1080);
     private double lastMouseX;
@@ -373,6 +392,91 @@ public class UIEventController {
             lastMouseX = currentX;
             lastMouseY = currentY;
         });
+
+        sceneCanvas.setOnMouseClicked(event -> {
+            if (event.getButton() == javafx.scene.input.MouseButton.SECONDARY) {
+                double clickX = event.getX();
+                double clickY = event.getY();
+
+                // Convert screen space to world space coordinates
+                double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
+                double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
+
+                wildlife.model.organism.Organism selected = findOrganismAt(worldX, worldY);
+                if (selected != null) {
+                    showEntityPanel(selected);
+                } else {
+                    hideEntityPanel();
+                }
+            }
+        });
+    }
+
+    private wildlife.model.organism.Organism findOrganismAt(double x, double y) {
+        if (activeOrganisms == null) return null;
+        synchronized (activeOrganisms) {
+            for (wildlife.model.organism.Organism o : activeOrganisms) {
+                if (o.isAlive()) {
+                    double ox = o.getPosition().getX();
+                    double oy = o.getPosition().getY();
+                    // Each organism is represented by a 32x32 sprite, so bounding box radius is 16
+                    if (x >= ox - 16 && x <= ox + 16 && y >= oy - 16 && y <= oy + 16) {
+                        return o;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void showEntityPanel(wildlife.model.organism.Organism selected) {
+        Platform.runLater(() -> {
+            entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
+            
+            // Populate stats
+            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
+            double hpPercent = stats.getHp() / stats.getMaxHp();
+            hpBarFill.setPrefWidth(500 * hpPercent);
+            hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
+
+            // Hunger (0 is full, 100 is starving, so fill is 1.0 - hungerLevel/100.0)
+            double hungerPercent = 1.0 - (stats.getHungerLevel() / 100.0);
+            hungerPercent = Math.max(0.0, Math.min(1.0, hungerPercent));
+            hungerBarFill.setPrefWidth(500 * hungerPercent);
+            hungerValueLabel.setText(String.format("%.0f / 100", stats.getHungerLevel()));
+
+            // Thirst (0 is quenched, 100 is dehydrated)
+            double thirstPercent = 1.0 - (stats.getThirstLevel() / 100.0);
+            thirstPercent = Math.max(0.0, Math.min(1.0, thirstPercent));
+            thirstyBarFill.setPrefWidth(500 * thirstPercent);
+            thirstyValueLabel.setText(String.format("%.0f / 100", stats.getThirstLevel()));
+
+            // Update Image depending on Species
+            String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
+            try {
+                javafx.scene.image.Image img = new javafx.scene.image.Image(getClass().getResourceAsStream(imagePath));
+                entityImageView.setImage(img);
+            } catch (Exception e) {
+                // Ignore if asset loading fails
+            }
+
+            entityPanel.setManaged(true);
+            entityPanel.setVisible(true);
+            
+            entityPanelIsExpanded = true;
+            info.setManaged(true);
+            info.setVisible(true);
+        });
+    }
+
+    private void hideEntityPanel() {
+        Platform.runLater(() -> {
+            entityPanel.setManaged(false);
+            entityPanel.setVisible(false);
+            entityPanelIsExpanded = false;
+            info.setManaged(false);
+            info.setVisible(false);
+        });
     }
 
     public Renderer getRenderer(){
@@ -384,6 +488,7 @@ public class UIEventController {
         setupLWJGLCanvas();
         setupScaling();
         setupCameraEvents();
+        hideEntityPanel();
         uiGroup.setPickOnBounds(false);
         if(uiGroup.getChildren().get(0) instanceof AnchorPane) {
             ((AnchorPane)uiGroup.getChildren().get(0)).setPickOnBounds(false);

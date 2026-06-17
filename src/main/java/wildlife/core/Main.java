@@ -66,10 +66,9 @@ public class Main {
         // BƯỚC 4: KHỞI TẠO VÀ CHẠY GIAO DIỆN (VIEW)
             // Khởi tạo 2 luồng song song: JavaFX và một deamon thread để chạy coreloop
         // deamon thread chạy coreloop
-        Thread coreLoopThread = new Thread(() -> {
-            System.out.println("[Core Loop] Đang chờ giao diện hiển thị");
-            Renderer renderer = ApplicationFrame.getRendererInstance();
 
+        Thread coreLoopThread = new Thread(() -> {
+            Renderer renderer = ApplicationFrame.getRendererInstance();
             final int TICK_RATE = 64;
             final long MS_PER_SECOND = 1000 / TICK_RATE;
 
@@ -89,8 +88,9 @@ public class Main {
                     }
                 }
             }
-            // todo: core loop system
         }, "Ecosystem-Core-loop");
+        wildlife.view.ui.UIEventController.setActiveOrganisms(ecosystem);
+
         coreLoopThread.setDaemon(true);
         coreLoopThread.start();
         // Chạy JavaFX Application. Phương thức này sẽ chặn cho đến khi cửa sổ đóng.
