@@ -16,6 +16,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.11</javafx.version>
+        <javafx.platform>win</javafx.platform>
         <lwjgl.version>3.3.6</lwjgl.version>
         <lwjgl.natives>natives-windows</lwjgl.natives>
         <joml.version>1.10.8</joml.version>
@@ -31,6 +32,7 @@
             <properties>
                 <app.icon> src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico </app.icon>
                 <lwjgl.natives>natives-windows</lwjgl.natives>
+                <javafx.platform>win</javafx.platform>
             </properties>
         </profile>
 
@@ -43,6 +45,7 @@
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
                 <lwjgl.natives>natives-macos</lwjgl.natives>
+                <javafx.platform>mac</javafx.platform>
             </properties>
         </profile>
 
@@ -55,6 +58,7 @@
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
                 <lwjgl.natives>natives-macos-arm64</lwjgl.natives>
+                <javafx.platform>mac-aarch64</javafx.platform>
             </properties>
         </profile>
 
@@ -67,6 +71,7 @@
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
                 <lwjgl.natives>natives-linux</lwjgl.natives>
+                <javafx.platform>linux</javafx.platform>
             </properties>
         </profile>
 
