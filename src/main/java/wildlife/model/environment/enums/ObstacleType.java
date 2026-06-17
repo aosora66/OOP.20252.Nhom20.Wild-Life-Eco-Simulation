@@ -1,6 +1,6 @@
 package wildlife.model.environment.enums;
 
 public enum ObstacleType {
-    ROCK,
-    BUSH
+    ROCK, // tang da
+    BUSH // bui ram
 }

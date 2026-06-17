@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Component quản lý toàn bộ danh sách sinh vật trong một môi trường.
@@ -70,42 +71,37 @@ public class OrganismRegistry {
     }
 
     /**
-     * Tìm tất cả sinh vật trong bán kính cho trước tính từ một vị trí.
-     * Chỉ trả về sinh vật còn sống (ALIVE).
-     *
-     * @param center tọa độ trung tâm
-     * @param radius bán kính tìm kiếm
-     * @return danh sách sinh vật trong vùng (chỉ đọc)
+     * Lấy danh sách TẤT CẢ sinh vật thuộc một loại cụ thể (kể cả đã chết).
+            * * @param type Lớp của sinh vật muốn lấy (VD: Animal.class / Plant.class / Organism.class)
+     * @return Danh sách đã được cast sẵn về đúng kiểu T
      */
-    public List<Organism> findNear(Vector2D center, float radius) {
-        List<Organism> result = new ArrayList<>();
-        for (Organism o : organisms) {
-            if (o.isAlive() && o.getPosition().distanceTo(center) <= radius) {
-                result.add(o);
-            }
-        }
-        return Collections.unmodifiableList(result);
+    public <T extends Organism> List<T> getAll(Class<T> type) {
+        return organisms.stream()
+                .filter(type::isInstance)       // Chỉ lấy đối tượng thuộc class T hoặc subclass của T
+                .map(type::cast)                // Ép kiểu an toàn về T
+                .collect(Collectors.toList());
     }
 
     /**
-     * Lấy toàn bộ danh sách sinh vật còn sống (ALIVE).
-     * @return danh sách chỉ đọc các sinh vật còn sống
+     * Lấy danh sách các sinh vật CÒN SỐNG thuộc một loại cụ thể.
      */
-    public List<Organism> getAllAlive() {
-        List<Organism> alive = new ArrayList<>();
-        for (Organism o : organisms) {
-            if (o.isAlive()) alive.add(o);
-        }
-        return Collections.unmodifiableList(alive);
+    public <T extends Organism> List<T> getAllAlive(Class<T> type) {
+        return organisms.stream()
+                .filter(o -> o.isAlive() && type.isInstance(o))
+                .map(type::cast)
+                .collect(Collectors.toList());
     }
 
     /**
-     * Lấy toàn bộ danh sách sinh vật (kể cả DEAD).
-     * Dùng để Environment dọn dẹp xác sinh vật sau N tick.
-     *
-     * @return danh sách chỉ đọc tất cả sinh vật
+     * Tìm tất cả sinh vật CÒN SỐNG thuộc một loại cụ thể trong bán kính.
+     * Rất hữu ích cho ViewLogic hoặc khi Động vật săn mồi tìm kiếm con mồi.
      */
-    public List<Organism> getAll() {
-        return Collections.unmodifiableList(new ArrayList<>(organisms));
+    public <T extends Organism> List<T> findNear(Vector2D center, float radius, Class<T> type) {
+        return organisms.stream()
+                .filter(o -> o.isAlive()
+                        && type.isInstance(o)
+                        && o.getPosition().distanceTo(center) <= radius)
+                .map(type::cast)
+                .collect(Collectors.toList());
     }
 }

@@ -7,23 +7,45 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
 import java.util.List;
+import java.util.UUID;
 
 public class Grass extends Plant{
     public Grass(String id,
                  String speciesName,
                  Vector2D startPos,
-                 TerrainType startTer,
                  Environment startEnv,
                  GrowthComponent growth,
                  SurvivalStatsComponent stats,
                  AdaptabilityComponent adaptability) {
-        super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
+        super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
         photosynthesisRate         = AppConfig.getFloat("plant.grass.photosynthesisRate");
         lightLevelToPhotosynthesis = AppConfig.getFloat("plant.grass.minLightLevel");
         nutritionAsorbRadius       = AppConfig.getFloat("plant.grass.nutrientsAsorbRadius");
+    }
+
+    /**
+     * Factory method — tạo Grass với sinh học mặc định, dùng trong GrassLand.initialize().
+     * Dùng factory thay vì 7 param để GrassLand không cần biết chi tiết component.
+     */
+    public static Grass create(Vector2D pos, Environment env) {
+        return new Grass(
+                UUID.randomUUID().toString(),
+                "Grass",
+                pos,
+                env,
+                new GrowthComponent(200f, 3f, 0.2f, 0.8f),
+                new SurvivalStatsComponent(30f, 2f, 0.05f, 0.07f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.GRASSLAND),
+                        new ValueRange(25f, 38f),
+                        new ValueRange(5f, 45f),
+                        new ValueRange(-100f, 0f)
+                )
+        );
     }
 
     @Override
@@ -35,6 +57,6 @@ public class Grass extends Plant{
 
     @Override
     protected void addOffspring(Vector2D pos) {
-
+        environment.getRegistry().add(Grass.create(pos, environment));
     }
 }

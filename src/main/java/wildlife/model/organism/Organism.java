@@ -14,7 +14,7 @@ import wildlife.util.Vector2D;
  * Abstract class trung tâm đại diện cho mọi sinh vật
  */
 public abstract class Organism {
-    // Lấy chỉ số trừ HP khi lão hóa từ file config
+    // HP bị trừ mỗi tick khi sinh vật vào giai đoạn lão hóa (key riêng, không dùng chung với starvation penalty)
     private static final float DECAY_HP_PENALTY = AppConfig.getFloat("organism.growth.decayHpPenalty");
 
     // ----------------------------------------------------------
@@ -42,7 +42,6 @@ public abstract class Organism {
      * @param id             ID duy nhất (nên dùng UUID)
      * @param speciesName    tên loài ("Tho", "Soi", "Co"...)
      * @param startPos       tọa độ xuất phát
-     * @param startTer       dia hinh ban đầu
      * @param startEnv       môi trường ban đầu
      * @param growth         component sinh trưởng
      * @param stats          component chỉ số sinh tồn
@@ -51,7 +50,6 @@ public abstract class Organism {
     protected Organism(String id,
                        String speciesName,
                        Vector2D startPos,
-                       TerrainType startTer,
                        Environment startEnv,
                        GrowthComponent growth,
                        SurvivalStatsComponent stats,
@@ -59,8 +57,7 @@ public abstract class Organism {
         this.id                 = id;
         this.speciesName        = speciesName;
         this.position           = startPos;
-        this.currentTerrain = startTer;
-        this.environment = startEnv;
+        this.environment        = startEnv;
         this.state              = OrganismState.ALIVE;
         this.growth             = growth;
         this.stats              = stats;
@@ -73,10 +70,17 @@ public abstract class Organism {
 
     /**
      * Cập nhật toàn bộ trạng thái sinh vật mỗi tick.
+     * Hàm này bị khóa (final) để ép luồng logic cốt lõi của hệ sinh thái.
+     *
+     * Thứ tự cố định: growUp → onTick (hành động) → reproduce → processSurvivalMetabolism (decay).
+     * Hành động (ăn/uống) chạy trước decay để kết quả ăn trong tick này
+     * được tính vào trước khi trừ HP.
+     *
      * @param currentTick  số thứ tự tick hiện tại
      */
     public final void updateOrganism(int currentTick) {
         if (!isAlive()) return;
+        refreshCurrentTerrain();
 
         // 1. Logic hệ thống bắt buộc (sinh vật tự động lớn lên và lão hóa)
         this.growUp();
@@ -84,13 +88,19 @@ public abstract class Organism {
 
         this.onTick(currentTick);
         if (!isAlive()) return;
+        refreshCurrentTerrain();
 
-        // 2. Logic sinh sản (sinh sản vào environment nếu đủ điều kiện)
         this.reproduce();
         if (!isAlive()) return;
 
         // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
         this.processSurvivalMetabolism();
+    }
+
+    private void refreshCurrentTerrain() {
+        if (environment != null) {
+            this.currentTerrain = environment.getTerrain().getTerrainAt(position);
+        }
     }
 
     // ----------------------------------------------------------
@@ -108,7 +118,6 @@ public abstract class Organism {
      * Có thể tạo ra 0, 1 hoặc nhiều sinh vật con và trực tiếp thêm vào environment thông qua addOrganism().
      */
     public abstract void reproduce();
-
 
     // ----------------------------------------------------------
     //  Concrete methods — hành vi mặc định dùng chung
@@ -128,9 +137,9 @@ public abstract class Organism {
                 * (1f + (1f - humidityFactor)
                 * AppConfig.getFloat("organism.stats.thirstHumidityFactor"));
 
-        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+        applyMetabolismDecay(seasonMultiplier, thirstMultiplier);
 
-        float hpDrain      = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
+        float hpDrain      = getBaseHpDrainPerTick();
         float stressPenalty = getEnvironmentalStressHpPenalty();
         // Mùa khắc nghiệt làm stress tệ hơn
         if (stressPenalty > 0f && seasonMultiplier > 1f) {
@@ -142,6 +151,19 @@ public abstract class Organism {
         if (stats.reduceHp(hpDrain)) {
             die();
         }
+    }
+
+    /**
+     * Áp dụng decay đói/khát mỗi tick. Mặc định cả đói và khát.
+     * Subclass override nếu không có khái niệm đói (vd. Plant — chỉ khát, dùng năng lượng
+     * từ quang hợp thay cho ăn).
+     */
+    protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
+        stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+    }
+
+    protected float getBaseHpDrainPerTick() {
+        return AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
     }
 
     /**
@@ -193,7 +215,7 @@ public abstract class Organism {
     }
 
     /**
-     * Xử lý khi sinh vật chết: chuyển trạng thái → TRANSFORMING,
+     * Xử lý khi sinh vật chết: chuyển trạng thái → DEAD,
      * sau đó Environment sẽ xóa khỏi danh sách sau một khoảng thời gian.
      *
      * Protected — chỉ được gọi từ decreaseHp() hoặc subclass.
@@ -240,6 +262,14 @@ public abstract class Organism {
     public void setEnvironment(Environment evn)   { this.environment = evn; }
 
     public boolean isAlive() { return state == OrganismState.ALIVE; }
+
+    /**
+     * Phải gọi sau khi thêm sinh vật vào Environment để các method phụ thuộc môi trường hoạt động.
+     * Cập nhật environment reference mà không cần tạo lại sinh vật.
+     */
+    public void bindEnvironment(Environment env) {
+        this.environment = env;
+    }
 
     @Override
     public String toString() {

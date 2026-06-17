@@ -19,6 +19,8 @@ public class TimeComponent {
     private static final float BREEDING_RAIN_CHANCE   = AppConfig.getFloat("environment.time.breeding.rainChance");
     /** Xác suất xuất hiện hạn trong mùa hạn hán */
     private static final float DROUGHT_DROUGHT_CHANCE = AppConfig.getFloat("environment.time.drought.droughtChance");
+    /** Xác suất (thấp) vẫn có mưa trong mùa hạn hán */
+    private static final float DROUGHT_RAIN_CHANCE    = AppConfig.getFloat("environment.time.drought.rainChance");
     /** Xác suất xuất hiện mưa trong mùa bình thường */
     private static final float NORMAL_RAIN_CHANCE     = AppConfig.getFloat("environment.time.normal.rainChance");
     /** Xác suất xuất hiện hạn trong mùa bình thường */
@@ -32,10 +34,10 @@ public class TimeComponent {
     private int currentTick;
 
     /** Số tick tương đương một chu kỳ ngày-đêm đầy đủ */
-    private final int ticksPerDayCycle;
+    private final int ticksPerDayCycle = AppConfig.getInt("environment.time.ticksPerDayCycle");
 
     /** Số tick để chuyển sang một mùa mới */
-    private final int ticksPerSeason;
+    private final int ticksPerSeason = AppConfig.getInt("environment.time.ticksPerSeason");
 
     /** Mùa hiện tại */
     private Season currentSeason;
@@ -49,13 +51,7 @@ public class TimeComponent {
     //  Constructor
     // ----------------------------------------------------------------
 
-    /**
-     * @param ticksPerDayCycle  số tick cho 1 chu kỳ ngày-đêm (VD: 24)
-     * @param ticksPerSeason    số tick cho 1 mùa (VD: 240)
-     */
-    public TimeComponent(int ticksPerDayCycle, int ticksPerSeason) {
-        this.ticksPerDayCycle = ticksPerDayCycle;
-        this.ticksPerSeason   = ticksPerSeason;
+    public TimeComponent() {
         this.currentTick      = 0;
         this.currentSeason    = Season.NORMAL;
         this.currentWeather   = WeatherType.NORMAL;
@@ -78,6 +74,7 @@ public class TimeComponent {
 
     /**
      * Cập nhật mùa dựa theo số tick đã qua.
+     * Thứ tự mùa: NORMAL → BREEDING → DROUGHT →NORMAL
      */
     private void updateSeason() {
         // Lấy vị trí trong chu kỳ 3 mùa
@@ -109,6 +106,8 @@ public class TimeComponent {
             }
             case DROUGHT -> {
                 if (roll < DROUGHT_DROUGHT_CHANCE)         currentWeather = WeatherType.DROUGHT;
+                else if (roll < DROUGHT_DROUGHT_CHANCE + DROUGHT_RAIN_CHANCE)
+                                                           currentWeather = WeatherType.RAIN;
                 else                                       currentWeather = WeatherType.NORMAL;
             }
             default -> { // NORMAL

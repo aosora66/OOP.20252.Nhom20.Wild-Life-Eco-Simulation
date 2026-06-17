@@ -1,5 +1,4 @@
 package wildlife.model.organism.plant;
-
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.TerrainType;
@@ -20,8 +19,17 @@ public abstract class Plant extends Organism {
     /**
      * Constructor for Plant entities.
      */
-    protected Plant(String id, String speciesName, Vector2D startPos, TerrainType startTer, Environment startEnv, GrowthComponent growth, SurvivalStatsComponent stats, AdaptabilityComponent adaptability) {
-        super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
+    protected Plant(String id, String speciesName, Vector2D startPos, Environment startEnv, GrowthComponent growth, SurvivalStatsComponent stats, AdaptabilityComponent adaptability) {
+        super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+    }
+
+    /**
+     * Cây không có khái niệm đói — năng lượng đến từ quang hợp (photosynthesis()),
+     * không phải ăn. Chỉ decay mức khát mỗi tick, hungerLevel luôn giữ ở 0.
+     */
+    @Override
+    protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
+        stats.applyThirstOnlyDecay(thirstMultiplier);
     }
 
     /**
@@ -60,7 +68,7 @@ public abstract class Plant extends Organism {
      * 1. Query the environment for available FoodItems (nutrients/water) within the absorption radius.
      * 2. Identify the nearest available resource to prioritize efficiency.
      * 3. Consume the resource, which updates the plant's survival statistics (hunger/thirst levels).
-     * 4. Remove the consumed resource from the environment's resource manager.
+     * 4. Remove finite resources from the environment's resource manager.
      */
     public void absorbNutrients() {
         Environment currentEnvironment = getEnvironment();
@@ -80,11 +88,13 @@ public abstract class Plant extends Organism {
             }
         }
 
-        // If a resource is found, consume it and remove it from the map
+        // If a resource is found, consume it. Water sources are permanent.
         if (nutrients == null) return;
 
         stats.consume(nutrients.nutritionalValue(), nutrients.isWater());
-        currentEnvironment.getResources().consume(nutrients);
+        if (!nutrients.isWater()) {
+            currentEnvironment.getResources().consume(nutrients);
+        }
     }
 
     protected boolean hasReproduced = false;
@@ -97,8 +107,9 @@ public abstract class Plant extends Organism {
         if (!growth.isAdult()) return;
 
         // check for health level (using a threshold from config)
-        float hungerThreshold = AppConfig.getFloat("plant.reproduce.hungerThreshold");
-        if (stats.getHungerLevel() > hungerThreshold) return;
+        // Cây không có khái niệm đói — dùng mức khát để quyết định có đủ điều kiện sinh sản không
+        float thirstThreshold = AppConfig.getFloat("plant.reproduce.thirstThreshold");
+        if (stats.getThirstLevel() > thirstThreshold) return;
 
         // reproduce add number of offspring into enviroment
         // every organism will only reproduce once in their life
@@ -112,15 +123,15 @@ public abstract class Plant extends Organism {
             // Random spawn around the current plant
             float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
             float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
-            
+
             // Calculate child position manually (Vector2D has no add method)
             Vector2D childPos = new Vector2D(
-                position.getX() + offsetX,
-                position.getY() + offsetY
+                    position.getX() + offsetX,
+                    position.getY() + offsetY
             );
 
             // Optional: check if position is passable before adding
-            if (environment.isPositionPassable(childPos, speciesName)) {
+            if (environment.getTerrain().isPassable(childPos, this)) {
                 addOffspring(childPos);
             }
         }

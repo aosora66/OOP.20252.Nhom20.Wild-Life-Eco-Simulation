@@ -3,8 +3,10 @@ package wildlife.model.brain;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
+import wildlife.util.AppConfig;
 
 import java.util.Comparator;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.Optional;
  */
 public class HunterStrategy extends AbstractSurvivalStrategy {
 
-    private final List<String> preySpecies;
+    private final List<Class<? extends Animal>> preySpecies;
     private final float  attackDamage;
 
     // Mức đói tối thiểu để bắt đầu săn (0–100)
@@ -24,7 +26,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
 
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
-                          String... preySpecies) {
+                          Class<? extends Animal>... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
@@ -34,22 +36,23 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
     @Override
     public boolean isApplicable(Animal self, Environment env) {
-        return self.getStats().getHungerLevel() >= hungerSearchThreshold;
+        return self.getGrowth().isAdult()
+                && self.getStats().getThirstLevel() < AppConfig.getFloat("organism.stats.thirstHpThreshold")
+                && self.getStats().getHungerLevel() >= hungerSearchThreshold;
     }
 
     @Override
     public int getPriority() { return 20; }
 
-
     /**
      * Thực thi chiến lược săn mồi:
-     * * 1. Ưu tiên ăn nếu có thịt sẵn
-     * * 2. Bản năng săn mồi (Săn):tìm kiếm con mồi gần nhất.
-     * - Trong tầm đánh: Cắn mục tiêu (trừ HP). Nếu mục tiêu chết, hệ thống (Environment)
-     * sẽ tự động dọn xác và sinh ra thịt (FoodItem) để nhặt vào tick tiếp theo.
-     * - Ngoài tầm đánh: Di chuyển bám theo con mồi.
-     * * 3. Trạng thái nghỉ (Wander): Nếu không có thịt và cũng không tìm thấy mồi,
-     * di chuyển lang thang ngẫu nhiên.
+     * 1. Ưu tiên ăn nếu có thịt sẵn trong phạm vi attackRange
+     * 2. Bản năng săn mồi sống: tìm kiếm con mồi gần nhất.
+     *    - Trong tầm đánh: Cắn mục tiêu (trừ HP). Nếu mục tiêu chết, Environment
+     *      sẽ tự động dọn xác và sinh ra thịt (FoodItem) để nhặt vào tick tiếp theo.
+     *    - Ngoài tầm đánh: Di chuyển bám theo con mồi.
+     * 3. Trạng thái nghỉ (Wander): Nếu không có thịt và cũng không tìm thấy mồi,
+     *    di chuyển lang thang ngẫu nhiên.
      *
      * @param self Thực thể động vật đang thực hiện chiến lược này.
      * @param env  Môi trường sống hiện tại chứa các danh sách thực thể và tài nguyên.
@@ -67,13 +70,17 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 return;
             }
         }
-        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được
-        Optional<Organism> prey = preySpecies.stream()
-                .map(s -> findNearestBySpecies(self, env, s))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .min(Comparator.comparingDouble(o -> o.getPosition().distanceTo(self.getPosition())));
-
+        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được.
+        // Loại trừ apex predator (vd. Voi) — không loài nào săn được apex,
+        // dù preySpecies có khai báo Animal.class bắt tất cả subclass.
+        Optional<? extends Animal> prey = preySpecies.stream()
+                .flatMap(species -> findNearestBySpecies(self, env, species).stream())
+                .filter(a -> !a.isApexPredator())
+                // Không ăn thịt đồng loại (vd. Sói không săn Sói)
+                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
+                // Không ngắm con mồi đang ở dưới nước sâu (thú trên cạn không xuống nước được)
+                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
         // =================================================================
@@ -94,5 +101,4 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 () -> wander(self, env)
         );
     }
-
 }

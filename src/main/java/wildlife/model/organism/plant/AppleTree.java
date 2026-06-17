@@ -7,9 +7,12 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
+import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * AppleTree represents a fruit-bearing plant in the ecosystem.
@@ -24,11 +27,10 @@ public class AppleTree extends Plant {
 
     /**
      * Constructs a new AppleTree instance with species-specific configuration.
-     * 
+     *
      * @param id           Unique identifier for the tree.
      * @param speciesName  The name of the species ("AppleTree").
      * @param startPos     The initial location in the environment.
-     * @param startTer     The terrain type at the starting position.
      * @param startEnv     The environment this tree belongs to.
      * @param growth       Component managing age and size.
      * @param stats        Component managing health and hunger.
@@ -37,13 +39,12 @@ public class AppleTree extends Plant {
     public AppleTree(String id,
                      String speciesName,
                      Vector2D startPos,
-                     TerrainType startTer,
                      Environment startEnv,
                      GrowthComponent growth,
                      SurvivalStatsComponent stats,
                      AdaptabilityComponent adaptability) {
-        super(id, speciesName, startPos, startTer, startEnv, growth, stats, adaptability);
-        
+        super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+
         // Load species-specific biological rates from configuration
         this.photosynthesisRate         = AppConfig.getFloat("plant.appletree.photosynthesisRate");
         this.lightLevelToPhotosynthesis = AppConfig.getFloat("plant.appletree.minLightLevel");
@@ -51,10 +52,27 @@ public class AppleTree extends Plant {
         this.appleDropRadius            = AppConfig.getFloat("plant.appletree.appleDropRadius");
     }
 
+    public static AppleTree create(Vector2D pos, Environment env) {
+        return new AppleTree(
+                "APPLETREE_" + System.nanoTime(),
+                "AppleTree",
+                pos,
+                env,
+                new GrowthComponent(1000f, 25f, 0.2f, 0.7f),
+                new SurvivalStatsComponent(80f, 15f, 0.0f, 0.06f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
+                        new ValueRange(18f, 30f),  // Mức tối ưu (Optimal)
+                        new ValueRange(5f, 40f),   // Mức chịu đựng (Tolerance)
+                        new ValueRange(-50f, 0f)   // Ngưỡng chết (Lethal) - Lạnh cóng
+                )
+        );
+    }
+
     /**
      * Updates the AppleTree state during each simulation tick.
      * Performs basic plant metabolism and triggers fruit dropping if conditions are met.
-     * 
+     *
      * @param currentTick The current step count of the simulation.
      */
     @Override
@@ -81,17 +99,17 @@ public class AppleTree extends Plant {
 
         // Load fruit properties from configuration
         float nutrition = AppConfig.getFloat("food.apple.nutritionalValue");
-        int expiry      = AppConfig.getInt("food.apple.expiryTicks=100");
+        int expiry      = AppConfig.getInt("food.apple.expiryTicks");
 
         // Calculate a random displacement within the drop radius
         // nextFloat() * 2 - 1 provides a range between [-1, 1]
         float offsetX = (RNG.nextFloat() * 2 - 1) * appleDropRadius;
         float offsetY = (RNG.nextFloat() * 2 - 1) * appleDropRadius;
-        
+
         // Create the final position for the dropped fruit
         Vector2D applePos = new Vector2D(
-            position.getX() + offsetX, 
-            position.getY() + offsetY
+                position.getX() + offsetX,
+                position.getY() + offsetY
         );
 
         // Add the fruit to the environment's resource pool

@@ -15,12 +15,24 @@ public class GrowthComponent {
 
     public GrowthComponent(float maxAge, float maxSize,
                            float maturityRatio, float decayAgeRatio) {
-        this.currentAge        = 0f;
+        this(maxAge, maxSize, maturityRatio, decayAgeRatio, 0f);
+    }
+
+    /**
+     * Cho phép khởi tạo với tuổi ban đầu > 0 — dùng để rải đều tuổi đàn ban đầu,
+     * tránh hiện tượng cả đàn cùng già và chết đồng loạt (boom–bust).
+     */
+    public GrowthComponent(float maxAge, float maxSize,
+                           float maturityRatio, float decayAgeRatio, float startAge) {
         this.maxAge            = maxAge;
         this.maxSize           = maxSize;
-        this.currentSize       = 1f;
         this.maturityRatio     = maturityRatio;
         this.decayAgeRatio     = decayAgeRatio;
+        this.currentAge        = Math.max(0f, startAge);
+        float maturityAge      = maxAge * maturityRatio;
+        this.currentSize       = (this.currentAge >= maturityAge)
+                ? maxSize
+                : Math.max(1f, maxSize * (this.currentAge / maturityAge));
     }
 
     // Tăng kích thước khi chưa tới maxsize
