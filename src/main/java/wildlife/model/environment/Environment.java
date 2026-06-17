@@ -20,6 +20,7 @@ import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
+import wildlife.util.SoundManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,11 +147,27 @@ public abstract class Environment {
         float nightLight = AppConfig.getFloat("environment.light.night");
         lightLevel = time.isDaytime() ? dayLight : nightLight;
 
+        // Cập nhật âm thanh ngày/đêm
+        if (time.isDaytime()) {
+            SoundManager.playAmbiance("TIME", "Ambiance.wav");
+        } else {
+            SoundManager.playAmbiance("TIME", "NightAmbiance.wav");
+        }
+
         // 3. Hiệu ứng mùa đặc trưng của từng môi trường
         applySeasonEffect();
 
         // 4. Hiệu ứng thời tiết đặc trưng của từng môi trường
         applyWeatherEffect();
+
+        // Cập nhật âm thanh mùa/thời tiết
+        if (time.getCurrentSeason() == wildlife.model.environment.enums.Season.DROUGHT) {
+            SoundManager.playAmbiance("SEASON", "DryAmbiance.wav");
+        } else if (time.getCurrentWeather() == wildlife.model.environment.enums.WeatherType.RAIN) {
+            SoundManager.playAmbiance("SEASON", "RainingAmbiance.wav");
+        } else {
+            SoundManager.stopAmbiance("SEASON");
+        }
 
         // 5. Tick toàn bộ sinh vật
         for (Organism o : registry.getAllAlive(Organism.class)) {
@@ -309,6 +326,18 @@ public abstract class Environment {
     public TerrainComponent getTerrain()              { return terrain; }
     public OrganismRegistry getRegistry()             { return registry; }
     public ResourceManager getResources()             { return resources; }
+
+    /**
+     * Lấy danh sách RenderData của tất cả sinh vật trong môi trường này.
+     * @return danh sách RenderData
+     */
+    public List<RenderData> getRenderSnapshot() {
+        List<RenderData> list = new ArrayList<>();
+        for (Organism o : registry.getAll(Organism.class)) {
+            list.add(o.getRenderData());
+        }
+        return list;
+    }
 
     @Override
     public String toString() {

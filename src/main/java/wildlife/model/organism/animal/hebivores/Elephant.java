@@ -11,6 +11,8 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+import wildlife.util.SoundManager;
+import wildlife.model.organism.Organism;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +65,12 @@ public class Elephant extends Animal {
     /** Voi là apex predator — mọi ScaredStrategy tự động nhận diện và bỏ chạy. */
     @Override
     public boolean isApexPredator() { return true; }
+
+    @Override
+    public void performAttack(Organism target, float damage) {
+        SoundManager.playSoundEffectWithCooldown("ElephantGrowl.wav", 2000, 1.0f);
+        super.performAttack(target, damage);
+    }
 
     @Override
     protected void addSurvivalStrategies() {

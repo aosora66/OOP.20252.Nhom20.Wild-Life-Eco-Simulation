@@ -12,6 +12,9 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+import wildlife.util.SoundManager;
+import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.organism.Organism;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +61,20 @@ public class Wolf extends Animal {
     @Override
     protected void onTick(int currentTick) {
         executeStrategy(currentTick);
+        
+        // Logic tiếng sói hú gọi bầy (khi có sói khác ở gần)
+        if (environment != null) {
+            List<Wolf> nearWolves = environment.getRegistry().findNear(position, vision * 1.5f, Wolf.class);
+            if (nearWolves.size() >= 2) {
+                // Cooldown lâu (vd 20000ms = 20s) để không hú liên tục
+                SoundManager.playSoundEffectWithCooldown("WolfHowl.wav", 20000, 1.0f);
+            }
+        }
+    }
+
+    @Override
+    protected void preEatAction(FoodItem food) {
+        SoundManager.playSoundEffectWithCooldown("Snarl.wav", 1500, 1.0f);
     }
 
     @Override

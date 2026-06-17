@@ -12,6 +12,9 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+import wildlife.util.SoundManager;
+import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.organism.Organism;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +61,17 @@ public class Tiger extends Animal {
     @Override
     protected void onTick(int currentTick) {
         executeStrategy(currentTick);
+    }
+
+    @Override
+    protected void preEatAction(FoodItem food) {
+        SoundManager.playSoundEffectWithCooldown("Snarl.wav", 1500, 1.0f);
+    }
+
+    @Override
+    public void performAttack(Organism target, float damage) {
+        SoundManager.playSoundEffectWithCooldown("TigerRoar.wav", 2000, 1.0f);
+        super.performAttack(target, damage);
     }
 
     @Override

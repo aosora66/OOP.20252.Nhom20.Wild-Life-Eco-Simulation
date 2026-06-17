@@ -81,7 +81,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                     float dist = self.getPosition().distanceTo(target.getPosition());
                     if (dist <= attackRange) {
                         // Mồi trong tầm -> Cắn
-                        target.decreaseHp(attackDamage);
+                        self.performAttack(target, attackDamage);
                     } else {
                         // Mồi ngoài tầm -> Đuổi theo
                         moveToward(self, target.getPosition(), env);

@@ -12,6 +12,8 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+import wildlife.util.SoundManager;
+import wildlife.model.organism.Organism;
 
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +61,12 @@ public class Hunter extends Animal {
                 ),
                 "MALE"
         );
+    }
+
+    @Override
+    public void performAttack(Organism target, float damage) {
+        SoundManager.playSequentialSoundEffects("GunLoad.wav", "GunFire.wav");
+        super.performAttack(target, damage);
     }
 
     @Override

@@ -53,6 +53,11 @@ public class CompositeMap extends Environment {
         this.subEnvironments = new ArrayList<>();
     }
 
+    @Override
+    protected void initialize() {
+        // CompositeMap does not initialize its own organisms directly.
+    }
+
     // ----------------------------------------------------------------
     //  Quản lý môi trường con
     // ----------------------------------------------------------------
@@ -136,7 +141,7 @@ public class CompositeMap extends Environment {
      */
     public int getTotalOrganismCount() {
         return subEnvironments.stream()
-                .mapToInt(e -> e.getRegistry().getAllAlive().size())
+                .mapToInt(e -> e.getRegistry().getAllAlive(wildlife.model.organism.Organism.class).size())
                 .sum();
     }
 
@@ -159,15 +164,6 @@ public class CompositeMap extends Environment {
      */
     @Override
     protected void applyWeatherEffect() {
-        // Ủy quyền xuống từng subEnvironment — không cần xử lý ở đây
-    }
-
-    /**
-     * CompositeMap không tự sinh tài nguyên.
-     * Mỗi môi trường con tự sinh tài nguyên trong updateEnvironment() của nó.
-     */
-    @Override
-    protected void generateNaturalResources() {
         // Ủy quyền xuống từng subEnvironment — không cần xử lý ở đây
     }
 

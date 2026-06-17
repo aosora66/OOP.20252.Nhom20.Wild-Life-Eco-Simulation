@@ -38,6 +38,7 @@ public class GrassLand extends Environment {
                 new ResourceManager()
         );
 
+        this.random = new Random();
         initialize();
     }
 

@@ -71,7 +71,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
             if (dist <= attackRange
                     && hpRatio <= counterHpThreshold
                     && RNG.nextFloat() < counterAttackChance) {
-                threat.decreaseHp(self.getCombatPower());
+                self.performAttack(threat, self.getCombatPower());
                 counterAttackCooldown = cooldownTicks;
             } else {
                 for (int i = 0; i < sprintSteps; i++) {

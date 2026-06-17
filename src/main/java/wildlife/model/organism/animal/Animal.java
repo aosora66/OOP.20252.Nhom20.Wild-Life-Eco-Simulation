@@ -93,15 +93,25 @@ public abstract class Animal extends Organism {
      */
     public void eating(FoodItem food) {
         if (food == null || environment == null) return;
+        preEatAction(food);
         stats.consume(food.nutritionalValue(), food.isWater());
         environment.getResources().consume(food);
     }
+
+    /** Hook để các loài động vật thực hiện hành động trước khi ăn (ví dụ phát tiếng gầm). */
+    protected void preEatAction(FoodItem food) {}
 
     public boolean canEat(FoodType type) {
         if (type == FoodType.WATER) return true;
         return diet.contains(type);
     }
 
+    /** Hook để động vật thực hiện đòn tấn công (có thể override để phát âm thanh). */
+    public void performAttack(Organism target, float damage) {
+        if (target != null) {
+            target.decreaseHp(damage);
+        }
+    }
 
     /** Getter dùng cho ScaredStrategy counter-attack. */
     public float getCombatPower() { return combatPower; }

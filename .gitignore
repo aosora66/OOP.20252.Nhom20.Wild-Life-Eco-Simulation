@@ -13,3 +13,9 @@ DS_Store
 
 .cursor
 .junie
+
+# Thư mục output biên dịch thủ công
+bin/
+
+# File tạm danh sách source khi biên dịch thủ công
+sources.txt
