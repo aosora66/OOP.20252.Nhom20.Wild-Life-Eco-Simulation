@@ -8,9 +8,6 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.dto.ObstacleItem;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
-import wildlife.model.environment.enums.WeatherType;
-import wildlife.model.environment.event.EnvironmentEventListener;
-import wildlife.model.environment.event.EnvironmentEventPublisher;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
 import wildlife.model.organism.animal.Animal;
@@ -25,11 +22,11 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.model.organism.plant.AppleTree;
 import wildlife.model.organism.plant.TreeForest;
 import wildlife.util.AppConfig;
-import wildlife.util.Boundary;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -403,5 +400,13 @@ public abstract class Environment {
                 time.getCurrentSeason(),
                 time.getCurrentWeather(),
                 registry.count());
+    }
+
+    public Collection<? extends RenderData> getRenderSnapshot() {
+        List<RenderData> list = new ArrayList<>();
+        for(Organism o: registry.getAll(Organism.class)) {
+            list.add(new RenderData(o));
+        }
+        return list;
     }
 }

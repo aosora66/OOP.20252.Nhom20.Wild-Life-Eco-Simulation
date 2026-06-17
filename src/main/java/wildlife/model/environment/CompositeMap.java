@@ -64,11 +64,9 @@ public class CompositeMap extends Environment {
         List<RenderData> all = new ArrayList<>();
         // Giả sử Environment có hàm getRenderSnapshot() trả về List<RenderData>
         // của các sinh vật do nó quản lý
-        /*
         for (Environment sub : subEnvironments) {
             all.addAll(sub.getRenderSnapshot());
         }
-        */
         return Collections.unmodifiableList(all);
     }
 

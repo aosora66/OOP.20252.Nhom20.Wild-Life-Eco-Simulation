@@ -1,5 +1,6 @@
 package wildlife.model.dto;
 
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
 
 /**
@@ -18,5 +19,13 @@ public class RenderData {
         this.x = x;
         this.y = y;
         this.state = state;
+    }
+
+    public RenderData(Organism organism) {
+        this.entityId = organism.getId();
+        this.speciesName = organism.getSpeciesName();
+        this.x = organism.getPosition().getX();
+        this.y = organism.getPosition().getY();
+        this.state = organism.getState();
     }
 }

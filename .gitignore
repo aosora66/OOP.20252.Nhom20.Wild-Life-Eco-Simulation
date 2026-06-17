@@ -9,7 +9,8 @@ target/
 
 # Bỏ qua file log và OS rác
 *.log
-DS_Store
+.DS_Store
 
 .cursor
 .junie
+GEMINI.md
