@@ -1,6 +1,7 @@
 package wildlife.util;
 
 import wildlife.model.environment.CompositeMap;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.envType.Forest;
 import wildlife.model.environment.envType.GrassLand;
@@ -95,10 +96,50 @@ public class MapLoader {
             }
         }
 
+        spawnShorelineWaterSources(layout, forestEnv, grassEnv);
+
         world.addSubEnvironment(forestEnv);
         world.addSubEnvironment(grassEnv);
         world.addSubEnvironment(waterEnv);
 
         return world;
+    }
+
+    private static void spawnShorelineWaterSources(List<String> layout, Forest forestEnv, GrassLand grassEnv) {
+        float waterNutrition = AppConfig.getFloat("food.water.nutritionalValue");
+
+        for (int r = 0; r < layout.size(); r++) {
+            String[] tokens = layout.get(r).split("\\s+");
+            for (int c = 0; c < tokens.length; c++) {
+                int tileCode = Integer.parseInt(tokens[c]);
+                if (!isDrinkableShoreTile(tileCode) || !hasAdjacentWater(layout, r, c)) {
+                    continue;
+                }
+
+                Vector2D pos = new Vector2D((c + 0.5f) * TILE_SIZE, (r + 0.5f) * TILE_SIZE);
+                if (tileCode == 2) {
+                    forestEnv.getResources().spawnFood(pos, waterNutrition, FoodType.WATER, Integer.MAX_VALUE);
+                } else {
+                    grassEnv.getResources().spawnFood(pos, waterNutrition, FoodType.WATER, Integer.MAX_VALUE);
+                }
+            }
+        }
+    }
+
+    private static boolean isDrinkableShoreTile(int tileCode) {
+        return tileCode == 1 || tileCode == 2 || tileCode == 4;
+    }
+
+    private static boolean hasAdjacentWater(List<String> layout, int row, int col) {
+        return isWaterTile(layout, row - 1, col)
+                || isWaterTile(layout, row + 1, col)
+                || isWaterTile(layout, row, col - 1)
+                || isWaterTile(layout, row, col + 1);
+    }
+
+    private static boolean isWaterTile(List<String> layout, int row, int col) {
+        if (row < 0 || row >= layout.size() || col < 0) return false;
+        String[] tokens = layout.get(row).split("\\s+");
+        return col < tokens.length && Integer.parseInt(tokens[col]) == 0;
     }
 }

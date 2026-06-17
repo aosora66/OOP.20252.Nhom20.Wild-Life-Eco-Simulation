@@ -94,7 +94,9 @@ public abstract class Animal extends Organism {
     public void eating(FoodItem food) {
         if (food == null || environment == null) return;
         stats.consume(food.nutritionalValue(), food.isWater());
-        environment.getResources().consume(food);
+        if (!food.isWater()) {
+            environment.getResources().consume(food);
+        }
     }
 
     public boolean canEat(FoodType type) {
@@ -113,6 +115,23 @@ public abstract class Animal extends Organism {
      * Chỉ cần override trong các lớp đặc biệt (ví dụ: Elephant). Mặc định là false.
      */
     public boolean isApexPredator() { return false; }
+
+    /**
+     * Trả về true nếu loài này biết GẶM CỎ (ăn trực tiếp cây Grass, không chỉ ăn quả rụng).
+     * Mặc định false; các loài ăn cỏ (Thỏ, Hươu, Voi) override thành true.
+     */
+    public boolean canGraze() { return false; }
+
+    /**
+     * Gặm một cây (vd. Cỏ): trừ "sinh khối" (HP) của cây và nạp dinh dưỡng cho bản thân.
+     * Cây chết khi HP cạn (Organism.decreaseHp tự gọi die()); cỏ mọc lại nhờ sinh sản,
+     * nên đây là nguồn thức ăn bền vững cho thú ăn cỏ.
+     */
+    public void grazeOn(wildlife.model.organism.plant.Plant plant) {
+        if (plant == null || !plant.isAlive()) return;
+        plant.decreaseHp(AppConfig.getFloat("animal.graze.biomassPerBite"));
+        stats.consume(AppConfig.getFloat("animal.graze.nutritionPerBite"), false);
+    }
 
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
     protected boolean canReproduce(int currentTick) {
