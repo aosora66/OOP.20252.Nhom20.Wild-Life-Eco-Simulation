@@ -6,6 +6,8 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
@@ -99,7 +101,7 @@ public class Fish extends Animal {
                 interactionRadius,
                 0.25f,
                 0.2f,
-                "Tiger", "Wolf"
+                Tiger.class, Wolf.class
         ));
     }
 

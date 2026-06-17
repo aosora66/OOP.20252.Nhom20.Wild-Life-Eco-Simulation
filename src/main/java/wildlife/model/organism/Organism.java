@@ -4,6 +4,7 @@ import wildlife.model.dto.RenderData;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
@@ -122,6 +123,7 @@ public abstract class Organism {
     // ----------------------------------------------------------
     //  Concrete methods — hành vi mặc định dùng chung
     // ----------------------------------------------------------
+
 
     /**
      * Tính và áp dụng decay đói/khát + toàn bộ HP drain mỗi tick.

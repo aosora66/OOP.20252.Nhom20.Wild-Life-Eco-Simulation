@@ -135,18 +135,6 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
     }
 
-    protected Optional<Organism> findNearestBySpecies(Animal self, Environment env,
-                                                       String targetSpecies) {
-        return env.getRegistry()
-                .findNear(self.getPosition(), sightRadius, Organism.class)
-                .stream()
-                .filter(o -> o.isAlive()
-                          && !o.getId().equals(self.getId())
-                          && o.getSpeciesName().equals(targetSpecies))
-                .filter(o -> detectability(o, self, env) > 0)
-                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
-    }
-
     protected Optional<Animal> findNearestApex(Animal self, Environment env) {
         return env.getRegistry()
                 .findNear(self.getPosition(), sightRadius, Animal.class)
@@ -156,17 +144,6 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 .max(Comparator.comparingDouble(a -> detectability(a, self, env)));
     }
 
-    /**
-     * Tìm bụi Cỏ (Grass) còn sống gần nhất trong sightRadius — dùng cho thú gặm cỏ.
-     * Chọn theo khoảng cách (giống tìm thức ăn), không dùng detectability.
-     */
-    protected Optional<Grass> findNearestGrass(Animal self, Environment env) {
-        return env.getRegistry()
-                .findNear(self.getPosition(), sightRadius, Grass.class)
-                .stream()
-                .min(Comparator.comparingDouble(
-                        g -> g.getPosition().distanceTo(self.getPosition())));
-    }
 
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
     protected Optional<FoodItem> findNearestFood(Animal self, Environment env,

@@ -1,5 +1,8 @@
 package wildlife.model.organism.animal.canivores;
 
+import wildlife.model.brain.HunterStrategy;
+import wildlife.model.brain.PassiveStrategy;
+import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.animal.Animal;
@@ -38,9 +41,9 @@ public class Tiger extends Animal {
     protected void addSurvivalStrategies() {
         float huntSpeedMult = AppConfig.getFloat("animal.tiger.hunt.speedMultiplier");
         float huntHungerThreshold = AppConfig.getFloat("animal.tiger.hunt.hungerThreshold");
+        int huntSprintSteps = AppConfig.getInt("animal.tiger.hunt.sprintSteps");
 
-        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
-        addStrategy(new wildlife.model.brain.ScaredStrategy(
+        addStrategy(new ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,
                 2,
@@ -49,18 +52,19 @@ public class Tiger extends Animal {
                 0.4f
         ));
 
-        // 2. Săn mồi khi đói (Ưu tiên trung bình: 20)
-        addStrategy(new wildlife.model.brain.HunterStrategy(
+        //  Săn mồi khi đói (Ưu tiên trung bình: 20)
+        addStrategy(new HunterStrategy(
                 this.speed * huntSpeedMult,
                 this.vision,
                 this.interactionRadius,
                 this.combatPower,
                 huntHungerThreshold,
+                huntSprintSteps,
                 Rabbit.class, Deer.class
         ));
 
         // 2. Tìm nước hoặc đi dạo khi không săn (Ưu tiên thấp: 10)
-        addStrategy(new wildlife.model.brain.PassiveStrategy(
+        addStrategy(new PassiveStrategy(
                 this.speed,
                 this.vision,
                 this.interactionRadius,
@@ -69,8 +73,4 @@ public class Tiger extends Animal {
         ));
     }
 
-    @Override
-    public void reproduce() {
-        reproduceSameSpecies();
-    }
 }
