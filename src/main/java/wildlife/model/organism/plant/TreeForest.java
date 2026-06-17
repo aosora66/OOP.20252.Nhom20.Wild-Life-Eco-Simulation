@@ -16,7 +16,6 @@ import java.util.UUID;
 
 /**
  * Cây rừng — cây cổ thụ sống trong môi trường Forest, định kỳ rụng quả để động vật ăn.
- * Dùng FoodType.APPLE như quả chung (quả rừng), các động vật ăn thực vật đều tiêu thụ được.
  */
 public class TreeForest extends Plant {
 
@@ -83,7 +82,7 @@ public class TreeForest extends Plant {
                 position.getY() + offsetY
         );
 
-        environment.getResources().spawnFood(fruitPos, nutrition, FoodType.APPLE, expiry);
+        environment.getResources().spawnFood(fruitPos, nutrition, FoodType.FRUITFOREST, expiry);
     }
 
     @Override

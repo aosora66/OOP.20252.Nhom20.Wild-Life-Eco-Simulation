@@ -5,6 +5,8 @@ import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
@@ -43,7 +45,7 @@ public class Rabbit extends Animal {
                 this.interactionRadius,
                 0.25f,
                 0.3f,
-                "Tiger", "Wolf"
+                Tiger.class, Wolf.class
         ));
 
         // Tìm thức ăn/nước uống khi không có kẻ thù
@@ -65,8 +67,4 @@ public class Rabbit extends Animal {
     @Override
     public boolean canGraze() { return true; }
 
-    @Override
-    public void reproduce() {
-        reproduceSameSpecies();
-    }
 }

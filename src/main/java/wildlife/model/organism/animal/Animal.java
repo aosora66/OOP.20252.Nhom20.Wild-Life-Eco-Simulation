@@ -54,8 +54,21 @@ public abstract class Animal extends Organism {
     }
 
     @Override
-    public abstract void reproduce();
+    /**
+     * Sinh một con cùng loài gần bố/mẹ. Các subclass trên cạn gọi helper này để tránh
+     * lặp lại reflection/config boilerplate; Fish giữ logic riêng vì có pop cap riêng.
+     */
+    public void reproduce() {
+        if (environment == null) return;
 
+        int currentTick = environment.getTime().getCurrentTick();
+        if (!canReproduce(currentTick)) return;
+
+        Animal child = createSameSpeciesOffspring(findOffspringPosition());
+        environment.addOrganism(child);
+        lastReproduceTick = currentTick;
+        return;
+    }
 
     // abstract
     /**
@@ -77,7 +90,7 @@ public abstract class Animal extends Organism {
     }
 
     /**
-     * Chọn và chạy strategy cos priority cao nhất mỗi tick, thỏa isApplicable()
+     * Chọn và chạy strategy co priority cao nhất mỗi tick, thỏa isApplicable()
      * Subclass gọi hàm này từ onTick().
      */
     protected void executeStrategy(int currentTick) {
@@ -106,14 +119,8 @@ public abstract class Animal extends Organism {
         return diet.contains(type);
     }
 
-
-    /** Getter dùng cho ScaredStrategy counter-attack. */
-    public float getCombatPower() { return combatPower; }
-    public float getVision()      { return vision; }
-    public float getSpeed()       { return speed; }
-
     /**
-     * Trả về true nếu loài này là "apex" — khiến MỌI động vật có ScaredStrategy phải chạy trốn.
+     * Trả về true nếu loài này là "apex"
      * Chỉ cần override trong các lớp đặc biệt (ví dụ: Elephant). Mặc định là false.
      */
     public boolean isApexPredator() { return false; }
@@ -137,10 +144,15 @@ public abstract class Animal extends Organism {
 
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
     protected boolean canReproduce(int currentTick) {
-        float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");
-        float thirstThreshold = AppConfig.getFloat("animal.reproduce.thirstThreshold");
-        int cooldown = AppConfig.getInt("animal.reproduce.cooldownTicks");
-        float chance = AppConfig.getFloat("animal.reproduce.chance");
+        String species = getClass().getSimpleName().toLowerCase();
+        float hungerThreshold = getSpeciesFloatOrDefault(species,
+                "reproduce.hungerThreshold", "animal.reproduce.hungerThreshold");
+        float thirstThreshold = getSpeciesFloatOrDefault(species,
+                "reproduce.thirstThreshold", "animal.reproduce.thirstThreshold");
+        int cooldown = getSpeciesIntOrDefault(species,
+                "reproduce.cooldownTicks", "animal.reproduce.cooldownTicks");
+        float chance = getSpeciesFloatOrDefault(species,
+                "reproduce.chance", "animal.reproduce.chance");
         boolean cooldownReady = lastReproduceTick == 0
                 || (currentTick - lastReproduceTick) >= cooldown;
 
@@ -151,22 +163,18 @@ public abstract class Animal extends Organism {
                 Math.random() < chance;
     }
 
-    /**
-     * Sinh một con cùng loài gần bố/mẹ. Các subclass trên cạn gọi helper này để tránh
-     * lặp lại reflection/config boilerplate; Fish giữ logic riêng vì có pop cap riêng.
-     */
-    protected boolean reproduceSameSpecies() {
-        if (environment == null) return false;
-
-        int currentTick = environment.getTime().getCurrentTick();
-        if (!canReproduce(currentTick)) return false;
-
-        Animal child = createSameSpeciesOffspring(findOffspringPosition());
-        environment.addOrganism(child);
-        lastReproduceTick = currentTick;
-        return true;
+    /** Lay gia tri chi so */
+    private float getSpeciesFloatOrDefault(String species, String suffix, String fallbackKey) {
+        String value = AppConfig.get("animal." + species + "." + suffix);
+        return value == null ? AppConfig.getFloat(fallbackKey) : Float.parseFloat(value.trim());
     }
 
+    private int getSpeciesIntOrDefault(String species, String suffix, String fallbackKey) {
+        String value = AppConfig.get("animal." + species + "." + suffix);
+        return value == null ? AppConfig.getInt(fallbackKey) : Integer.parseInt(value.trim());
+    }
+
+    /** Tìm vị trí sinh con hợp lệ gần cha/mẹ. */
     private Vector2D findOffspringPosition() {
         float radius = AppConfig.getFloat("animal.reproduce.spawnRadius");
         for (int attempt = 0; attempt < 8; attempt++) {
@@ -180,6 +188,7 @@ public abstract class Animal extends Organism {
         return position;
     }
 
+    /** Tạo một cá thể con cùng loài với cá thể hiện tại.*/
     private Animal createSameSpeciesOffspring(Vector2D childPos) {
         try {
             String species = getClass().getSimpleName().toLowerCase();
@@ -217,4 +226,10 @@ public abstract class Animal extends Organism {
             throw new IllegalStateException("Không thể sinh con cho loài: " + getClass().getSimpleName(), e);
         }
     }
+
+    /** Getter dùng cho ScaredStrategy counter-attack. */
+    public float getCombatPower() { return combatPower; }
+    public float getVision()      { return vision; }
+    public float getSpeed()       { return speed; }
+
 }
