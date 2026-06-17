@@ -225,7 +225,7 @@ public class UIEventController {
 
             SimpleTextureRegistry textureRegistry = buildTextureRegistry();
             SpriteBatch spriteBatch = new SpriteBatch(width, height);
-            this.renderer = new Renderer(spriteBatch, textureRegistry);
+            this.renderer = new Renderer(spriteBatch, textureRegistry, camera);
             rendererLatch.countDown();
 
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);

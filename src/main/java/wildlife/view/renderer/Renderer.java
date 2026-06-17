@@ -2,6 +2,7 @@ package wildlife.view.renderer;
 
 import org.lwjgl.BufferUtils;
 import wildlife.model.dto.RenderData;
+import wildlife.view.renderer.utils.Camera;
 import wildlife.view.renderer.utils.IndexedMap;
 
 import java.nio.FloatBuffer;
@@ -24,7 +25,7 @@ public class Renderer {
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
-
+    private final Camera camera;
     /** 0 = Basic (solid color), 1 = Sprite (textured). Written by the JavaFX thread, read by the render thread. */
     private final AtomicInteger renderMode = new AtomicInteger(0);
 
@@ -79,9 +80,10 @@ public class Renderer {
     private boolean running = true;
     private final Semaphore framePending = new Semaphore(0);
 
-    public Renderer(SpriteBatch spriteBatch, TextureRegistry textureRegistry) {
+    public Renderer(SpriteBatch spriteBatch, TextureRegistry textureRegistry, Camera camera) {
         this.spriteBatch     = Objects.requireNonNull(spriteBatch, "spriteBatch");
         this.textureRegistry = Objects.requireNonNull(textureRegistry, "textureRegistry");
+        this.camera = camera;
         instance = this;
     }
 
@@ -103,6 +105,16 @@ public class Renderer {
     public void submit(RenderData data) {
         if (!running) return;
         synchronized (renderQueue) {
+            //culling: nếu nằm ngoài khung nhìn -> không cho vào renderQueue
+            if  (
+                    data.x - DEFAULT_SPRITE_WIDTH/2 > camera.getBotRightX() ||
+                    data.x + DEFAULT_SPRITE_WIDTH/2 < camera.getTopLeftX() ||
+                    data.y + DEFAULT_SPRITE_HEIGHT/2 < camera.getTopLeftY() ||
+                    data.y - DEFAULT_SPRITE_HEIGHT/2 > camera.getBotRightY()
+                )
+            {
+                return;
+            }
             renderQueue.computeIfAbsent(data.speciesName, SpeciesGroup::new)
                        .addPosition(data.x, data.y);
         }
