@@ -1,8 +1,10 @@
 package wildlife.view.renderer;
 
+import org.lwjgl.BufferUtils;
 import wildlife.model.dto.RenderData;
 import wildlife.view.renderer.utils.IndexedMap;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,12 +28,50 @@ public class Renderer {
     /** 0 = Basic (solid color), 1 = Sprite (textured). Written by the JavaFX thread, read by the render thread. */
     private final AtomicInteger renderMode = new AtomicInteger(0);
 
-    private record SpeciesGroup(String speciesName, List<float[]> positions) {}
+    /**
+     * Gom tọa độ của các thực thể cùng loài vào 1 nhóm để vẽ cùng nhau, giảm số lượt texture-bind.
+     * Dùng double-buffer: positionBuffer (submit thread ghi) và renderBuffer (render thread đọc)
+     * được hoán đổi nguyên tử bên trong lock — loại bỏ hoàn toàn float[] per-entity.
+     */
+    private static final class SpeciesGroup {
+        private static final int INITIAL_CAPACITY = 2048; // đủ cho 1024 vị trí (x,y) không cần resize
 
+        final String speciesName;
+        FloatBuffer positionBuffer; // ghi bởi submit()
+        FloatBuffer renderBuffer;   // đọc bởi renderAll()
+
+        SpeciesGroup(String speciesName) {
+            this.speciesName    = speciesName;
+            this.positionBuffer = BufferUtils.createFloatBuffer(INITIAL_CAPACITY);
+            this.renderBuffer   = BufferUtils.createFloatBuffer(INITIAL_CAPACITY);
+        }
+
+        void addPosition(float x, float y) {
+            if (positionBuffer.remaining() < 2) {
+                FloatBuffer bigger = BufferUtils.createFloatBuffer(positionBuffer.capacity() * 2);
+                positionBuffer.flip();
+                bigger.put(positionBuffer);
+                positionBuffer = bigger;
+            }
+            positionBuffer.put(x).put(y);
+        }
+
+        /**
+         * Phải gọi bên trong lock renderQueue.
+         * Flip positionBuffer thành ready-to-read, hoán đổi sang renderBuffer,
+         * rồi clear buffer cũ (nay là positionBuffer) để frame sau có thể ghi ngay.
+         */
+        void swapForRead() {
+            positionBuffer.flip();
+            FloatBuffer tmp = renderBuffer;
+            renderBuffer    = positionBuffer;
+            positionBuffer  = tmp;
+            positionBuffer.clear();
+        }
+    }
 
     /**
-     * Gom tọa độ của các thực thể cùng loài vào 1 nhóm {@link SpeciesGroup} để vẽ cùng nhau, giảm số lượt texture-bind
-     * Các nhóm này được lưu liên tục kế tiếp trên 1 mảng liên tục, kết hợp với HashMap để tăng tốc độ insert / iterate
+     * Các nhóm được lưu liên tục trên 1 mảng liên tục, kết hợp với HashMap để tăng tốc độ insert / iterate.
      * (Tham khảo kỹ hơn trong {@link IndexedMap})
      */
     private final IndexedMap<String, SpeciesGroup> renderQueue = new IndexedMap<>();
@@ -63,40 +103,43 @@ public class Renderer {
     public void submit(RenderData data) {
         if (!running) return;
         synchronized (renderQueue) {
-            renderQueue.computeIfAbsent(data.speciesName, k -> new SpeciesGroup(k, new ArrayList<>())).positions().add(new float[]{data.x, data.y});
+            renderQueue.computeIfAbsent(data.speciesName, SpeciesGroup::new)
+                       .addPosition(data.x, data.y);
         }
     }
 
     public void renderAll() {
         List<SpeciesGroup> groupsToRender;
         synchronized (renderQueue) {
-            if (renderQueue.isEmpty()) {
-                return;
+            if (renderQueue.isEmpty()) return;
+
+            groupsToRender = new ArrayList<>();
+            for (SpeciesGroup group : renderQueue.values()) {
+                if (group.positionBuffer.position() > 0) {
+                    group.swapForRead(); // flip write→read, clear write — all under the lock
+                    groupsToRender.add(group);
+                }
             }
-            groupsToRender = new ArrayList<>(renderQueue.values());
-            renderQueue.clear();
         }
+        if (groupsToRender.isEmpty()) return;
 
         // Snapshot once so every flush() in this frame uses the same mode.
         spriteBatch.setRenderMode(renderMode.get());
         spriteBatch.begin();
 
         for (SpeciesGroup group : groupsToRender) {
-            ITexture texture = textureRegistry.getTexture(group.speciesName());
+            ITexture texture = textureRegistry.getTexture(group.speciesName);
             if (texture == null) {
+                group.renderBuffer.clear();
                 continue;
             }
 
-            for (float[] pos : group.positions()) {
-                spriteBatch.draw(
-                        texture,
-                        pos[0],
-                        pos[1],
-                        DEFAULT_SPRITE_WIDTH,
-                        DEFAULT_SPRITE_HEIGHT
-                );
+            FloatBuffer buf = group.renderBuffer; // already flipped, ready to read
+            while (buf.hasRemaining()) {
+                spriteBatch.draw(texture, buf.get(), buf.get(), DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
             }
             spriteBatch.flush();
+            buf.clear(); // reset renderBuffer so it's ready for the next swapForRead() cycle
         }
 
         spriteBatch.end();
