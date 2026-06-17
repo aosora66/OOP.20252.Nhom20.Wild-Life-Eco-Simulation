@@ -38,6 +38,7 @@ public class Tiger extends Animal {
     protected void addSurvivalStrategies() {
         float huntSpeedMult = AppConfig.getFloat("animal.tiger.hunt.speedMultiplier");
         float huntHungerThreshold = AppConfig.getFloat("animal.tiger.hunt.hungerThreshold");
+        int huntSprintSteps = AppConfig.getInt("animal.tiger.hunt.sprintSteps");
 
         // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
         addStrategy(new wildlife.model.brain.ScaredStrategy(
@@ -56,6 +57,7 @@ public class Tiger extends Animal {
                 this.interactionRadius,
                 this.combatPower,
                 huntHungerThreshold,
+                huntSprintSteps,
                 Rabbit.class, Deer.class
         ));
 

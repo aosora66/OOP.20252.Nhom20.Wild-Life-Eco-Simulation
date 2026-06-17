@@ -137,10 +137,15 @@ public abstract class Animal extends Organism {
 
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
     protected boolean canReproduce(int currentTick) {
-        float hungerThreshold = AppConfig.getFloat("animal.reproduce.hungerThreshold");
-        float thirstThreshold = AppConfig.getFloat("animal.reproduce.thirstThreshold");
-        int cooldown = AppConfig.getInt("animal.reproduce.cooldownTicks");
-        float chance = AppConfig.getFloat("animal.reproduce.chance");
+        String species = getClass().getSimpleName().toLowerCase();
+        float hungerThreshold = getSpeciesFloatOrDefault(species,
+                "reproduce.hungerThreshold", "animal.reproduce.hungerThreshold");
+        float thirstThreshold = getSpeciesFloatOrDefault(species,
+                "reproduce.thirstThreshold", "animal.reproduce.thirstThreshold");
+        int cooldown = getSpeciesIntOrDefault(species,
+                "reproduce.cooldownTicks", "animal.reproduce.cooldownTicks");
+        float chance = getSpeciesFloatOrDefault(species,
+                "reproduce.chance", "animal.reproduce.chance");
         boolean cooldownReady = lastReproduceTick == 0
                 || (currentTick - lastReproduceTick) >= cooldown;
 
@@ -149,6 +154,16 @@ public abstract class Animal extends Organism {
                 stats.getThirstLevel() < thirstThreshold &&
                 cooldownReady &&
                 Math.random() < chance;
+    }
+
+    private float getSpeciesFloatOrDefault(String species, String suffix, String fallbackKey) {
+        String value = AppConfig.get("animal." + species + "." + suffix);
+        return value == null ? AppConfig.getFloat(fallbackKey) : Float.parseFloat(value.trim());
+    }
+
+    private int getSpeciesIntOrDefault(String species, String suffix, String fallbackKey) {
+        String value = AppConfig.get("animal." + species + "." + suffix);
+        return value == null ? AppConfig.getInt(fallbackKey) : Integer.parseInt(value.trim());
     }
 
     /**

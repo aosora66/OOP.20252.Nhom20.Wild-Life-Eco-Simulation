@@ -20,6 +20,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
 
     private final List<Class<? extends Animal>> preySpecies;
     private final float  attackDamage;
+    private final int chaseSteps;
 
     // Mức đói tối thiểu để bắt đầu săn (0–100)
     private final float  hungerSearchThreshold;
@@ -27,9 +28,17 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
                           Class<? extends Animal>... preySpecies) {
+        this(stepSize, sightRadius, attackRange, attackDamage, hungerSearchThreshold, 1, preySpecies);
+    }
+
+    public HunterStrategy(float stepSize, float sightRadius, float attackRange,
+                          float attackDamage, float hungerSearchThreshold,
+                          int chaseSteps,
+                          Class<? extends Animal>... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
+        this.chaseSteps            = Math.max(1, chaseSteps);
         this.preySpecies           = List.of(preySpecies);
     }
 
@@ -89,10 +98,16 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                     float dist = self.getPosition().distanceTo(target.getPosition());
                     if (dist <= attackRange) {
                         // Mồi trong tầm -> Cắn
-                        target.decreaseHp(attackDamage);
+                        attackAndEatIfKilled(self, env, target);
                     } else {
                         // Mồi ngoài tầm -> Đuổi theo
-                        moveToward(self, target.getPosition(), env);
+                        for (int i = 0; i < chaseSteps; i++) {
+                            moveToward(self, target.getPosition(), env);
+                            if (self.getPosition().distanceTo(target.getPosition()) <= attackRange) {
+                                attackAndEatIfKilled(self, env, target);
+                                break;
+                            }
+                        }
                     }
                 },
                 // =================================================================
@@ -100,5 +115,13 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 // =================================================================
                 () -> wander(self, env)
         );
+    }
+
+    private void attackAndEatIfKilled(Animal self, Environment env, Animal target) {
+        target.decreaseHp(attackDamage);
+        if (!target.isAlive()) {
+            self.getStats().consume(target.getStats().getNutritionalValue(), false);
+            env.getRegistry().remove(target.getId());
+        }
     }
 }
