@@ -58,8 +58,4 @@ public class Elephant extends Animal {
         executeStrategy(currentTick);
     }
 
-    @Override
-    public void reproduce() {
-        reproduceSameSpecies();
-    }
 }

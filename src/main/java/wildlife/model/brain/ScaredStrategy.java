@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 public class ScaredStrategy extends AbstractSurvivalStrategy {
 
-    private final List<String> predatorSpecies;
+    private final List<Class<? extends Animal>> predatorSpecies;
     private final int          sprintSteps;
     private final float        counterHpThreshold;
     private final float        counterAttackChance;
@@ -36,7 +36,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
      */
     public ScaredStrategy(float stepSize, float fearRadius, int sprintSteps,
                           float counterAttackRange, float counterHpThreshold,
-                          float counterAttackChance, String... predatorSpecies) {
+                          float counterAttackChance, Class<? extends Animal>... predatorSpecies) {
         super(stepSize, fearRadius, counterAttackRange);
         this.predatorSpecies     = List.of(predatorSpecies);
         this.sprintSteps         = Math.max(1, sprintSteps);
@@ -85,7 +85,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
      * Apex herbivore như Voi không được coi là nguồn sợ hãi ở đây; Voi được xử lý
      * như vật cản sinh học trong Environment.isPositionPassable().
      */
-    private Optional<Organism> findNearestThreat(Animal self, Environment env) {
+    private Optional<? extends Animal> findNearestThreat(Animal self, Environment env) {
         return predatorSpecies.stream()
                 .map(s -> findNearestBySpecies(self, env, s))
                 .filter(Optional::isPresent)

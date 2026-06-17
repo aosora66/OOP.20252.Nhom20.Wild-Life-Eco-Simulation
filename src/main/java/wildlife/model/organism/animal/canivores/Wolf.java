@@ -1,5 +1,8 @@
 package wildlife.model.organism.animal.canivores;
 
+import wildlife.model.brain.HunterStrategy;
+import wildlife.model.brain.PassiveStrategy;
+import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
@@ -41,8 +44,7 @@ public class Wolf extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
         int huntSprintSteps = AppConfig.getInt("animal.wolf.hunt.sprintSteps");
 
-        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
-        addStrategy(new wildlife.model.brain.ScaredStrategy(
+        addStrategy(new ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,
                 2,
@@ -52,7 +54,7 @@ public class Wolf extends Animal {
         ));
 
         // 2. Săn mồi khi đói (Ưu tiên trung bình: 20)
-        addStrategy(new wildlife.model.brain.HunterStrategy(
+        addStrategy(new HunterStrategy(
                 this.speed * huntSpeedMult,
                 this.vision,
                 this.interactionRadius,
@@ -63,7 +65,7 @@ public class Wolf extends Animal {
         ));
 
         // 2. Tìm nước hoặc đi dạo khi không săn (Ưu tiên thấp: 10)
-        addStrategy(new wildlife.model.brain.PassiveStrategy(
+        addStrategy(new PassiveStrategy(
                 this.speed,
                 this.vision,
                 this.interactionRadius,
@@ -72,8 +74,4 @@ public class Wolf extends Animal {
         ));
     }
 
-    @Override
-    public void reproduce() {
-        reproduceSameSpecies();
-    }
 }
