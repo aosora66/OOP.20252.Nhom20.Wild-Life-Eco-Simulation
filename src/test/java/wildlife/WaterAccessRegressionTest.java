@@ -19,6 +19,7 @@ import java.util.List;
 public class WaterAccessRegressionTest {
     public static void main(String[] args) {
         shorelineWaterIsAvailableToLandEnvironment();
+        forestAlsoGetsNearbyLakeWaterSources();
         drinkingWaterDoesNotRemoveTheWaterSource();
         plantAbsorbingWaterDoesNotRemoveTheWaterSource();
     }
@@ -51,6 +52,22 @@ public class WaterAccessRegressionTest {
 
         if (grassWaterSources == 0) {
             throw new AssertionError("Expected grassland shoreline WATER sources from map water tiles");
+        }
+    }
+
+    private static void forestAlsoGetsNearbyLakeWaterSources() {
+        CompositeMap world = MapLoader.loadMapFromFile("test-world", "Test World", "config/map.txt");
+        Environment forest = findEnvironment(world, "forest");
+
+        long forestWaterSources = forest.getResources()
+                .getFoodNear(new Vector2D(500f, 500f), 2000f)
+                .stream()
+                .filter(FoodItem::isWater)
+                .count();
+
+        if (forestWaterSources < 5) {
+            throw new AssertionError("Expected forest land near the lake to receive several WATER sources, got "
+                    + forestWaterSources);
         }
     }
 

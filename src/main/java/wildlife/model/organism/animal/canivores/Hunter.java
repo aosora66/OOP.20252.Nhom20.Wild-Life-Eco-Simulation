@@ -40,7 +40,7 @@ public class Hunter extends Animal {
         float huntSpeedMult       = AppConfig.getFloat("animal.hunter.hunt.speedMultiplier");
         float huntHungerThreshold = AppConfig.getFloat("animal.hunter.hunt.hungerThreshold");
 
-        // 1. Tránh apex predator (vd. Voi) — ưu tiên cao nhất, không có named predator
+        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
         addStrategy(new wildlife.model.brain.ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,

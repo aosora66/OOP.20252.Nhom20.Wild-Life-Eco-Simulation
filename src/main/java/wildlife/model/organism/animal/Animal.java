@@ -141,11 +141,13 @@ public abstract class Animal extends Organism {
         float thirstThreshold = AppConfig.getFloat("animal.reproduce.thirstThreshold");
         int cooldown = AppConfig.getInt("animal.reproduce.cooldownTicks");
         float chance = AppConfig.getFloat("animal.reproduce.chance");
+        boolean cooldownReady = lastReproduceTick == 0
+                || (currentTick - lastReproduceTick) >= cooldown;
 
         return growth.isAdult() &&
                 stats.getHungerLevel() < hungerThreshold &&
                 stats.getThirstLevel() < thirstThreshold &&
-                (currentTick - lastReproduceTick) >= cooldown &&
+                cooldownReady &&
                 Math.random() < chance;
     }
 

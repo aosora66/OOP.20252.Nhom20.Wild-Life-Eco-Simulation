@@ -6,6 +6,7 @@ import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
+import wildlife.util.AppConfig;
 
 import java.util.Comparator;
 import java.util.List;
@@ -35,7 +36,9 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
     @Override
     public boolean isApplicable(Animal self, Environment env) {
-        return self.getStats().getHungerLevel() >= hungerSearchThreshold;
+        return self.getGrowth().isAdult()
+                && self.getStats().getThirstLevel() < AppConfig.getFloat("organism.stats.thirstHpThreshold")
+                && self.getStats().getHungerLevel() >= hungerSearchThreshold;
     }
 
     @Override

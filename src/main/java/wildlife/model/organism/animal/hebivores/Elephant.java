@@ -11,9 +11,8 @@ import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
 /**
- * Voi — apex predator thực vật. Không săn mồi, nhưng khiến MỌI động vật khác phải bỏ chạy.
- * Cơ chế: isApexPredator() = true → ScaredStrategy của mọi loài tự động phát hiện và né tránh.
- * Chỉ ăn thực vật, máu nhiều, chậm nhưng tầm nhìn xa và sức mạnh rất cao (khi bị tấn công).
+ * Voi — động vật ăn cỏ đầu bảng. Không săn mồi và không bị thú ăn thịt chọn làm mồi.
+ * Chỉ ăn thực vật, máu nhiều, chậm nhưng tầm nhìn xa và sức mạnh rất cao.
  */
 public class Elephant extends Animal {
 
@@ -34,7 +33,7 @@ public class Elephant extends Animal {
         initStrategies();
     }
 
-    /** Voi là apex predator — mọi ScaredStrategy tự động nhận diện và bỏ chạy. */
+    /** Voi là apex để HunterStrategy không chọn làm con mồi. */
     @Override
     public boolean isApexPredator() { return true; }
 

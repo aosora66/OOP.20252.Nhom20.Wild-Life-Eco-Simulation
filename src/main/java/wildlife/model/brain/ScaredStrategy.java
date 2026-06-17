@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Strategy chạy trốn — kích hoạt khi phát hiện kẻ thù trong tầm nhìn, ưu tiên 30.
- * Kẻ thù bao gồm: (1) named predators theo speciesName, (2) bất kỳ apex predator nào (vd. Voi).
+ * Kẻ thù là các loài săn mồi được khai báo rõ bằng speciesName.
  *
  * Khi HP thấp và kẻ thù áp sát (trong attackRange), có tỉ lệ phản kháng thay vì chỉ chạy.
  * Sát thương phản kháng = combatPower của bản thân.
@@ -32,8 +32,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
      * @param counterAttackRange  khoảng cách để phản kháng (dùng làm attackRange)
      * @param counterHpThreshold  ngưỡng HP ratio để có thể phản kháng (0–1)
      * @param counterAttackChance xác suất phản kháng mỗi lần cơ hội (0–1)
-     * @param predatorSpecies     các loài kẻ thù theo speciesName (có thể để trống —
-     *                            khi đó chỉ chạy trốn apex predator như Voi)
+     * @param predatorSpecies     các loài kẻ thù theo speciesName
      */
     public ScaredStrategy(float stepSize, float fearRadius, int sprintSteps,
                           float counterAttackRange, float counterHpThreshold,
@@ -82,24 +81,15 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
     }
 
     /**
-     * Gộp named predators và apex predators, trả về mối đe dọa gần nhất.
-     * Named predators: tìm theo speciesName. Apex: tìm qua isApexPredator().
+     * Trả về mối đe dọa gần nhất trong các loài săn mồi được khai báo rõ.
+     * Apex herbivore như Voi không được coi là nguồn sợ hãi ở đây; Voi được xử lý
+     * như vật cản sinh học trong Environment.isPositionPassable().
      */
     private Optional<Organism> findNearestThreat(Animal self, Environment env) {
-        Optional<Organism> nearestNamed = predatorSpecies.stream()
+        return predatorSpecies.stream()
                 .map(s -> findNearestBySpecies(self, env, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
-
-        Optional<Organism> nearestApex = findNearestApex(self, env)
-                .map(a -> (Organism) a);
-
-        if (nearestNamed.isEmpty()) return nearestApex;
-        if (nearestApex.isEmpty()) return nearestNamed;
-
-        double det1 = detectability(nearestNamed.get(), self, env);
-        double det2 = detectability(nearestApex.get(), self, env);
-        return det1 >= det2 ? nearestNamed : nearestApex;
     }
 }

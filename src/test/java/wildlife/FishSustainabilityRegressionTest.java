@@ -45,7 +45,7 @@ public class FishSustainabilityRegressionTest {
         lake.addOrganism(fish);
 
         float before = fish.getStats().getHp();
-        fish.updateOrganism(1);
+        lake.updateEnvironment(1);
         float after = fish.getStats().getHp();
 
         if (after < before - 0.0001f) {
@@ -65,7 +65,7 @@ public class FishSustainabilityRegressionTest {
         Environment lake = findEnvironment(world, "lake");
         lake.getTime().advance(1000);
 
-        Fish parent = Fish.create(lake.getTerrain().getRandomValidPosition(), lake, 1000f);
+        Fish parent = Fish.create(lake.getTerrain().getRandomValidPosition(), lake, 3000f);
         lake.addOrganism(parent);
 
         int before = lake.getRegistry().getAllAlive(Fish.class).size();

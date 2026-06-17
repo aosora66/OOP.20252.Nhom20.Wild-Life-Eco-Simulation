@@ -16,6 +16,7 @@ import java.util.List;
 public class MapLoader {
 
     private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
+    private static final int LAKE_SHORE_BAND_TILES = 2;
 
     public static CompositeMap loadMapFromFile(String mapId, String mapName, String filePath) {
         List<String> layout = new ArrayList<>();
@@ -112,7 +113,7 @@ public class MapLoader {
             String[] tokens = layout.get(r).split("\\s+");
             for (int c = 0; c < tokens.length; c++) {
                 int tileCode = Integer.parseInt(tokens[c]);
-                if (!isDrinkableShoreTile(tileCode) || !hasAdjacentWater(layout, r, c)) {
+                if (!isDrinkableShoreTile(tileCode) || !isNearLakeShore(layout, r, c, LAKE_SHORE_BAND_TILES)) {
                     continue;
                 }
 
@@ -130,11 +131,19 @@ public class MapLoader {
         return tileCode == 1 || tileCode == 2 || tileCode == 4;
     }
 
-    private static boolean hasAdjacentWater(List<String> layout, int row, int col) {
-        return isWaterTile(layout, row - 1, col)
-                || isWaterTile(layout, row + 1, col)
-                || isWaterTile(layout, row, col - 1)
-                || isWaterTile(layout, row, col + 1);
+    private static boolean isNearLakeShore(List<String> layout, int row, int col, int shoreBandTiles) {
+        for (int dr = -shoreBandTiles; dr <= shoreBandTiles; dr++) {
+            for (int dc = -shoreBandTiles; dc <= shoreBandTiles; dc++) {
+                int distanceInTiles = Math.abs(dr) + Math.abs(dc);
+                if (distanceInTiles == 0 || distanceInTiles > shoreBandTiles) {
+                    continue;
+                }
+                if (isWaterTile(layout, row + dr, col + dc)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean isWaterTile(List<String> layout, int row, int col) {

@@ -17,6 +17,7 @@ import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.animal.hebivores.Deer;
+import wildlife.model.organism.animal.hebivores.Elephant;
 import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -69,6 +70,8 @@ public abstract class Environment {
 
     /** Bán kính chặn quanh gốc cây lớn (TreeForest/AppleTree) khi động vật di chuyển. */
     private static final float PLANT_BLOCK_RADIUS = 6.0f;
+    /** Bán kính thân Voi dùng như vật cản sinh học. */
+    private static final float ELEPHANT_BLOCK_RADIUS = AppConfig.getFloat("animal.elephant.blockRadius");
 
     // ----------------------------------------------------------------
     //  5 Components
@@ -123,6 +126,9 @@ public abstract class Environment {
         this.humidity    = humidity;
         this.temperature = temperature;
         this.lightLevel  = lightLevel;
+        this.currentHumidity = humidity;
+        this.currentTemp     = temperature;
+        this.currentLight    = lightLevel;
         this.time        = time;
         this.terrain     = terrain;
         this.registry    = registry;
@@ -150,8 +156,8 @@ public abstract class Environment {
         // 4. Cập nhật theo ngày/đêm
         if (!time.isDaytime()) {
             this.currentTemp = this.currentTemp - 5.0f;
-            this.currentHumidity = this.currentHumidity + 15.0f;
-            this.currentLight = this.lightLevel - 0.6f; // +/- 0.05
+            this.currentHumidity = clamp(this.currentHumidity + 15.0f, 0.0f, 100.0f);
+            this.currentLight = clamp(this.lightLevel - 0.6f, 0.0f, 1.0f);
         }
 
         // 5. Tick toàn bộ sinh vật
@@ -183,6 +189,10 @@ public abstract class Environment {
      * Áp dụng tác động của thời tiết hiện tại lên chỉ số môi trường.
      */
     protected abstract void applyWeatherEffect();
+
+    private float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
 
 
     // ----------------------------------------------------------------
@@ -221,8 +231,9 @@ public abstract class Environment {
                 float finalMaxSize = baseSize * randomFactorSize;
 
                 // 3. KHỞI TẠO CÁC COMPONENT
-                // Trưởng thành ở 20% (0.2f), lão hóa ở 70% (0.7f)
-                GrowthComponent growth = new GrowthComponent(finalMaxAge, finalMaxSize, 0.2f, 0.7f);
+                // Rải tuổi ban đầu (0..60% đời) để quần thể có cả con non và con trưởng thành.
+                float startAge = random.nextFloat() * finalMaxAge * 0.6f;
+                GrowthComponent growth = new GrowthComponent(finalMaxAge, finalMaxSize, 0.2f, 0.7f, startAge);
                 SurvivalStatsComponent stats = new SurvivalStatsComponent(finalHp, baseNutrition, hungerDecay, thirstDecay);
 
                 // Setup Adaptability: Phân loại môi trường sống cho Cá và Thú trên cạn
@@ -296,10 +307,15 @@ public abstract class Environment {
             }
         }
 
-        // 3. Vật cản sinh học: thân cây lớn (TreeForest, AppleTree) chặn đường mọi loài.
-        //    Cỏ (Grass) nhỏ nên KHÔNG chặn. Bán kính nhỏ — chỉ chặn ngay tại gốc cây.
+        // 3. Vật cản sinh học: thân cây lớn và Voi chặn đường mọi loài.
+        //    Cỏ (Grass) nhỏ nên KHÔNG chặn. Bán kính nhỏ — chỉ chặn ngay tại thân.
         for (Organism o : registry.findNear(pos, PLANT_BLOCK_RADIUS, Organism.class)) {
             if (o instanceof TreeForest || o instanceof AppleTree) {
+                return false;
+            }
+        }
+        for (Elephant elephant : registry.findNear(pos, ELEPHANT_BLOCK_RADIUS, Elephant.class)) {
+            if (!elephant.getId().equals(self.getId())) {
                 return false;
             }
         }

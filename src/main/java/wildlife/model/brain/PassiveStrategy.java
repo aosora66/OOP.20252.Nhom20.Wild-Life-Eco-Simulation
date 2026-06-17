@@ -1,9 +1,11 @@
 package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
+import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.plant.Grass;
 
+import java.util.Comparator;
 import java.util.Optional;
 
 /**
@@ -38,15 +40,23 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
      */
     @Override
     public void execute(Animal self, Environment env) {
+        if (tryOpportunisticEat(self, env)) return;
+
         if (self.getStats().getThirstLevel() >= thirstSearchThreshold) {
-            findNearestFood(self, env, true).ifPresentOrElse(
+            findNearestKnownFood(self, env, true).ifPresentOrElse(
                     water -> {
                         moveToward(self, water.position(), env);
                         if (self.getPosition().distanceTo(water.position()) <= attackRange) {
                             self.eating(water);
                         }
                     },
-                    () -> wander(self, env)
+                    () -> {
+                        if (self.getStats().getHungerLevel() >= hungerSearchThreshold) {
+                            seekNearestFoodOrGrass(self, env);
+                        } else {
+                            wander(self, env);
+                        }
+                    }
             );
             return;
         }
@@ -58,7 +68,6 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
 
         // Chưa tới ngưỡng đói/khát: đi lang thang. Nhưng nếu vô tình có thức ăn/nước
         // ngay dưới chân và đang còn nhu cầu (đói/khát > 0) thì nhặt ăn luôn — không bỏ phí.
-        if (tryOpportunisticEat(self, env)) return;
         wander(self, env);
     }
 
@@ -68,8 +77,8 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
      * thì wander chờ tick sau.
      */
     private void seekNearestFoodOrGrass(Animal self, Environment env) {
-        var food  = findNearestFood(self, env, false);
-        Optional<Grass> grass = self.canGraze() ? findNearestGrass(self, env) : Optional.empty();
+        var food  = findNearestKnownFood(self, env, false);
+        Optional<Grass> grass = self.canGraze() ? findNearestKnownGrass(self, env) : Optional.empty();
 
         double dFood  = food.map(f -> (double) f.position().distanceTo(self.getPosition()))
                 .orElse(Double.MAX_VALUE);
@@ -92,6 +101,33 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
                 self.eating(food.get());
             }
         }
+    }
+
+    private Optional<FoodItem> findNearestKnownFood(Animal self, Environment env, boolean wantWater) {
+        Optional<FoodItem> visible = findNearestFood(self, env, wantWater);
+        if (visible.isPresent()) {
+            return visible;
+        }
+
+        return env.getResources()
+                .getAllFood()
+                .stream()
+                .filter(f -> f.isWater() == wantWater && self.canEat(f.type()))
+                .min(Comparator.comparingDouble(
+                        f -> f.position().distanceTo(self.getPosition())));
+    }
+
+    private Optional<Grass> findNearestKnownGrass(Animal self, Environment env) {
+        Optional<Grass> visible = findNearestGrass(self, env);
+        if (visible.isPresent()) {
+            return visible;
+        }
+
+        return env.getRegistry()
+                .getAllAlive(Grass.class)
+                .stream()
+                .min(Comparator.comparingDouble(
+                        g -> g.getPosition().distanceTo(self.getPosition())));
     }
 
     /**
