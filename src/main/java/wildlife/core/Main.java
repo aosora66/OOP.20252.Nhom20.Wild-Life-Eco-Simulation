@@ -1,4 +1,6 @@
 package wildlife.core;
+import wildlife.model.dto.RenderData;
+import wildlife.model.organism.animal.carnivores.Wolf;
 import wildlife.view.ApplicationFrame;
 
 import java.util.ArrayList;
@@ -57,11 +59,48 @@ public class Main {
             // TODO: Tạo instance Sói và add vào ecosystem
             // ecosystem.add(new Soi("Soi_" + i, pos, ...));
         }
-        // BƯỚC 4: KHỞI TẠO VÀ CHẠY GIAO DIỆN (VIEW)
         System.out.println("--- KHỞI TẠO HOÀN TẤT! ---");
         System.out.println("Tổng số sinh vật: " + ecosystem.size());
 
+
+        // BƯỚC 4: KHỞI TẠO VÀ CHẠY GIAO DIỆN (VIEW)
+            // Khởi tạo 2 luồng song song: JavaFX và một deamon thread để chạy coreloop
+        // deamon thread chạy coreloop
+        Thread coreLoopThread = new Thread(() -> {
+            System.out.println("[Core Loop] Đang chờ giao diện hiển thị");
+            Renderer renderer = ApplicationFrame.getRendererInstance();
+
+            final int TICK_RATE = 64;
+            final long MS_PER_SECOND = 1000 / TICK_RATE;
+
+            while(true) {
+                long startTime = System.currentTimeMillis();
+
+                runSimulationTick(renderer);
+
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                long sleepTime = MS_PER_SECOND - elapsedTime;
+                if(sleepTime > 0) {
+                    try{
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+            // todo: core loop system
+        }, "Ecosystem-Core-loop");
+        coreLoopThread.setDaemon(true);
+        coreLoopThread.start();
         // Chạy JavaFX Application. Phương thức này sẽ chặn cho đến khi cửa sổ đóng.
         ApplicationFrame.launch(ApplicationFrame.class, args);
+    }
+    private static void runSimulationTick(Renderer renderer){
+        // todo: cập nhật môi trường
+
+        // todo: Cập nhật các sinh vật trong organism registry, mỗi sinh vật cập nhật xong thì goi renderer.submit()
+
+        renderer.renderAll();
     }
 }

@@ -26,6 +26,7 @@ import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
 
 import java.nio.ByteBuffer;
+import java.util.EventListener;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -117,6 +118,8 @@ public class UIEventController {
     }
 
     //Pane nay de render scene
+
+
     @FXML
     public AnchorPane sceneCanvas;
 
@@ -133,6 +136,10 @@ public class UIEventController {
     private volatile int canvasHeight = 600;
 
     private volatile Renderer renderer;
+
+    private final wildlife.view.renderer.utils.Camera camera = new wildlife.view.renderer.utils.Camera(400, 300, 1080);
+    private double lastMouseX;
+    private double lastMouseY;
     private void setupLWJGLCanvas() {
         // Create the ImageView for rendering
         renderImageView = new ImageView();
@@ -246,6 +253,9 @@ public class UIEventController {
                 // Clear the framebuffer
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+                // Update projection with camera
+                spriteBatch.updateProjection(camera);
+
                 // Draw all submitted organisms
                 renderer.renderAll();
 
@@ -278,14 +288,6 @@ public class UIEventController {
                 Platform.runLater(() -> {
                     updateJavaFXImage(framePixels, finalW, finalH);
                 });
-
-                // Maintain a stable ~60 FPS
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
             }
 
             // Clean up resources inside the render thread
@@ -347,6 +349,32 @@ public class UIEventController {
         }
     }
 
+    private void setupCameraEvents() {
+        sceneCanvas.setOnScroll(event -> {
+            double deltaY = event.getDeltaY();
+            int zoomFactor = (int) (deltaY * 2);
+            camera.zoom(-zoomFactor);
+        });
+
+        sceneCanvas.setOnMousePressed(event -> {
+            lastMouseX = event.getX();
+            lastMouseY = event.getY();
+        });
+
+        sceneCanvas.setOnMouseDragged(event -> {
+            double currentX = event.getX();
+            double currentY = event.getY();
+            double deltaX = currentX - lastMouseX;
+            double deltaY = currentY - lastMouseY;
+
+            double scale = (double) (camera.getBotRightY() - camera.getTopLeftY()) / canvasHeight;
+            camera.pan((int) (-deltaX * scale), (int) (-deltaY * scale));
+
+            lastMouseX = currentX;
+            lastMouseY = currentY;
+        });
+    }
+
     public Renderer getRenderer(){
         return this.renderer;
     }
@@ -355,5 +383,10 @@ public class UIEventController {
         environment_materials_load();
         setupLWJGLCanvas();
         setupScaling();
+        setupCameraEvents();
+        uiGroup.setPickOnBounds(false);
+        if(uiGroup.getChildren().get(0) instanceof AnchorPane) {
+            ((AnchorPane)uiGroup.getChildren().get(0)).setPickOnBounds(false);
+        }
     }
 }

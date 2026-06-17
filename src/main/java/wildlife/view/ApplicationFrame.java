@@ -10,17 +10,31 @@ import wildlife.view.renderer.Renderer;
 import wildlife.view.ui.UIEventController;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 /*
  this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for lwjgl embedding (renderer).
  */
 public class ApplicationFrame extends Application {
-    private Renderer renderer;
+    private static volatile Renderer renderer;
+    private static final java.util.concurrent.CountDownLatch latch = new CountDownLatch(1);
+
+    public static Renderer getRendererInstance(){
+        try{
+            latch.await();
+        }catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
+        return renderer;
+    }
     @Override
     public void start(Stage primaryStage) throws Exception {
-        //we load the frame from fxml file, set it as root node on javafx
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/wildlife/view/ui/fxml/main_ui.fxml"));
         Parent root = loader.load();
+
+        renderer = loader.<UIEventController>getController().getRenderer();
+        latch.countDown();
+
         primaryStage.setMaximized(true);
         primaryStage.setResizable(false);
         renderer = loader.<UIEventController>getController().getRenderer();
@@ -33,13 +47,5 @@ public class ApplicationFrame extends Application {
 
         primaryStage.setScene(scene);
         primaryStage.show();
-
-    }
-    public Renderer getRenderer() {
-        return this.renderer;
-    }
-
-    public void show(String[] args){
-        launch(args);
     }
 }

@@ -162,6 +162,15 @@ public class SpriteBatch {
         projection.identity().ortho2D(0f, screenWidth, screenHeight, 0f);
     }
 
+    public void updateProjection(wildlife.view.renderer.utils.Camera camera) {
+        projection.identity().ortho2D(
+            camera.getTopLeftX(),
+            camera.getBotRightX(),
+            camera.getBotRightY(),
+            camera.getTopLeftY()
+        );
+    }
+
     public void dispose() {
         shader.dispose();
         glDeleteBuffers(vboId);
