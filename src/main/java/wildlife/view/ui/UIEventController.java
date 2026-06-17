@@ -6,6 +6,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -339,12 +340,19 @@ public class UIEventController {
 
     private void setupCameraEvents() {
         sceneCanvas.setFocusTraversable(true);
+        sceneCanvas.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if(!newVal){
+                sceneCanvas.setCursor(Cursor.DEFAULT);
+            }
+        });
         sceneCanvas.setOnKeyPressed(event -> {
             if(event.getCode() == KeyCode.SPACE) {
                 isSpacePressed = true;
+                sceneCanvas.setCursor(Cursor.OPEN_HAND);
             }
             if(event.getCode() == KeyCode.CONTROL) {
                 isCtrlPressed = true;
+                sceneCanvas.setCursor(Cursor.NONE);
             }
         });
         sceneCanvas.setOnKeyReleased(event -> {
@@ -354,6 +362,7 @@ public class UIEventController {
             if(event.getCode() == KeyCode.CONTROL) {
                 isCtrlPressed = false;
             }
+            sceneCanvas.setCursor(Cursor.DEFAULT);
         });
 
         sceneCanvas.setOnScroll(event -> {
@@ -367,6 +376,7 @@ public class UIEventController {
         sceneCanvas.setOnMousePressed(event -> {
             if(isSpacePressed){
                 sceneCanvas.requestFocus();
+                sceneCanvas.setCursor(Cursor.CLOSED_HAND);
                 lastMouseX = event.getX();
                 lastMouseY = event.getY();
             }

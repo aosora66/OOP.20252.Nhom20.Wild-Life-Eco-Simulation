@@ -42,7 +42,7 @@ public class Main {
 
             Renderer renderer = ApplicationFrame.getRendererInstance();
 
-            final int  TICK_RATE       = 20;
+            final int  TICK_RATE       = 30;
             final long NS_PER_TICK     = 1_000_000_000L / TICK_RATE;
             // Số tick tối đa được phép bù trong 1 frame — ngăn "spiral of death"
             // khi GC pause hoặc breakpoint làm đồng hồ nhảy vọt
