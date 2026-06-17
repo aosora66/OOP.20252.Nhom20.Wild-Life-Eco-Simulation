@@ -54,21 +54,8 @@ public abstract class Animal extends Organism {
     }
 
     @Override
-    /**
-     * Sinh một con cùng loài gần bố/mẹ. Các subclass trên cạn gọi helper này để tránh
-     * lặp lại reflection/config boilerplate; Fish giữ logic riêng vì có pop cap riêng.
-     */
-    public void reproduce() {
-        if (environment == null) return;
+    public abstract void reproduce();
 
-        int currentTick = environment.getTime().getCurrentTick();
-        if (!canReproduce(currentTick)) return;
-
-        Animal child = createSameSpeciesOffspring(findOffspringPosition());
-        environment.addOrganism(child);
-        lastReproduceTick = currentTick;
-        return;
-    }
 
     // abstract
     /**
@@ -90,7 +77,7 @@ public abstract class Animal extends Organism {
     }
 
     /**
-     * Chọn và chạy strategy co priority cao nhất mỗi tick, thỏa isApplicable()
+     * Chọn và chạy strategy cos priority cao nhất mỗi tick, thỏa isApplicable()
      * Subclass gọi hàm này từ onTick().
      */
     protected void executeStrategy(int currentTick) {
@@ -119,8 +106,14 @@ public abstract class Animal extends Organism {
         return diet.contains(type);
     }
 
+
+    /** Getter dùng cho ScaredStrategy counter-attack. */
+    public float getCombatPower() { return combatPower; }
+    public float getVision()      { return vision; }
+    public float getSpeed()       { return speed; }
+
     /**
-     * Trả về true nếu loài này là "apex"
+     * Trả về true nếu loài này là "apex" — khiến MỌI động vật có ScaredStrategy phải chạy trốn.
      * Chỉ cần override trong các lớp đặc biệt (ví dụ: Elephant). Mặc định là false.
      */
     public boolean isApexPredator() { return false; }
@@ -163,7 +156,6 @@ public abstract class Animal extends Organism {
                 Math.random() < chance;
     }
 
-    /** Lay gia tri chi so */
     private float getSpeciesFloatOrDefault(String species, String suffix, String fallbackKey) {
         String value = AppConfig.get("animal." + species + "." + suffix);
         return value == null ? AppConfig.getFloat(fallbackKey) : Float.parseFloat(value.trim());
@@ -174,7 +166,22 @@ public abstract class Animal extends Organism {
         return value == null ? AppConfig.getInt(fallbackKey) : Integer.parseInt(value.trim());
     }
 
-    /** Tìm vị trí sinh con hợp lệ gần cha/mẹ. */
+    /**
+     * Sinh một con cùng loài gần bố/mẹ. Các subclass trên cạn gọi helper này để tránh
+     * lặp lại reflection/config boilerplate; Fish giữ logic riêng vì có pop cap riêng.
+     */
+    protected boolean reproduceSameSpecies() {
+        if (environment == null) return false;
+
+        int currentTick = environment.getTime().getCurrentTick();
+        if (!canReproduce(currentTick)) return false;
+
+        Animal child = createSameSpeciesOffspring(findOffspringPosition());
+        environment.addOrganism(child);
+        lastReproduceTick = currentTick;
+        return true;
+    }
+
     private Vector2D findOffspringPosition() {
         float radius = AppConfig.getFloat("animal.reproduce.spawnRadius");
         for (int attempt = 0; attempt < 8; attempt++) {
@@ -188,7 +195,6 @@ public abstract class Animal extends Organism {
         return position;
     }
 
-    /** Tạo một cá thể con cùng loài với cá thể hiện tại.*/
     private Animal createSameSpeciesOffspring(Vector2D childPos) {
         try {
             String species = getClass().getSimpleName().toLowerCase();
@@ -201,12 +207,10 @@ public abstract class Animal extends Organism {
                     * (0.85f + REPRODUCTION_RANDOM.nextFloat() * 0.3f);
             float maxSize = AppConfig.getFloat("animal." + species + ".maxSize")
                     * (0.85f + REPRODUCTION_RANDOM.nextFloat() * 0.3f);
-            String gender = REPRODUCTION_RANDOM.nextBoolean() ? "MALE" : "FEMALE";
-
             return getClass().getDeclaredConstructor(
                     String.class, String.class, Vector2D.class, Environment.class,
                     GrowthComponent.class, SurvivalStatsComponent.class,
-                    AdaptabilityComponent.class, String.class
+                    AdaptabilityComponent.class
             ).newInstance(
                     getClass().getSimpleName().toUpperCase() + "_" + System.nanoTime(),
                     getClass().getSimpleName(),
@@ -219,17 +223,10 @@ public abstract class Animal extends Organism {
                             adaptability.getOptimalRange(),
                             adaptability.getToleranceRange(),
                             adaptability.getLethalLimit()
-                    ),
-                    gender
+                    )
             );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Không thể sinh con cho loài: " + getClass().getSimpleName(), e);
         }
     }
-
-    /** Getter dùng cho ScaredStrategy counter-attack. */
-    public float getCombatPower() { return combatPower; }
-    public float getVision()      { return vision; }
-    public float getSpeed()       { return speed; }
-
 }

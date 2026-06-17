@@ -2,7 +2,6 @@ package wildlife.model.organism.animal.canivores;
 
 import wildlife.model.brain.HunterStrategy;
 import wildlife.model.brain.PassiveStrategy;
-import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.animal.Animal;
@@ -25,8 +24,7 @@ public class Hunter extends Animal {
                   Environment startEnv,
                   GrowthComponent growth,
                   SurvivalStatsComponent stats,
-                  AdaptabilityComponent adaptability,
-                  String gender) {
+                  AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HUNTER");
         this.combatPower       = AppConfig.getFloat("animal.hunter.combatPower");
         this.vision            = AppConfig.getFloat("animal.hunter.vision");
@@ -42,7 +40,8 @@ public class Hunter extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.hunter.hunt.hungerThreshold");
         int huntSprintSteps       = AppConfig.getInt("animal.hunter.hunt.sprintSteps");
 
-        addStrategy(new ScaredStrategy(
+        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
+        addStrategy(new wildlife.model.brain.ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,
                 2,
@@ -76,5 +75,10 @@ public class Hunter extends Animal {
     @Override
     protected void onTick(int currentTick) {
         executeStrategy(currentTick);
+    }
+
+    @Override
+    public void reproduce() {
+        reproduceSameSpecies();
     }
 }

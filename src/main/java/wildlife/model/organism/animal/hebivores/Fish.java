@@ -24,8 +24,7 @@ public class Fish extends Animal {
                 Environment startEnv,
                 GrowthComponent growth,
                 SurvivalStatsComponent stats,
-                AdaptabilityComponent adaptability,
-                String gender) {
+                AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HEBIVORE");
         this.combatPower = AppConfig.getFloat("animal.fish.combatPower");
         this.vision      = AppConfig.getFloat("animal.fish.vision");
@@ -55,7 +54,6 @@ public class Fish extends Animal {
         float maxAge      = AppConfig.getFloat("animal.fish.maxAge") * (0.75f + RNG.nextFloat() * 0.5f);
         float maxSize     = AppConfig.getFloat("animal.fish.maxSize");
 
-        String gender = RNG.nextBoolean() ? "MALE" : "FEMALE";
         return new Fish(
                 "FISH_" + System.nanoTime() + "_" + RNG.nextInt(1000),
                 "Fish",
@@ -68,8 +66,7 @@ public class Fish extends Animal {
                         new ValueRange(15f, 35f),   // tối ưu
                         new ValueRange(0f, 45f),    // chịu đựng
                         new ValueRange(-60f, -10f)  // vùng cực lạnh = chết
-                ),
-                gender
+                )
         );
     }
 

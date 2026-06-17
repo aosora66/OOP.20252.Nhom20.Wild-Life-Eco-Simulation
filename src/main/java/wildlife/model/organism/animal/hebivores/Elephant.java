@@ -22,8 +22,7 @@ public class Elephant extends Animal {
                     Environment startEnv,
                     GrowthComponent growth,
                     SurvivalStatsComponent stats,
-                    AdaptabilityComponent adaptability,
-                    String gender) {
+                    AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HERBIVORE");
         this.combatPower       = AppConfig.getFloat("animal.elephant.combatPower");
         this.vision            = AppConfig.getFloat("animal.elephant.vision");
@@ -58,4 +57,8 @@ public class Elephant extends Animal {
         executeStrategy(currentTick);
     }
 
+    @Override
+    public void reproduce() {
+        reproduceSameSpecies();
+    }
 }

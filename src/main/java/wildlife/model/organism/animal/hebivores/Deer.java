@@ -21,8 +21,7 @@ public class Deer extends Animal {
                 Environment startEnv,
                 GrowthComponent growth,
                 SurvivalStatsComponent stats,
-                AdaptabilityComponent adaptability,
-                String gender) {
+                AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HEBIVORE");
         this.combatPower = AppConfig.getFloat("animal.deer.combatPower");
         this.vision = AppConfig.getFloat("animal.deer.vision");
@@ -40,6 +39,9 @@ public class Deer extends Animal {
     /** Hươu ăn cỏ — gặm trực tiếp cây Grass. */
     @Override
     public boolean canGraze() { return true; }
+
+    @Override
+    public void reproduce() { reproduceSameSpecies(); }
 
     @Override
     protected void addSurvivalStrategies() {
