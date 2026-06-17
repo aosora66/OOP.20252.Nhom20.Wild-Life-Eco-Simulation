@@ -8,11 +8,14 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
+import wildlife.model.organism.animal.hebivores.Deer;
+import wildlife.model.organism.animal.hebivores.Elephant;
+import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.plant.Grass;
 import wildlife.util.Boundary;
-import wildlife.util.Vector2D;
 
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -48,24 +51,31 @@ public class GrassLand extends Environment {
 
     @Override
     protected void initialize() {
-        // Khởi tạo cỏ
-        for (int i = 0; i < 30; i++) {
-            Vector2D grassPos = terrain.getRandomValidPosition();
-
-            // Tạo thực thể Plant tương ứng
-            registry.add(Grass.create(grassPos, this));
+        // --- 1. THỰC VẬT (PLANTS) ---
+        // 50 Bụi cỏ (Nguồn thức ăn dồi dào, phủ khắp nơi)
+        for (int i = 0; i < 50; i++) {
+            registry.add(Grass.create(terrain.getRandomValidPosition(), this));
         }
-
-        // Rải bụi rậm làm nơi trú ẩn
-        for (int i = 0; i < 5; i++) {
-            Vector2D bushPos = terrain.getRandomValidPosition();
-            resources.placeObstacle(bushPos, ObstacleType.BUSH);
-        }
-
+        // 10 Cây táo (Nhiều hơn rừng)
         for (int i = 0; i < 10; i++) {
-            Vector2D rockPos = terrain.getRandomValidPosition();
-            resources.placeObstacle(rockPos, ObstacleType.ROCK);
+            registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this));
         }
+
+        // --- 2. VẬT CẢN (OBSTACLES) ---
+        // 5 Bụi rậm & 5 Tảng đá (Rất thưa thớt, khó trốn)
+        for (int i = 0; i < 5; i++) {
+            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.BUSH);
+            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.ROCK);
+        }
+
+        // --- 3. ĐỘNG VẬT (ANIMALS) ---
+        // Tỉ lệ: Rất nhiều thú ăn cỏ, Ít thú ăn thịt
+        spawnAnimals(Rabbit.class, 15);
+        spawnAnimals(Deer.class, 10);
+        spawnAnimals(Elephant.class, 3);
+
+        spawnAnimals(Wolf.class, 2);
+        spawnAnimals(Tiger.class, 1);
     }
 
     @Override

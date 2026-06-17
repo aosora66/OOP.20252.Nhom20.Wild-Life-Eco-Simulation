@@ -32,7 +32,7 @@ public class TerrainComponent {
     // ----------------------------------------------------------------
     //  Trạng thái nội tại
     // ----------------------------------------------------------------
-    private final Boundary boundary; // Ranh giới môi trường (Tròn hoặc Chữ nhật)
+    private final Boundary boundary; // Ranh giới môi trường
     private final TerrainType defaultTerrain; // Loại đất nền trải khắp vùng
     private final Set<TerrainType> containedTerrains; // Thống kê các loại đất đang có
 
@@ -67,9 +67,9 @@ public class TerrainComponent {
     }
 
     public TerrainType getTerrainAt(Vector2D pos) {
-        // 1. Rớt ra ngoài ranh giới vùng -> Coi như đụng vách núi
+        // 1. Rớt ra ngoài ranh giới vùng -> Coi như deep water
         if (!containsPosition(pos)) {
-            return TerrainType.MOUNTAIN;
+            return TerrainType.DEEP_WATER;
         }
 
         // 2. Ép tọa độ thực tế thành tọa độ ô vuông
@@ -78,6 +78,16 @@ public class TerrainComponent {
 
         // 3. Ưu tiên ô điểm xuyết, nếu không có thì trả về nền mặc định
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
+    }
+
+    // xoa terrain
+    public void removeCustomTerrain(Vector2D pos) {
+        if (containsPosition(pos)) {
+            int tileX = (int) (pos.getX() / TILE_SIZE);
+            int tileY = (int) (pos.getY() / TILE_SIZE);
+            //hệ thống tự động fallback về defaultTerrain
+            customTiles.remove(new TileIndex(tileX, tileY));
+        }
     }
 
     public float getVisibility(Vector2D pos) {

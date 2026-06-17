@@ -7,9 +7,12 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
+import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * AppleTree represents a fruit-bearing plant in the ecosystem.
@@ -47,6 +50,23 @@ public class AppleTree extends Plant {
         this.lightLevelToPhotosynthesis = AppConfig.getFloat("plant.appletree.minLightLevel");
         this.nutritionAsorbRadius       = AppConfig.getFloat("plant.appletree.nutrientsAsorbRadius");
         this.appleDropRadius            = AppConfig.getFloat("plant.appletree.appleDropRadius");
+    }
+
+    public static AppleTree create(Vector2D pos, Environment env) {
+        return new AppleTree(
+                "APPLETREE_" + System.nanoTime(),
+                "AppleTree",
+                pos,
+                env,
+                new GrowthComponent(1000f, 25f, 0.2f, 0.7f),
+                new SurvivalStatsComponent(80f, 15f, 0.0f, 0.06f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
+                        new ValueRange(18f, 30f),  // Mức tối ưu (Optimal)
+                        new ValueRange(5f, 40f),   // Mức chịu đựng (Tolerance)
+                        new ValueRange(-50f, 0f)   // Ngưỡng chết (Lethal) - Lạnh cóng
+                )
+        );
     }
 
     /**

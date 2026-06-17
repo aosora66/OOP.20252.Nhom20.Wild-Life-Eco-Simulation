@@ -5,11 +5,11 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
-import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.organism.Organism;
+import wildlife.model.organism.animal.hebivores.Fish;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.Vector2D;
@@ -62,20 +62,23 @@ public class Lake extends Environment {
     @Override
     protected void initialize() {
         int numberOfWaterNodes = 16;
-
-        // Lấy danh sách các tọa độ nằm TRÊN ĐƯỜNG VIỀN (Boundary) của hồ
         List<Vector2D> shorelinePoints = generateShorelinePoints(numberOfWaterNodes);
 
-        // Rải FoodItem (Nước) vào các tọa độ ven bờ này
+        // --- 1. TÀI NGUYÊN NƯỚC UỐNG ---
         for (Vector2D pos : shorelinePoints) {
-            this.resources.spawnFood(
-                    pos,
-                    20.0f,            // Giá trị dinh dưỡng: Mỗi ngụm giảm 20 độ khát
-                    FoodType.WATER,
-                    Integer.MAX_VALUE              // Tồn tại vĩnh viễn
-            );
+            this.resources.spawnFood(pos, AppConfig.getFloat("food.water.nutritionalValue"), FoodType.WATER, Integer.MAX_VALUE);
         }
 
+        // --- 2. THỰC VẬT ĐẦU VÀO (TẢO) ---
+        // Rải sẵn 15 cụm tảo ngay khi bắt đầu để Cá có đồ ăn ngay, tránh chết đói ở những tick đầu
+        float algaeNutrition = AppConfig.getFloat("food.algae.nutritionalValue");
+        int algaeExpiry = AppConfig.getInt("food.algae.expiryTicks");
+        for (int i = 0; i < 15; i++) {
+            resources.spawnFood(terrain.getRandomValidPosition(), algaeNutrition, FoodType.ALGAE, algaeExpiry);
+        }
+
+        // --- 3. ĐỘNG VẬT DƯỚI NƯỚC (CÁ) ---
+        spawnAnimals(Fish.class, 15);
     }
 
     @Override

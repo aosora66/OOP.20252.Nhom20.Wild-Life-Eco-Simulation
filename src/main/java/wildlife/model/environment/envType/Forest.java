@@ -8,11 +8,18 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
+import wildlife.model.organism.animal.hebivores.Deer;
+import wildlife.model.organism.animal.hebivores.Elephant;
+import wildlife.model.organism.animal.hebivores.Rabbit;
+import wildlife.model.organism.component.AdaptabilityComponent;
+import wildlife.model.organism.component.GrowthComponent;
+import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.model.organism.plant.TreeForest;
+import wildlife.model.organism.plant.AppleTree;
 import wildlife.util.Boundary;
-import wildlife.util.Vector2D;
 
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -46,18 +53,41 @@ public class Forest extends Environment {
 
     @Override
     protected void initialize() {
-        // Khởi tạo 20 cây cổ thụ
-        for (int i = 0; i < 20; i++) {
-            Vector2D treePos = terrain.getRandomValidPosition();
-            registry.add(TreeForest.create(treePos, this));
+        // --- 1. THỰC VẬT (PLANTS) ---
+        // 30 Cây cổ thụ (Rất dày đặc)
+        for (int i = 0; i < 30; i++) {
+            registry.add(TreeForest.create(terrain.getRandomValidPosition(), this));
+        }
+        // 5 Cây táo (Ít, mọc ven rừng)
+        for (int i = 0; i < 5; i++) {
+            registry.add(AppleTree.create(terrain.getRandomValidPosition(), this));
         }
 
-        // Rải thêm 10 bụi rậm làm nơi trú ẩn
-        for (int i = 0; i < 10; i++) {
-            Vector2D bushPos = terrain.getRandomValidPosition();
-            // Chỉ định rõ đây là Bụi rậm (Thỏ/Hươu lách qua được, Sói/Hổ bị chặn)
-            resources.placeObstacle(bushPos, ObstacleType.BUSH);
+        // --- 2. VẬT CẢN (OBSTACLES) ---
+        // 25 Bụi rậm (Đặc trưng của rừng, rất nhiều chỗ ẩn nấp)
+        for (int i = 0; i < 25; i++) {
+            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.BUSH);
         }
+        // 15 Tảng đá
+        for (int i = 0; i < 15; i++) {
+            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.ROCK);
+        }
+
+        // --- 3. ĐỘNG VẬT (ANIMALS) ---
+        // Tỉ lệ: Nhiều Thú ăn thịt, Ít Thú ăn cỏ, Có động vật đầu bảng (Voi)
+
+        // Sinh 4 con Sói (Bầy sói rừng)
+        spawnAnimals(Wolf.class, 4);
+
+        // Sinh 2 con Hổ (Chúa sơn lâm)
+        spawnAnimals(Tiger.class, 2);
+
+        // Sinh 2 con Voi (Động vật đầu bảng)
+        spawnAnimals(Elephant.class, 2);
+
+        // Sinh 5 con Hươu và 5 con Thỏ (Ít hơn đồng cỏ)
+        spawnAnimals(Rabbit.class, 5);
+        spawnAnimals(Deer.class, 5);
     }
 
     @Override

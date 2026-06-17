@@ -7,6 +7,7 @@ import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.dto.ObstacleItem;
 import wildlife.model.environment.enums.ObstacleType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.event.EnvironmentEventListener;
 import wildlife.model.environment.event.EnvironmentEventPublisher;
@@ -17,12 +18,17 @@ import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.animal.hebivores.Deer;
 import wildlife.model.organism.animal.hebivores.Rabbit;
+import wildlife.model.organism.component.AdaptabilityComponent;
+import wildlife.model.organism.component.GrowthComponent;
+import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Abstract class trung tâm của tầng môi trường.
@@ -177,6 +183,73 @@ public abstract class Environment {
     // ----------------------------------------------------------------
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
+
+    /**
+     * Hàm Generic khởi tạo động vật
+     * @param animalClass Lớp của động vật (VD: Rabbit.class, Wolf.class)
+     * @param count Số lượng cần sinh
+     * @param <T> Kiểu dữ liệu phải kế thừa từ Animal
+     */
+    protected <T extends Animal> void spawnAnimals(Class<T> animalClass, int count) {
+        Random random = new Random();
+        String species = animalClass.getSimpleName().toLowerCase();
+
+        for (int i = 0; i < count; i++) {
+            Vector2D randomPos = terrain.getRandomValidPosition();
+            try {
+                // 1. LẤY THÔNG SỐ CƠ BẢN TỪ CONFIG
+                float baseHp = AppConfig.getFloat("animal." + species + ".maxHp");
+                float baseNutrition = AppConfig.getFloat("animal." + species + ".nutrition");
+                float hungerDecay = AppConfig.getFloat("animal." + species + ".hungerDecay");
+                float thirstDecay = AppConfig.getFloat("animal." + species + ".thirstDecay");
+
+                float baseAge = AppConfig.getFloat("animal." + species + ".maxAge");
+                float baseSize = AppConfig.getFloat("animal." + species + ".maxSize");
+
+                // 2. RANDOM DAO ĐỘNG ±15% (Nhân với khoảng 0.85 -> 1.15)
+                float randomFactorHp = 0.85f + (random.nextFloat() * 0.3f);
+                float randomFactorAge = 0.85f + (random.nextFloat() * 0.3f);
+                float randomFactorSize = 0.85f + (random.nextFloat() * 0.3f);
+
+                float finalHp = baseHp * randomFactorHp;
+                float finalMaxAge = baseAge * randomFactorAge;
+                float finalMaxSize = baseSize * randomFactorSize;
+
+                // 3. KHỞI TẠO CÁC COMPONENT
+                // Trưởng thành ở 20% (0.2f), lão hóa ở 70% (0.7f)
+                GrowthComponent growth = new GrowthComponent(finalMaxAge, finalMaxSize, 0.2f, 0.7f);
+                SurvivalStatsComponent stats = new SurvivalStatsComponent(finalHp, baseNutrition, hungerDecay, thirstDecay);
+
+                // Setup Adaptability: Phân loại môi trường sống cho Cá và Thú trên cạn
+                List<TerrainType> survivableTerrains = species.equals("fish")
+                        ? List.of(TerrainType.DEEP_WATER)
+                        : List.of(TerrainType.GRASSLAND, TerrainType.FOREST, TerrainType.MUD);
+
+                AdaptabilityComponent adapt = new AdaptabilityComponent(
+                        survivableTerrains,
+                        new ValueRange(15f, 30f),  // Điều kiện tối ưu
+                        new ValueRange(0f, 45f),   // Chịu đựng được
+                        new ValueRange(-20f, 60f)  // Vượt mức này là chết
+                );
+
+                // 4. KHỞI TẠO ĐỘNG VẬT BẰNG REFLECTION
+                String gender = random.nextBoolean() ? "MALE" : "FEMALE";
+                String id = animalClass.getSimpleName().toUpperCase() + "_" + System.nanoTime();
+
+                T animal = animalClass.getDeclaredConstructor(
+                        String.class, String.class, Vector2D.class, Environment.class,
+                        GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class, String.class
+                ).newInstance(id, animalClass.getSimpleName(), randomPos, this, growth, stats, adapt, gender);
+
+                // 5. THÊM VÀO MÔI TRƯỜNG
+                registry.add(animal);
+
+            } catch (Exception e) {
+                System.err.println("Lỗi khởi tạo! Có thể bạn quên thêm key cấu hình cho loài: " + species);
+                e.printStackTrace();
+            }
+        }
+    }
 
     /**
      * Kiểm tra một vị trí có hợp lệ để động vật di chuyển đến không.
