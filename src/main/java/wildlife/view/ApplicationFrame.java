@@ -37,7 +37,6 @@ public class ApplicationFrame extends Application {
 
         primaryStage.setMaximized(true);
         primaryStage.setResizable(false);
-        renderer = loader.<UIEventController>getController().getRenderer();
         Scene scene = new Scene(root);
         scene.getStylesheets().add(String.valueOf(getClass().getResource("/wildlife/view/ui/css/style.css")));
 

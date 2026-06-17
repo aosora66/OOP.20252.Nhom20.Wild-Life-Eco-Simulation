@@ -149,6 +149,7 @@ public class UIEventController {
     private volatile int canvasHeight = 600;
 
     private volatile Renderer renderer;
+    private final java.util.concurrent.CountDownLatch rendererLatch = new java.util.concurrent.CountDownLatch(1);
 
     private static volatile java.util.List<wildlife.model.organism.Organism> activeOrganisms;
 
@@ -201,16 +202,21 @@ public class UIEventController {
         startLWJGLThread();
     }
     
+    private SimpleTextureRegistry buildTextureRegistry() {
+        SimpleTextureRegistry registry = new SimpleTextureRegistry();
+        registry.register("Wolf",   new SimpleTexture(16, 16, (byte) 220, (byte)  50, (byte)  50, (byte) 255));
+        registry.register("Grass",  new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255));
+        registry.register("Rabbit", new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255));
+        return registry;
+    }
+
     private void startLWJGLThread() {
         Thread renderThread = new Thread(() -> {
-            // Initialize GLFW
             if (!glfwInit()) {
-                System.err.println("Failed to initialize GLFW");
+                System.err.println("LWJGL: glfwInit() thất bại");
                 return;
             }
 
-            // Configure GLFW for offscreen/hidden rendering
-            glfwDefaultWindowHints();
             glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -220,45 +226,37 @@ public class UIEventController {
             int width = canvasWidth;
             int height = canvasHeight;
 
-            // Create offscreen GLFW window
-            long window = glfwCreateWindow(width, height, "Offscreen Window", 0, 0);
+            long window = glfwCreateWindow(width, height, "Offscreen", 0, 0);
             if (window == 0) {
-                System.err.println("Failed to create offscreen GLFW window");
+                System.err.println("LWJGL: tạo offscreen window thất bại");
                 glfwTerminate();
                 return;
             }
 
-            // Make context current
             glfwMakeContextCurrent(window);
             GL.createCapabilities();
 
-            // Create default textures (16x16 pixels with solid colors)
-            SimpleTexture wolfTexture = new SimpleTexture(16, 16, (byte) 255, (byte) 50, (byte) 50, (byte) 255);
-            SimpleTexture grassTexture = new SimpleTexture(16, 16, (byte) 50, (byte) 200, (byte) 50, (byte) 255);
-            SimpleTexture rabbitTexture = new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255);
-
-            // Create registry and register our textures
-            SimpleTextureRegistry textureRegistry = new SimpleTextureRegistry();
-            textureRegistry.register("Wolf", wolfTexture);
-            textureRegistry.register("Grass", grassTexture);
-            textureRegistry.register("Rabbit", rabbitTexture);
-
-            // Initialize SpriteBatch and Renderer
+            SimpleTextureRegistry textureRegistry = buildTextureRegistry();
             SpriteBatch spriteBatch = new SpriteBatch(width, height);
             this.renderer = new Renderer(spriteBatch, textureRegistry);
+            rendererLatch.countDown();
 
-            // Set the clear color
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
 
-            // Buffer to hold pixel data read from OpenGL
             ByteBuffer pixelBuffer = BufferUtils.createByteBuffer(width * height * 4);
             int[] argbBuffer = new int[width * height];
 
             while (running) {
-                // Check if JavaFX container size has changed
+                // Chờ coreLoopThread commit frame — tránh spin-loop, chỉ render khi có dữ liệu mới
+                try {
+                    if (!renderer.awaitFrame(16)) continue;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
                 int targetW = canvasWidth;
                 int targetH = canvasHeight;
-
                 if (targetW != width || targetH != height) {
                     width = targetW;
                     height = targetH;
@@ -269,29 +267,20 @@ public class UIEventController {
                     argbBuffer = new int[width * height];
                 }
 
-                // Clear the framebuffer
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                // Update projection with camera
                 spriteBatch.updateProjection(camera);
-
-                // Draw all submitted organisms
                 renderer.renderAll();
-
-                // Swap buffers (mandatory for GLFW double buffering even if offscreen)
                 glfwSwapBuffers(window);
 
-                // Read pixels from OpenGL backbuffer
+                // Đọc pixel từ OpenGL và chuyển RGBA → ARGB (flip Y vì OpenGL gốc tọa độ bottom-left)
                 pixelBuffer.clear();
                 glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelBuffer);
-
-                // Convert RGBA to ARGB and flip Y-axis (since OpenGL 0,0 is bottom-left, but JavaFX is top-left)
                 for (int y = 0; y < height; y++) {
-                    int srcRow = height - 1 - y;
+                    int srcRow    = height - 1 - y;
                     int srcOffset = srcRow * width * 4;
                     int dstOffset = y * width;
                     for (int x = 0; x < width; x++) {
-                        int r = pixelBuffer.get(srcOffset + x * 4) & 0xFF;
+                        int r = pixelBuffer.get(srcOffset + x * 4)     & 0xFF;
                         int g = pixelBuffer.get(srcOffset + x * 4 + 1) & 0xFF;
                         int b = pixelBuffer.get(srcOffset + x * 4 + 2) & 0xFF;
                         int a = pixelBuffer.get(srcOffset + x * 4 + 3) & 0xFF;
@@ -299,21 +288,15 @@ public class UIEventController {
                     }
                 }
 
-                // Copy the pixel buffer and size for thread-safety in Platform.runLater
                 final int[] framePixels = argbBuffer.clone();
                 final int finalW = width;
                 final int finalH = height;
-
-                Platform.runLater(() -> {
-                    updateJavaFXImage(framePixels, finalW, finalH);
-                });
+                Platform.runLater(() -> updateJavaFXImage(framePixels, finalW, finalH));
             }
 
-            // Clean up resources inside the render thread
             renderer.stop();
             spriteBatch.dispose();
             textureRegistry.clear();
-
             glfwDestroyWindow(window);
             glfwTerminate();
         }, "LWJGL-Render-Thread");
@@ -480,6 +463,11 @@ public class UIEventController {
     }
 
     public Renderer getRenderer(){
+        try {
+            rendererLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         return this.renderer;
     }
     public void initialize() {

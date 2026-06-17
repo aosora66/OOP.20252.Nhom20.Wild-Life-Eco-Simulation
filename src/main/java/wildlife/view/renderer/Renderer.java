@@ -6,6 +6,8 @@ import wildlife.view.renderer.utils.IndexedMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Nhận các sinh vật vào dưới dạng {@link RenderData}, gom nhóm theo loài để tăng hiệu quả batch theo texture, giảm lượt gọi {@link SpriteBatch}
@@ -29,6 +31,7 @@ public class Renderer {
     private final IndexedMap<String, SpeciesGroup> renderQueue = new IndexedMap<>();
 
     private boolean running = true;
+    private final Semaphore framePending = new Semaphore(0);
 
     public Renderer(SpriteBatch spriteBatch, TextureRegistry textureRegistry) {
         this.spriteBatch     = Objects.requireNonNull(spriteBatch, "spriteBatch");
@@ -81,9 +84,25 @@ public class Renderer {
     }
 
     /**
-     * Ngừng nhận thêm vào hàng đợi
+     * Báo hiệu cho LWJGL thread rằng 1 tick đã hoàn tất, sẵn sàng để render.
+     * Được gọi bởi coreLoopThread sau khi submit() xong toàn bộ sinh vật trong tick.
      */
+    public void commitFrame() {
+        if (running) framePending.release();
+    }
+
+    /**
+     * LWJGL thread gọi method này để chờ frame mới từ coreLoopThread.
+     * Trả về false nếu timeout mà không có frame nào được commit (dùng để kiểm tra vòng lặp vẫn chạy).
+     */
+    public boolean awaitFrame(long timeoutMs) throws InterruptedException {
+        if (!framePending.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS)) return false;
+        framePending.drainPermits(); // bỏ qua các frame tích lũy nếu render chậm hơn tick
+        return true;
+    }
+
     public void stop() {
         this.running = false;
+        framePending.release(); // mở khóa awaitFrame() nếu LWJGL thread đang chờ
     }
 }
