@@ -12,9 +12,11 @@ import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.hebivores.Fish;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
+import wildlife.util.RegionBoundary;
 import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -27,11 +29,11 @@ public class Lake extends Environment {
     // ----------------------------------------------------------------
     //  Trạng thái riêng của Hồ Nước
     // ----------------------------------------------------------------
-    // Thêm biến này ở đầu class Lake
-    private ResourceManager mainWaterSource;
     private final float maxWaterLevel;
     private float currentWaterLevel;
     private final Random random;
+    private final List<Vector2D> algaeSpawnTiles;
+    private int algaeSpawnCursor;
 
     // ----------------------------------------------------------------
     //  Constructor
@@ -51,6 +53,8 @@ public class Lake extends Environment {
         this.maxWaterLevel = maxWaterLevel;
         this.currentWaterLevel = maxWaterLevel * 0.8f; // Bắt đầu với 80% thể tích
         this.random = new Random(); // fix: final field phải khởi tạo trước khi dùng
+        this.algaeSpawnTiles = collectAlgaeSpawnTiles(boundary);
+        Collections.shuffle(this.algaeSpawnTiles, random);
 
         initialize();
     }
@@ -70,15 +74,18 @@ public class Lake extends Environment {
         }
 
         // --- 2. THỰC VẬT ĐẦU VÀO (TẢO) ---
-        // Rải sẵn 15 cụm tảo ngay khi bắt đầu để Cá có đồ ăn ngay, tránh chết đói ở những tick đầu
+        // Rải sẵn 25 cụm tảo theo vòng qua các tile nước để Cá có đồ ăn đều hơn ngay từ đầu.
         float algaeNutrition = AppConfig.getFloat("food.algae.nutritionalValue");
         int algaeExpiry = AppConfig.getInt("food.algae.expiryTicks");
-        for (int i = 0; i < 15; i++) {
-            resources.spawnFood(terrain.getRandomValidPosition(), algaeNutrition, FoodType.ALGAE, algaeExpiry);
-        }
+        spawnAlgaeEvenly(25, algaeNutrition, algaeExpiry);
 
         // --- 3. ĐỘNG VẬT DƯỚI NƯỚC (CÁ) ---
-        spawnAnimals(Fish.class, 15);
+        // Rải đều TUỔI ban đầu (0..60% đời) để đàn không cùng già chết một lúc gây tuyệt chủng.
+        float fishMaxAge = AppConfig.getFloat("animal.fish.maxAge");
+        for (int i = 0; i < 15; i++) {
+            float startAge = random.nextFloat() * fishMaxAge * 0.6f;
+            addOrganism(Fish.create(terrain.getRandomValidPosition(), this, startAge));
+        }
     }
 
     @Override
@@ -121,7 +128,7 @@ public class Lake extends Environment {
 
     /**
      * Mỗi tick: chạy cập nhật chuẩn của Environment, sau đó rải thêm tảo (Algae)
-     * ngẫu nhiên trong hồ — nguồn thức ăn liên tục cho Cá, tránh bị tuyệt chủng vì đói.
+     * theo vòng qua các tile hồ — nguồn thức ăn liên tục và đều hơn cho Cá.
      */
     @Override
     public void updateEnvironment(int currentTick) {
@@ -137,10 +144,7 @@ public class Lake extends Environment {
         float nutrition  = AppConfig.getFloat("food.algae.nutritionalValue");
         int expiryTicks  = AppConfig.getInt("food.algae.expiryTicks");
 
-        for (int i = 0; i < spawnCount; i++) {
-            Vector2D pos = terrain.getRandomValidPosition();
-            resources.spawnFood(pos, nutrition, FoodType.ALGAE, expiryTicks);
-        }
+        spawnAlgaeEvenly(spawnCount, nutrition, expiryTicks);
     }
 
     // ----------------------------------------------------------------
@@ -172,6 +176,33 @@ public class Lake extends Environment {
             points.add(terrain.getRandomValidPosition());
         }
         return points;
+    }
+
+    private List<Vector2D> collectAlgaeSpawnTiles(Boundary boundary) {
+        if (boundary instanceof RegionBoundary regionBoundary) {
+            return new ArrayList<>(regionBoundary.getTileOrigins());
+        }
+        return new ArrayList<>();
+    }
+
+    private void spawnAlgaeEvenly(int count, float nutrition, int expiryTicks) {
+        for (int i = 0; i < count; i++) {
+            resources.spawnFood(nextAlgaeSpawnPosition(), nutrition, FoodType.ALGAE, expiryTicks);
+        }
+    }
+
+    private Vector2D nextAlgaeSpawnPosition() {
+        if (algaeSpawnTiles.isEmpty()) {
+            return terrain.getRandomValidPosition();
+        }
+
+        Vector2D tile = algaeSpawnTiles.get(algaeSpawnCursor);
+        algaeSpawnCursor = (algaeSpawnCursor + 1) % algaeSpawnTiles.size();
+
+        float tileSize = AppConfig.getFloat("environment.terrain.tileSize");
+        float x = tile.getX() + random.nextFloat() * tileSize;
+        float y = tile.getY() + random.nextFloat() * tileSize;
+        return new Vector2D(x, y);
     }
 
     // --- Getters ---

@@ -1,6 +1,7 @@
 package wildlife.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -40,5 +41,9 @@ public class RegionBoundary implements Boundary {
         float x = tile.getX() + random.nextFloat() * tileSize;
         float y = tile.getY() + random.nextFloat() * tileSize;
         return new Vector2D(x, y);
+    }
+
+    public List<Vector2D> getTileOrigins() {
+        return Collections.unmodifiableList(tileCenters);
     }
 }

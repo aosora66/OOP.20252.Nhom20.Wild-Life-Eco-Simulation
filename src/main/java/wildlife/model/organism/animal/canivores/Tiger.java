@@ -71,7 +71,6 @@ public class Tiger extends Animal {
 
     @Override
     public void reproduce() {
-
-
+        reproduceSameSpecies();
     }
 }

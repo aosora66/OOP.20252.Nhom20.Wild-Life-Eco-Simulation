@@ -80,6 +80,7 @@ public abstract class Organism {
      */
     public final void updateOrganism(int currentTick) {
         if (!isAlive()) return;
+        refreshCurrentTerrain();
 
         // 1. Logic hệ thống bắt buộc (sinh vật tự động lớn lên và lão hóa)
         this.growUp();
@@ -87,12 +88,19 @@ public abstract class Organism {
 
         this.onTick(currentTick);
         if (!isAlive()) return;
+        refreshCurrentTerrain();
 
         this.reproduce();
         if (!isAlive()) return;
 
         // processSurvivalMetabolism() tự gọi die() khi HP về 0, không cần check lại sau đó
         this.processSurvivalMetabolism();
+    }
+
+    private void refreshCurrentTerrain() {
+        if (environment != null) {
+            this.currentTerrain = environment.getTerrain().getTerrainAt(position);
+        }
     }
 
     // ----------------------------------------------------------
@@ -131,7 +139,7 @@ public abstract class Organism {
 
         applyMetabolismDecay(seasonMultiplier, thirstMultiplier);
 
-        float hpDrain      = AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
+        float hpDrain      = getBaseHpDrainPerTick();
         float stressPenalty = getEnvironmentalStressHpPenalty();
         // Mùa khắc nghiệt làm stress tệ hơn
         if (stressPenalty > 0f && seasonMultiplier > 1f) {
@@ -152,6 +160,10 @@ public abstract class Organism {
      */
     protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
         stats.applyHungerThirstDecay(seasonMultiplier, thirstMultiplier);
+    }
+
+    protected float getBaseHpDrainPerTick() {
+        return AppConfig.getFloat("organism.stats.baseHpDrainPerTick");
     }
 
     /**

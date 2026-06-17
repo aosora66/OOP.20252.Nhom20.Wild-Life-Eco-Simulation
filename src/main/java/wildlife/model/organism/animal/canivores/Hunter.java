@@ -78,6 +78,6 @@ public class Hunter extends Animal {
 
     @Override
     public void reproduce() {
-        // TODO: sinh thợ săn mới
+        reproduceSameSpecies();
     }
 }

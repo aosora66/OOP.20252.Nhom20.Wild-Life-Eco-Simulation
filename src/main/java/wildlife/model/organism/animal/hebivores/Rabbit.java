@@ -61,8 +61,12 @@ public class Rabbit extends Animal {
         executeStrategy(currentTick);
     }
 
+    /** Thỏ ăn cỏ — gặm trực tiếp cây Grass. */
+    @Override
+    public boolean canGraze() { return true; }
+
     @Override
     public void reproduce() {
-        // TODO: tạo Rabbit con và thêm vào environment
+        reproduceSameSpecies();
     }
 }

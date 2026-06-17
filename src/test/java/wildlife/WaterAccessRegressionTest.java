@@ -9,6 +9,7 @@ import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
+import wildlife.model.organism.plant.Grass;
 import wildlife.util.MapLoader;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
@@ -19,6 +20,23 @@ public class WaterAccessRegressionTest {
     public static void main(String[] args) {
         shorelineWaterIsAvailableToLandEnvironment();
         drinkingWaterDoesNotRemoveTheWaterSource();
+        plantAbsorbingWaterDoesNotRemoveTheWaterSource();
+    }
+
+    private static void plantAbsorbingWaterDoesNotRemoveTheWaterSource() {
+        CompositeMap world = MapLoader.loadMapFromFile("test-world", "Test World", "config/map.txt");
+        Environment grass = findEnvironment(world, "grass");
+        Vector2D waterPos = new Vector2D(150f, 150f);
+        grass.getResources().spawnFood(waterPos, 20f, FoodType.WATER, Integer.MAX_VALUE);
+
+        Grass plant = Grass.create(waterPos, grass);
+        plant.absorbNutrients();
+
+        boolean stillPresent = grass.getResources().getFoodNear(waterPos, 1f).stream()
+                .anyMatch(FoodItem::isWater);
+        if (!stillPresent) {
+            throw new AssertionError("Expected WATER source to remain after plant absorption");
+        }
     }
 
     private static void shorelineWaterIsAvailableToLandEnvironment() {

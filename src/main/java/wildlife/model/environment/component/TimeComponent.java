@@ -19,6 +19,8 @@ public class TimeComponent {
     private static final float BREEDING_RAIN_CHANCE   = AppConfig.getFloat("environment.time.breeding.rainChance");
     /** Xác suất xuất hiện hạn trong mùa hạn hán */
     private static final float DROUGHT_DROUGHT_CHANCE = AppConfig.getFloat("environment.time.drought.droughtChance");
+    /** Xác suất (thấp) vẫn có mưa trong mùa hạn hán */
+    private static final float DROUGHT_RAIN_CHANCE    = AppConfig.getFloat("environment.time.drought.rainChance");
     /** Xác suất xuất hiện mưa trong mùa bình thường */
     private static final float NORMAL_RAIN_CHANCE     = AppConfig.getFloat("environment.time.normal.rainChance");
     /** Xác suất xuất hiện hạn trong mùa bình thường */
@@ -104,6 +106,8 @@ public class TimeComponent {
             }
             case DROUGHT -> {
                 if (roll < DROUGHT_DROUGHT_CHANCE)         currentWeather = WeatherType.DROUGHT;
+                else if (roll < DROUGHT_DROUGHT_CHANCE + DROUGHT_RAIN_CHANCE)
+                                                           currentWeather = WeatherType.RAIN;
                 else                                       currentWeather = WeatherType.NORMAL;
             }
             default -> { // NORMAL

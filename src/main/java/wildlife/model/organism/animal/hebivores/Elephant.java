@@ -38,6 +38,10 @@ public class Elephant extends Animal {
     @Override
     public boolean isApexPredator() { return true; }
 
+    /** Voi ăn cỏ — gặm trực tiếp cây Grass (ngoài ăn quả rụng). */
+    @Override
+    public boolean canGraze() { return true; }
+
     @Override
     protected void addSurvivalStrategies() {
         // Voi không sợ ai — chỉ tìm thức ăn và nước
@@ -57,6 +61,6 @@ public class Elephant extends Animal {
 
     @Override
     public void reproduce() {
-        // TODO: sinh voi con
+        reproduceSameSpecies();
     }
 }

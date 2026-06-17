@@ -104,6 +104,10 @@ public class TerrainComponent {
      * @return true nếu không có cản trở
      */
     public boolean isPassable(Vector2D pos, Organism self) {
+        if (!containsPosition(pos)) {
+            return false;
+        }
+
         TerrainType terrain = getTerrainAt(pos);
         if (self == null) {
             return terrain != TerrainType.DEEP_WATER && terrain != TerrainType.MOUNTAIN;

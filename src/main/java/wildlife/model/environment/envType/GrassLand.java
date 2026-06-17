@@ -14,6 +14,7 @@ import wildlife.model.organism.animal.hebivores.Deer;
 import wildlife.model.organism.animal.hebivores.Elephant;
 import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.plant.Grass;
+import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 
 import java.util.Random;
@@ -110,6 +111,10 @@ public class GrassLand extends Environment {
         if (weather == WeatherType.RAIN) {
             this.currentHumidity = Math.min(100.0f, this.currentHumidity + 10.0f);
             this.currentTemp = Math.max(0.0f, this.currentTemp - 2.0f);
+            // Mưa có xác suất thấp làm một ô đất biến thành bùn lầy (MUD) — làm chậm thú đi qua
+            if (random.nextFloat() < AppConfig.getFloat("environment.weather.rain.mudChance")) {
+                terrain.addCustomTerrain(terrain.getRandomValidPosition(), TerrainType.MUD);
+            }
         } else if (weather == WeatherType.DROUGHT) {
             this.currentHumidity = Math.max(0.0f, this.currentHumidity - 10.0f);
             this.currentTemp = this.currentTemp + 3.0f;

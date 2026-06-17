@@ -33,6 +33,10 @@ public class Deer extends Animal {
         executeStrategy(currentTick);
     }
 
+    /** Hươu ăn cỏ — gặm trực tiếp cây Grass. */
+    @Override
+    public boolean canGraze() { return true; }
+
     @Override
     protected void addSurvivalStrategies() {
         float fleeSpeedMult = AppConfig.getFloat("animal.deer.flee.speedMultiplier");
@@ -62,6 +66,6 @@ public class Deer extends Animal {
 
     @Override
     public void reproduce() {
-        // Reproduce logic base on age/stats
+        reproduceSameSpecies();
     }
 }

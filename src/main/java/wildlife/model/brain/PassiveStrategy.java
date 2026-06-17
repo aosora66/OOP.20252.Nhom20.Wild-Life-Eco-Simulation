@@ -2,6 +2,9 @@ package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.plant.Grass;
+
+import java.util.Optional;
 
 /**
  * Strategy sinh tồn cơ bản — tìm nước/thức ăn khi cần, wander khi đủ no.
@@ -49,18 +52,77 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
         }
 
         if (self.getStats().getHungerLevel() >= hungerSearchThreshold) {
-            findNearestFood(self, env, false).ifPresentOrElse(
-                    food -> {
-                        moveToward(self, food.position(), env);
-                        if (self.getPosition().distanceTo(food.position()) <= attackRange) {
-                            self.eating(food);
-                        }
-                    },
-                    () -> wander(self, env)
-            );
+            seekNearestFoodOrGrass(self, env);
             return;
         }
 
+        // Chưa tới ngưỡng đói/khát: đi lang thang. Nhưng nếu vô tình có thức ăn/nước
+        // ngay dưới chân và đang còn nhu cầu (đói/khát > 0) thì nhặt ăn luôn — không bỏ phí.
+        if (tryOpportunisticEat(self, env)) return;
         wander(self, env);
+    }
+
+    /**
+     * Khi đói: đi tới và tiêu thụ nguồn dinh dưỡng GẦN NHẤT — thức ăn rơi (quả/tảo) hoặc
+     * bụi Cỏ (nếu là loài gặm cỏ). So sánh khoảng cách để chọn mục tiêu gần hơn; không có gì
+     * thì wander chờ tick sau.
+     */
+    private void seekNearestFoodOrGrass(Animal self, Environment env) {
+        var food  = findNearestFood(self, env, false);
+        Optional<Grass> grass = self.canGraze() ? findNearestGrass(self, env) : Optional.empty();
+
+        double dFood  = food.map(f -> (double) f.position().distanceTo(self.getPosition()))
+                .orElse(Double.MAX_VALUE);
+        double dGrass = grass.map(g -> (double) g.getPosition().distanceTo(self.getPosition()))
+                .orElse(Double.MAX_VALUE);
+
+        if (dFood == Double.MAX_VALUE && dGrass == Double.MAX_VALUE) {
+            wander(self, env);
+            return;
+        }
+
+        if (dGrass <= dFood) {                       // gặm cỏ gần hơn (hoặc không có quả)
+            moveToward(self, grass.get().getPosition(), env);
+            if (self.getPosition().distanceTo(grass.get().getPosition()) <= attackRange) {
+                self.grazeOn(grass.get());
+            }
+        } else {                                     // tới chỗ thức ăn rơi
+            moveToward(self, food.get().position(), env);
+            if (self.getPosition().distanceTo(food.get().position()) <= attackRange) {
+                self.eating(food.get());
+            }
+        }
+    }
+
+    /**
+     * Ăn cơ hội: nếu có nước/thức ăn (hoặc cỏ với loài gặm cỏ) trong tầm với (attackRange)
+     * và còn nhu cầu thì tiêu thụ. Ưu tiên nước trước. Trả về true nếu đã ăn/uống.
+     */
+    private boolean tryOpportunisticEat(Animal self, Environment env) {
+        if (self.getStats().getThirstLevel() > 0f) {
+            var water = findNearestFood(self, env, true);
+            if (water.isPresent()
+                    && self.getPosition().distanceTo(water.get().position()) <= attackRange) {
+                self.eating(water.get());
+                return true;
+            }
+        }
+        if (self.getStats().getHungerLevel() > 0f) {
+            var food = findNearestFood(self, env, false);
+            if (food.isPresent()
+                    && self.getPosition().distanceTo(food.get().position()) <= attackRange) {
+                self.eating(food.get());
+                return true;
+            }
+            if (self.canGraze()) {
+                var grass = findNearestGrass(self, env);
+                if (grass.isPresent()
+                        && self.getPosition().distanceTo(grass.get().getPosition()) <= attackRange) {
+                    self.grazeOn(grass.get());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

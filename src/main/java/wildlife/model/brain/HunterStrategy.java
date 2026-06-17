@@ -3,6 +3,7 @@ package wildlife.model.brain;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 
@@ -72,6 +73,10 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
         Optional<? extends Animal> prey = preySpecies.stream()
                 .flatMap(species -> findNearestBySpecies(self, env, species).stream())
                 .filter(a -> !a.isApexPredator())
+                // Không ăn thịt đồng loại (vd. Sói không săn Sói)
+                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
+                // Không ngắm con mồi đang ở dưới nước sâu (thú trên cạn không xuống nước được)
+                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
                 .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống

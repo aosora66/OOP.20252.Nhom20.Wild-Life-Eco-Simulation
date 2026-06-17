@@ -68,7 +68,7 @@ public abstract class Plant extends Organism {
      * 1. Query the environment for available FoodItems (nutrients/water) within the absorption radius.
      * 2. Identify the nearest available resource to prioritize efficiency.
      * 3. Consume the resource, which updates the plant's survival statistics (hunger/thirst levels).
-     * 4. Remove the consumed resource from the environment's resource manager.
+     * 4. Remove finite resources from the environment's resource manager.
      */
     public void absorbNutrients() {
         Environment currentEnvironment = getEnvironment();
@@ -88,11 +88,13 @@ public abstract class Plant extends Organism {
             }
         }
 
-        // If a resource is found, consume it and remove it from the map
+        // If a resource is found, consume it. Water sources are permanent.
         if (nutrients == null) return;
 
         stats.consume(nutrients.nutritionalValue(), nutrients.isWater());
-        currentEnvironment.getResources().consume(nutrients);
+        if (!nutrients.isWater()) {
+            currentEnvironment.getResources().consume(nutrients);
+        }
     }
 
     protected boolean hasReproduced = false;

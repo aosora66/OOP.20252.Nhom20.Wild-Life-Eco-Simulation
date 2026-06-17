@@ -72,6 +72,6 @@ public class Wolf extends Animal {
 
     @Override
     public void reproduce() {
-        // Implementation for reproduction
+        reproduceSameSpecies();
     }
 }

@@ -14,6 +14,7 @@ import wildlife.util.Vector2D;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 /**
         * Lớp abstract đại diện chức năng sinh học, thuộc tính vật lý chung của động vật
@@ -21,6 +22,7 @@ import java.util.List;
         * Implement addSurvivalStrategies() để gọi addStrategy() cho từng strategy cần thiết.
  */
 public abstract class Animal extends Organism {
+    private static final Random REPRODUCTION_RANDOM = new Random();
 
     protected String animalType;
     protected float vision;
@@ -145,5 +147,72 @@ public abstract class Animal extends Organism {
                 stats.getThirstLevel() < thirstThreshold &&
                 (currentTick - lastReproduceTick) >= cooldown &&
                 Math.random() < chance;
+    }
+
+    /**
+     * Sinh một con cùng loài gần bố/mẹ. Các subclass trên cạn gọi helper này để tránh
+     * lặp lại reflection/config boilerplate; Fish giữ logic riêng vì có pop cap riêng.
+     */
+    protected boolean reproduceSameSpecies() {
+        if (environment == null) return false;
+
+        int currentTick = environment.getTime().getCurrentTick();
+        if (!canReproduce(currentTick)) return false;
+
+        Animal child = createSameSpeciesOffspring(findOffspringPosition());
+        environment.addOrganism(child);
+        lastReproduceTick = currentTick;
+        return true;
+    }
+
+    private Vector2D findOffspringPosition() {
+        float radius = AppConfig.getFloat("animal.reproduce.spawnRadius");
+        for (int attempt = 0; attempt < 8; attempt++) {
+            float ox = (REPRODUCTION_RANDOM.nextFloat() * 2f - 1f) * radius;
+            float oy = (REPRODUCTION_RANDOM.nextFloat() * 2f - 1f) * radius;
+            Vector2D candidate = new Vector2D(position.getX() + ox, position.getY() + oy);
+            if (environment.isPositionPassable(candidate, this)) {
+                return candidate;
+            }
+        }
+        return position;
+    }
+
+    private Animal createSameSpeciesOffspring(Vector2D childPos) {
+        try {
+            String species = getClass().getSimpleName().toLowerCase();
+            float hp = AppConfig.getFloat("animal." + species + ".maxHp")
+                    * (0.85f + REPRODUCTION_RANDOM.nextFloat() * 0.3f);
+            float nutrition = AppConfig.getFloat("animal." + species + ".nutrition");
+            float hungerDecay = AppConfig.getFloat("animal." + species + ".hungerDecay");
+            float thirstDecay = AppConfig.getFloat("animal." + species + ".thirstDecay");
+            float maxAge = AppConfig.getFloat("animal." + species + ".maxAge")
+                    * (0.85f + REPRODUCTION_RANDOM.nextFloat() * 0.3f);
+            float maxSize = AppConfig.getFloat("animal." + species + ".maxSize")
+                    * (0.85f + REPRODUCTION_RANDOM.nextFloat() * 0.3f);
+            String gender = REPRODUCTION_RANDOM.nextBoolean() ? "MALE" : "FEMALE";
+
+            return getClass().getDeclaredConstructor(
+                    String.class, String.class, Vector2D.class, Environment.class,
+                    GrowthComponent.class, SurvivalStatsComponent.class,
+                    AdaptabilityComponent.class, String.class
+            ).newInstance(
+                    getClass().getSimpleName().toUpperCase() + "_" + System.nanoTime(),
+                    getClass().getSimpleName(),
+                    childPos,
+                    environment,
+                    new GrowthComponent(maxAge, maxSize, 0.2f, 0.7f),
+                    new SurvivalStatsComponent(hp, nutrition, hungerDecay, thirstDecay),
+                    new AdaptabilityComponent(
+                            adaptability.getSurvivableEnvironments(),
+                            adaptability.getOptimalRange(),
+                            adaptability.getToleranceRange(),
+                            adaptability.getLethalLimit()
+                    ),
+                    gender
+            );
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Không thể sinh con cho loài: " + getClass().getSimpleName(), e);
+        }
     }
 }

@@ -21,6 +21,8 @@ import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
+import wildlife.model.organism.plant.AppleTree;
+import wildlife.model.organism.plant.TreeForest;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
 import wildlife.util.ValueRange;
@@ -64,6 +66,9 @@ public abstract class Environment {
      */
     protected float currentLight;
     protected float lightLevel;
+
+    /** Bán kính chặn quanh gốc cây lớn (TreeForest/AppleTree) khi động vật di chuyển. */
+    private static final float PLANT_BLOCK_RADIUS = 6.0f;
 
     // ----------------------------------------------------------------
     //  5 Components
@@ -225,11 +230,14 @@ public abstract class Environment {
                         ? List.of(TerrainType.DEEP_WATER)
                         : List.of(TerrainType.GRASSLAND, TerrainType.FOREST, TerrainType.MUD);
 
+                // LƯU Ý SEMANTIC: lethalLimit là VÙNG nhiệt độ GÂY CHẾT (isLethal = lethalLimit.contains(temp)),
+                // KHÔNG phải "biên sống sót". Ngoài vùng tolerance đã tự chết qua !canTolerate rồi.
+                // Để lethalLimit là vùng cực lạnh tách rời tolerance, tránh lỗi giết sạch ở nhiệt độ thường.
                 AdaptabilityComponent adapt = new AdaptabilityComponent(
                         survivableTerrains,
-                        new ValueRange(15f, 30f),  // Điều kiện tối ưu
-                        new ValueRange(0f, 45f),   // Chịu đựng được
-                        new ValueRange(-20f, 60f)  // Vượt mức này là chết
+                        new ValueRange(15f, 35f),   // Tối ưu (bao trùm Hồ 22°, Rừng 24°, Đồng cỏ 33°)
+                        new ValueRange(0f, 45f),    // Chịu đựng được
+                        new ValueRange(-60f, -10f)  // Vùng cực lạnh = chết (tách rời tolerance)
                 );
 
                 // 4. KHỞI TẠO ĐỘNG VẬT BẰNG REFLECTION
@@ -285,6 +293,14 @@ public abstract class Environment {
                         return false; // Bị chặn lại
                     }
                 }
+            }
+        }
+
+        // 3. Vật cản sinh học: thân cây lớn (TreeForest, AppleTree) chặn đường mọi loài.
+        //    Cỏ (Grass) nhỏ nên KHÔNG chặn. Bán kính nhỏ — chỉ chặn ngay tại gốc cây.
+        for (Organism o : registry.findNear(pos, PLANT_BLOCK_RADIUS, Organism.class)) {
+            if (o instanceof TreeForest || o instanceof AppleTree) {
+                return false;
             }
         }
 

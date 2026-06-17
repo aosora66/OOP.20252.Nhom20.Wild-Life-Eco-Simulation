@@ -4,6 +4,7 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.plant.Grass;
 import wildlife.util.Vector2D;
 
 import java.util.Comparator;
@@ -36,12 +37,22 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
     // Phương thức dùng chung
 
+    /**
+     * Bước đi thực tế sau khi trừ hình phạt tốc độ của địa hình đang đứng (bùn, rừng rậm...).
+     * Luôn giữ tối thiểu 0.5 để sinh vật không bị kẹt đứng yên hoàn toàn.
+     */
+    protected float effectiveStep(Animal self, Environment env) {
+        float penalty = env.getTerrain().getSpeedPenalty(self.getPosition(), self);
+        return Math.max(0.5f, stepSize - penalty);
+    }
+
     /** Di chuyển ngẫu nhiên một bước, bỏ qua nếu ô đích không đi được. */
     protected void wander(Animal self, Environment env) {
+        float step  = effectiveStep(self, env);
         float angle = RNG.nextFloat() * 2f * (float) Math.PI;
         Vector2D next = new Vector2D(
-                self.getPosition().getX() + (float) Math.cos(angle) * stepSize,
-                self.getPosition().getY() + (float) Math.sin(angle) * stepSize
+                self.getPosition().getX() + (float) Math.cos(angle) * step,
+                self.getPosition().getY() + (float) Math.sin(angle) * step
         );
         if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
@@ -54,7 +65,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         float dist   = pos.distanceTo(target);
         if (dist < 0.001f) return;
 
-        float step = Math.min(stepSize, dist);
+        float step = Math.min(effectiveStep(self, env), dist);
         float dx = (target.getX() - pos.getX()) / dist;
         float dy = (target.getY() - pos.getY()) / dist;
 
@@ -76,12 +87,13 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         float dist   = pos.distanceTo(threat);
         if (dist < 0.001f) { wander(self, env); return; }
 
+        float step = effectiveStep(self, env);
         float dx = (pos.getX() - threat.getX()) / dist;
         float dy = (pos.getY() - threat.getY()) / dist;
 
         Vector2D next = new Vector2D(
-                pos.getX() + dx * stepSize,
-                pos.getY() + dy * stepSize
+                pos.getX() + dx * step,
+                pos.getY() + dy * step
         );
         if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
@@ -142,6 +154,18 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 .filter(a -> !a.getId().equals(self.getId()) && a.isApexPredator())
                 .filter(a -> detectability(a, self, env) > 0)
                 .max(Comparator.comparingDouble(a -> detectability(a, self, env)));
+    }
+
+    /**
+     * Tìm bụi Cỏ (Grass) còn sống gần nhất trong sightRadius — dùng cho thú gặm cỏ.
+     * Chọn theo khoảng cách (giống tìm thức ăn), không dùng detectability.
+     */
+    protected Optional<Grass> findNearestGrass(Animal self, Environment env) {
+        return env.getRegistry()
+                .findNear(self.getPosition(), sightRadius, Grass.class)
+                .stream()
+                .min(Comparator.comparingDouble(
+                        g -> g.getPosition().distanceTo(self.getPosition())));
     }
 
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
