@@ -4,12 +4,17 @@ import wildlife.model.brain.HunterStrategy;
 import wildlife.model.brain.PassiveStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Thợ săn — săn được MỌI loài động vật (Animal.class) trừ apex predator, sát thương rất cao.
@@ -33,6 +38,27 @@ public class Hunter extends Animal {
         this.interactionRadius = AppConfig.getFloat("animal.hunter.eatRadius");
         this.diet.add(FoodType.MEAT);
         initStrategies();
+    }
+
+    /**
+     * Factory method — tạo Hunter với sinh học mặc định.
+     */
+    public static Hunter create(Vector2D pos, Environment env) {
+        return new Hunter(
+                UUID.randomUUID().toString(),
+                "Hunter",
+                pos,
+                env,
+                new GrowthComponent(1500f, 40f, 0.15f, 0.8f),
+                new SurvivalStatsComponent(50f, 15f, 0.1f, 0.2f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
+                        new ValueRange(18f, 35f),
+                        new ValueRange(10f, 45f),
+                        new ValueRange(-100f, -0.1f)
+                ),
+                "MALE"
+        );
     }
 
     @Override
@@ -78,6 +104,28 @@ public class Hunter extends Animal {
 
     @Override
     public void reproduce() {
-        // TODO: sinh thợ săn mới
+        if (environment == null) return;
+        int currentTick = environment.getTime().getCurrentTick();
+
+        if (canReproduce(currentTick)) {
+            lastReproduceTick = currentTick;
+
+            int offspringCount = AppConfig.getInt("animal.hunter.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("animal.hunter.reproduce.spawnRadius");
+
+            for (int i = 0; i < offspringCount; i++) {
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+
+                Vector2D childPos = new Vector2D(
+                        position.getX() + offsetX,
+                        position.getY() + offsetY
+                );
+
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    environment.getRegistry().add(Hunter.create(childPos, environment));
+                }
+            }
+        }
     }
 }

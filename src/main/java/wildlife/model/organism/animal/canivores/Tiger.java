@@ -2,6 +2,7 @@ package wildlife.model.organism.animal.canivores;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.animal.hebivores.Deer;
 import wildlife.model.organism.animal.hebivores.Rabbit;
@@ -9,7 +10,11 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+
+import java.util.List;
+import java.util.UUID;
 
 public class Tiger extends Animal {
     public Tiger(String id,
@@ -27,6 +32,27 @@ public class Tiger extends Animal {
         this.interactionRadius = AppConfig.getFloat("animal.tiger.eatRadius");
         this.diet.add(FoodType.MEAT);
         initStrategies();
+    }
+
+    /**
+     * Factory method — tạo Tiger với sinh học mặc định.
+     */
+    public static Tiger create(Vector2D pos, Environment env) {
+        return new Tiger(
+                UUID.randomUUID().toString(),
+                "Tiger",
+                pos,
+                env,
+                new GrowthComponent(1200f, 60f, 0.1f, 0.7f),
+                new SurvivalStatsComponent(100f, 30f, 0.15f, 0.15f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
+                        new ValueRange(20f, 35f),
+                        new ValueRange(10f, 50f),
+                        new ValueRange(-100f, -0.1f)
+                ),
+                "MALE"
+        );
     }
 
     @Override
@@ -71,7 +97,28 @@ public class Tiger extends Animal {
 
     @Override
     public void reproduce() {
+        if (environment == null) return;
+        int currentTick = environment.getTime().getCurrentTick();
 
+        if (canReproduce(currentTick)) {
+            lastReproduceTick = currentTick;
 
+            int offspringCount = AppConfig.getInt("animal.tiger.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("animal.tiger.reproduce.spawnRadius");
+
+            for (int i = 0; i < offspringCount; i++) {
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+
+                Vector2D childPos = new Vector2D(
+                        position.getX() + offsetX,
+                        position.getY() + offsetY
+                );
+
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    environment.getRegistry().add(Tiger.create(childPos, environment));
+                }
+            }
+        }
     }
 }

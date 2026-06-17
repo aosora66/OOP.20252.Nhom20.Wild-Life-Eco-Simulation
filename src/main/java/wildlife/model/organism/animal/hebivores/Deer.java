@@ -8,7 +8,11 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+
+import java.util.List;
+import java.util.UUID;
 
 public class Deer extends Animal {
     public Deer(String id,
@@ -26,6 +30,27 @@ public class Deer extends Animal {
         this.interactionRadius = AppConfig.getFloat("animal.deer.eatRadius");
         this.diet.add(FoodType.APPLE);
         initStrategies();
+    }
+
+    /**
+     * Factory method — tạo Deer với sinh học mặc định.
+     */
+    public static Deer create(Vector2D pos, Environment env) {
+        return new Deer(
+                UUID.randomUUID().toString(),
+                "Deer",
+                pos,
+                env,
+                new GrowthComponent(1000f, 45f, 0.15f, 0.8f),
+                new SurvivalStatsComponent(60f, 15f, 0.08f, 0.08f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.GRASSLAND, TerrainType.FOREST),
+                        new ValueRange(15f, 35f),
+                        new ValueRange(5f, 45f),
+                        new ValueRange(-100f, -0.1f)
+                ),
+                "FEMALE"
+        );
     }
 
     @Override
@@ -62,6 +87,28 @@ public class Deer extends Animal {
 
     @Override
     public void reproduce() {
-        // Reproduce logic base on age/stats
+        if (environment == null) return;
+        int currentTick = environment.getTime().getCurrentTick();
+
+        if (canReproduce(currentTick)) {
+            lastReproduceTick = currentTick;
+
+            int offspringCount = AppConfig.getInt("animal.deer.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("animal.deer.reproduce.spawnRadius");
+
+            for (int i = 0; i < offspringCount; i++) {
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+
+                Vector2D childPos = new Vector2D(
+                        position.getX() + offsetX,
+                        position.getY() + offsetY
+                );
+
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    environment.getRegistry().add(Deer.create(childPos, environment));
+                }
+            }
+        }
     }
 }

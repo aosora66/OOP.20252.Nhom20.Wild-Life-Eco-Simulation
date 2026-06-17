@@ -3,12 +3,17 @@ package wildlife.model.organism.animal.hebivores;
 import wildlife.model.brain.PassiveStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Voi — apex predator thực vật. Không săn mồi, nhưng khiến MỌI động vật khác phải bỏ chạy.
@@ -34,6 +39,27 @@ public class Elephant extends Animal {
         initStrategies();
     }
 
+    /**
+     * Factory method — tạo Elephant với sinh học mặc định.
+     */
+    public static Elephant create(Vector2D pos, Environment env) {
+        return new Elephant(
+                UUID.randomUUID().toString(),
+                "Elephant",
+                pos,
+                env,
+                new GrowthComponent(3000f, 100f, 0.05f, 0.85f),
+                new SurvivalStatsComponent(250f, 100f, 0.05f, 0.05f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
+                        new ValueRange(18f, 32f),
+                        new ValueRange(10f, 40f),
+                        new ValueRange(-100f, -0.1f)
+                ),
+                "MALE"
+        );
+    }
+
     /** Voi là apex predator — mọi ScaredStrategy tự động nhận diện và bỏ chạy. */
     @Override
     public boolean isApexPredator() { return true; }
@@ -57,6 +83,28 @@ public class Elephant extends Animal {
 
     @Override
     public void reproduce() {
-        // TODO: sinh voi con
+        if (environment == null) return;
+        int currentTick = environment.getTime().getCurrentTick();
+
+        if (canReproduce(currentTick)) {
+            lastReproduceTick = currentTick;
+
+            int offspringCount = AppConfig.getInt("animal.elephant.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("animal.elephant.reproduce.spawnRadius");
+
+            for (int i = 0; i < offspringCount; i++) {
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+
+                Vector2D childPos = new Vector2D(
+                        position.getX() + offsetX,
+                        position.getY() + offsetY
+                );
+
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    environment.getRegistry().add(Elephant.create(childPos, environment));
+                }
+            }
+        }
     }
 }
