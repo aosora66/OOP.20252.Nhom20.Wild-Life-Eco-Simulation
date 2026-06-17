@@ -252,13 +252,12 @@ public abstract class Environment {
                 );
 
                 // 4. KHỞI TẠO ĐỘNG VẬT BẰNG REFLECTION
-                String gender = random.nextBoolean() ? "MALE" : "FEMALE";
                 String id = animalClass.getSimpleName().toUpperCase() + "_" + System.nanoTime();
 
                 T animal = animalClass.getDeclaredConstructor(
                         String.class, String.class, Vector2D.class, Environment.class,
                         GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class, String.class
-                ).newInstance(id, animalClass.getSimpleName(), randomPos, this, growth, stats, adapt, gender);
+                ).newInstance(id, animalClass.getSimpleName(), randomPos, this, growth, stats, adapt);
 
                 // 5. THÊM VÀO MÔI TRƯỜNG
                 registry.add(animal);
