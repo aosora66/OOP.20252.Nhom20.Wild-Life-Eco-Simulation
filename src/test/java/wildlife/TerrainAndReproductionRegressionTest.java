@@ -82,8 +82,7 @@ public class TerrainAndReproductionRegressionTest {
                         new ValueRange(15f, 35f),
                         new ValueRange(0f, 45f),
                         new ValueRange(-60f, -10f)
-                ),
-                "FEMALE"
+                )
         );
         grass.addOrganism(parent);
 

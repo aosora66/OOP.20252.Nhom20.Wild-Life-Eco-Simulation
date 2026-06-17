@@ -46,7 +46,7 @@ public class Main {
 
             Renderer renderer = ApplicationFrame.getRendererInstance();
 
-            final int TICK_RATE = 60;
+            final int TICK_RATE = 20;
             final long MS_PER_SECOND = 1000 / TICK_RATE;
             int currentTick = 0;
 

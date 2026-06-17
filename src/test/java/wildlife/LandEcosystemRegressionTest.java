@@ -75,8 +75,7 @@ public class LandEcosystemRegressionTest {
                 grass,
                 new GrowthComponent(2500f, 50f, 0.2f, 0.7f, 1000f),
                 new SurvivalStatsComponent(500f, 150f, 0.3f, 0.5f),
-                landAdaptability(),
-                "FEMALE"
+                landAdaptability()
         );
         grass.addOrganism(rabbit);
         grass.addOrganism(elephant);
@@ -113,8 +112,7 @@ public class LandEcosystemRegressionTest {
                 grass,
                 new GrowthComponent(1000f, 20f, 0.2f, 0.7f, 0f),
                 new SurvivalStatsComponent(150f, 50f, 0.4f, 0.6f),
-                landAdaptability(),
-                "MALE"
+                landAdaptability()
         );
 
         grass.addOrganism(rabbit);
@@ -174,8 +172,7 @@ public class LandEcosystemRegressionTest {
                 grass,
                 new GrowthComponent(1000f, 20f, 0.2f, 0.7f, 500f),
                 new SurvivalStatsComponent(150f, 50f, 0.4f, 0.6f),
-                landAdaptability(),
-                "MALE"
+                landAdaptability()
         );
         grass.addOrganism(rabbit);
         grass.addOrganism(tiger);
@@ -210,8 +207,7 @@ public class LandEcosystemRegressionTest {
                 grass,
                 new GrowthComponent(1000f, 20f, 0.2f, 0.7f, 500f),
                 new SurvivalStatsComponent(150f, 50f, 0.4f, 0.6f),
-                landAdaptability(),
-                "MALE"
+                landAdaptability()
         );
         grass.addOrganism(rabbit);
         grass.addOrganism(tiger);
@@ -250,8 +246,7 @@ public class LandEcosystemRegressionTest {
                 grass,
                 new GrowthComponent(1000f, 20f, 0.2f, 0.7f, 500f),
                 new SurvivalStatsComponent(150f, 50f, 0.4f, 0.6f),
-                landAdaptability(),
-                "MALE"
+                landAdaptability()
         );
         setStat(tiger.getStats(), "hungerLevel", 100f);
         setStat(tiger.getStats(), "thirstLevel", 100f);
@@ -323,8 +318,7 @@ public class LandEcosystemRegressionTest {
                 env,
                 new GrowthComponent(400f, 5f, 0.2f, 0.7f, startAge),
                 new SurvivalStatsComponent(40f, 15f, 0.8f, 1.0f),
-                landAdaptability(),
-                "FEMALE"
+                landAdaptability()
         );
     }
 
