@@ -12,8 +12,8 @@
     <version>0.0.1</version>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.11</javafx.version>
         <lwjgl.version>3.3.6</lwjgl.version>
@@ -34,11 +34,11 @@
             </properties>
         </profile>
 
-        <!-- macOS -->
+        <!-- macOS x86_64 -->
         <profile>
             <id>mac</id>
             <activation>
-                <os><family>mac</family></os>
+                <os><family>mac</family><arch>x86_64</arch></os>
             </activation>
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
@@ -46,11 +46,23 @@
             </properties>
         </profile>
 
+        <!-- macOS Apple Silicon (aarch64) -->
+        <profile>
+            <id>mac-arm64</id>
+            <activation>
+                <os><family>mac</family><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+                <lwjgl.natives>natives-macos-arm64</lwjgl.natives>
+            </properties>
+        </profile>
+
         <!-- Linux -->
         <profile>
             <id>linux</id>
             <activation>
-                <os><family>unix</family></os>
+                <os><name>Linux</name></os>
             </activation>
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
@@ -143,8 +155,8 @@
                 <version>3.13.0</version>
 
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
 

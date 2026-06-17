@@ -52,10 +52,12 @@ public class Main {
                 long startTime = System.currentTimeMillis();
 
                 world.updateEnvironment(currentTick);
-                for(RenderData o: world.getAllRenderSnapshots()){
-                    renderer.submit(o);
+                if (renderer != null) {
+                    for(RenderData o: world.getAllRenderSnapshots()){
+                        renderer.submit(o);
+                    }
+                    renderer.commitFrame();
                 }
-                renderer.commitFrame();
                 var timeInfo = world.getTime();
                 if(currentTick % (TICK_RATE) == 0) {
                     System.out.printf("[Tick %d] Sinh vật: %d | Thời tiết: %s | Mùa: %s\n",

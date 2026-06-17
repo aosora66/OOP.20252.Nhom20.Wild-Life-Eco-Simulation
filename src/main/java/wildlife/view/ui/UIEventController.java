@@ -211,6 +211,12 @@ public class UIEventController {
     }
 
     private void startLWJGLThread() {
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            System.err.println("[UIEventController] macOS detected — skipping GLFW (JavaFX main thread conflict). Canvas sẽ trắng.");
+            this.renderer = null;
+            rendererLatch.countDown();
+            return;
+        }
         Thread renderThread = new Thread(() -> {
             if (!glfwInit()) {
                 System.err.println("LWJGL: glfwInit() thất bại");
