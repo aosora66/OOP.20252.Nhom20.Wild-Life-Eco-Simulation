@@ -12,6 +12,9 @@ import java.util.Timer;
 import wildlife.model.organism.Organism;
 import wildlife.util.AppConfig;
 import wildlife.view.renderer.Renderer;
+import wildlife.view.ui.UIEventController;
+
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -52,6 +55,15 @@ public class Main {
                 long startTime = System.currentTimeMillis();
 
                 world.updateEnvironment(currentTick);
+
+                // Cập nhật danh sách sinh vật cho UI click detection
+                if (currentTick % 30 == 0) {
+                    List<Organism> all = world.getSubEnvironments().stream()
+                            .flatMap(env -> env.getRegistry().getAll(Organism.class).stream())
+                            .collect(Collectors.toList());
+                    UIEventController.setActiveOrganisms(all);
+                }
+
                 if (renderer != null) {
                     for(RenderData o: world.getAllRenderSnapshots()){
                         renderer.submit(o);
@@ -80,7 +92,6 @@ public class Main {
                 }
             }
         }, "Ecosystem-Core-loop");
-        // wildlife.view.ui.UIEventController.setActiveOrganisms(ecosystem);
         coreLoopThread.setDaemon(true);
         coreLoopThread.start();
         // Chạy JavaFX Application. Phương thức này sẽ chặn cho đến khi cửa sổ đóng.
