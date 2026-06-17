@@ -10,6 +10,8 @@ import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -135,7 +137,8 @@ public class UIEventController {
 
     @FXML
     public AnchorPane sceneCanvas;
-
+    private boolean isSpacePressed = false;
+    private boolean isCtrlPressed = false;
     @FXML
     public StackPane rootStackPane;
 
@@ -358,32 +361,57 @@ public class UIEventController {
     }
 
     private void setupCameraEvents() {
+        sceneCanvas.setFocusTraversable(true);
+        sceneCanvas.setOnKeyPressed(event -> {
+            if(event.getCode() == KeyCode.SPACE) {
+                isSpacePressed = true;
+            }
+            if(event.getCode() == KeyCode.CONTROL) {
+                isCtrlPressed = true;
+            }
+        });
+        sceneCanvas.setOnKeyReleased(event -> {
+            if(event.getCode() == KeyCode.SPACE) {
+                isSpacePressed = false;
+            }
+            if(event.getCode() == KeyCode.CONTROL) {
+                isCtrlPressed = false;
+            }
+        });
+
         sceneCanvas.setOnScroll(event -> {
-            double deltaY = event.getDeltaY();
-            int zoomFactor = (int) (deltaY * 2);
-            camera.zoom(-zoomFactor);
+            if(isCtrlPressed){
+                double deltaY = event.getDeltaY();
+                int zoomFactor = (int) (deltaY * 2);
+                camera.zoom(-zoomFactor);
+            }
         });
 
         sceneCanvas.setOnMousePressed(event -> {
-            lastMouseX = event.getX();
-            lastMouseY = event.getY();
+            if(isSpacePressed){
+                sceneCanvas.requestFocus();
+                lastMouseX = event.getX();
+                lastMouseY = event.getY();
+            }
         });
 
         sceneCanvas.setOnMouseDragged(event -> {
-            double currentX = event.getX();
-            double currentY = event.getY();
-            double deltaX = currentX - lastMouseX;
-            double deltaY = currentY - lastMouseY;
+            if(isSpacePressed){
+                double currentX = event.getX();
+                double currentY = event.getY();
+                double deltaX = currentX - lastMouseX;
+                double deltaY = currentY - lastMouseY;
 
-            double scale = (double) (camera.getBotRightY() - camera.getTopLeftY()) / canvasHeight;
-            camera.pan((int) (-deltaX * scale), (int) (-deltaY * scale));
+                double scale = (double) (camera.getBotRightY() - camera.getTopLeftY()) / canvasHeight;
+                camera.pan((int) (-deltaX * scale), (int) (-deltaY * scale));
 
-            lastMouseX = currentX;
-            lastMouseY = currentY;
+                lastMouseX = currentX;
+                lastMouseY = currentY;
+            }
         });
 
         sceneCanvas.setOnMouseClicked(event -> {
-            if (event.getButton() == javafx.scene.input.MouseButton.SECONDARY) {
+            if (event.getButton() == MouseButton.PRIMARY && !isSpacePressed) {
                 double clickX = event.getX();
                 double clickY = event.getY();
 
