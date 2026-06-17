@@ -118,7 +118,7 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
     }
 
     private Optional<Grass> findNearestKnownGrass(Animal self, Environment env) {
-        Optional<Grass> visible = findNearestBySpecies(self, env, Grass.class);
+        Optional<Grass> visible = findNearestGrass(self, env);
         if (visible.isPresent()) {
             return visible;
         }
@@ -151,7 +151,7 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
                 return true;
             }
             if (self.canGraze()) {
-                var grass = findNearestBySpecies(self, env, Grass.class);
+                var grass = findNearestGrass(self, env);
                 if (grass.isPresent()
                         && self.getPosition().distanceTo(grass.get().getPosition()) <= attackRange) {
                     self.grazeOn(grass.get());

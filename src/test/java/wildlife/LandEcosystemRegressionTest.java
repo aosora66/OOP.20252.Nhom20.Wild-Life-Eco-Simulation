@@ -88,7 +88,7 @@ public class LandEcosystemRegressionTest {
                 5f,
                 0.25f,
                 0.3f,
-                "Tiger", "Wolf"
+                Tiger.class, Wolf.class
         );
 
         if (fearTigerOrWolf.isApplicable(rabbit, grass)) {

@@ -145,6 +145,15 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
     }
 
 
+    /** Tìm bụi Grass gần nhất trong sightRadius. */
+    protected Optional<Grass> findNearestGrass(Animal self, Environment env) {
+        return env.getRegistry()
+                .findNear(self.getPosition(), sightRadius, Grass.class)
+                .stream()
+                .min(Comparator.comparingDouble(
+                        g -> g.getPosition().distanceTo(self.getPosition())));
+    }
+
     /** Tìm nguồn thức ăn (hoặc nước nếu wantWater=true) gần nhất trong sightRadius. */
     protected Optional<FoodItem> findNearestFood(Animal self, Environment env,
                                                   boolean wantWater) {

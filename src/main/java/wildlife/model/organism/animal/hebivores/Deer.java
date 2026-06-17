@@ -21,8 +21,7 @@ public class Deer extends Animal {
                 Environment startEnv,
                 GrowthComponent growth,
                 SurvivalStatsComponent stats,
-                AdaptabilityComponent adaptability,
-                String gender) {
+                AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "HEBIVORE");
         this.combatPower = AppConfig.getFloat("animal.deer.combatPower");
         this.vision = AppConfig.getFloat("animal.deer.vision");
@@ -57,6 +56,9 @@ public class Deer extends Animal {
     protected void onTick(int currentTick) {
         executeStrategy(currentTick);
     }
+
+    @Override
+    public void reproduce() { reproduceSameSpecies(); }
 
     @Override
     protected void addSurvivalStrategies() {

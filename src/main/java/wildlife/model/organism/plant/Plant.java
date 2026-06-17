@@ -33,13 +33,13 @@ public abstract class Plant extends Organism {
     }
 
     /**
-     * Mô phỏng quá trình quang hợp của thực vật.
-     *
-     * Quá trình được thực hiện theo logic sau:
-     * 1. Kiểm tra mức ánh sáng từ môi trường có đủ hay không.
-     * 2. Tính hệ số độ ẩm (độ ẩm hiện tại / độ ẩm tối đa), đóng vai trò như một chất xúc tác.
-     * 3. Tính lượng năng lượng tạo ra dựa trên ánh sáng, hệ số độ ẩm và tốc độ quang hợp riêng của loài cây.
-     * 4. Chuyển đổi lượng năng lượng tạo ra thành lượng hồi phục sức khỏe (HP) cho cây.
+     * Simulates the biological process of photosynthesis.
+     * <p>
+     * The process is governed by the following logic:
+     * 1. Check for sufficient light level from the environment.
+     * 2. Calculate a humidity factor (humidity / max humidity) which acts as a catalyst.
+     * 3. Compute energy generated based on light, humidity factor, and the plant's specific rate.
+     * 4. Convert the generated energy into health (HP) recovery for the plant.
      */
     public void photosynthesis() {
         Environment currentEnvironment = getEnvironment();
@@ -62,16 +62,13 @@ public abstract class Plant extends Organism {
     }
 
     /**
-     * Mô phỏng quá trình hấp thụ chất dinh dưỡng và nước từ môi trường xung quanh.
-     *
-     * Quá trình được thực hiện theo các bước sau:
-     * 1. Truy vấn môi trường để tìm các FoodItem (nguồn dinh dưỡng hoặc nước)
-     *    khả dụng trong phạm vi hấp thụ của thực vật.
-     * 2. Xác định nguồn tài nguyên gần nhất nhằm tối ưu hiệu quả hấp thụ.
-     * 3. Tiêu thụ nguồn tài nguyên đó, đồng thời cập nhật các chỉ số sinh tồn
-     *    của cây (mức đói và mức khát).
-     * 4. Loại bỏ các tài nguyên hữu hạn đã được sử dụng khỏi bộ quản lý tài nguyên
-     *    của môi trường.
+     * Simulates the absorption of nutrients and water from the surrounding environment.
+     * <p>
+     * The process follows these steps:
+     * 1. Query the environment for available FoodItems (nutrients/water) within the absorption radius.
+     * 2. Identify the nearest available resource to prioritize efficiency.
+     * 3. Consume the resource, which updates the plant's survival statistics (hunger/thirst levels).
+     * 4. Remove finite resources from the environment's resource manager.
      */
     public void absorbNutrients() {
         Environment currentEnvironment = getEnvironment();

@@ -253,7 +253,7 @@ public abstract class Environment {
 
                 T animal = animalClass.getDeclaredConstructor(
                         String.class, String.class, Vector2D.class, Environment.class,
-                        GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class, String.class
+                        GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class
                 ).newInstance(id, animalClass.getSimpleName(), randomPos, this, growth, stats, adapt);
 
                 // 5. THÊM VÀO MÔI TRƯỜNG

@@ -10,11 +10,7 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
-import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
-
-import java.util.List;
-import java.util.UUID;
 
 public class Wolf extends Animal {
     public Wolf(String id,
@@ -23,8 +19,7 @@ public class Wolf extends Animal {
                 Environment startEnv,
                 GrowthComponent growth,
                 SurvivalStatsComponent stats,
-                AdaptabilityComponent adaptability,
-                String gender) {
+                AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability, "CANIVORE");
         this.combatPower = AppConfig.getFloat("animal.wolf.combatPower");
         this.vision = AppConfig.getFloat("animal.wolf.vision");
@@ -32,27 +27,6 @@ public class Wolf extends Animal {
         this.interactionRadius = AppConfig.getFloat("animal.wolf.eatRadius");
         this.diet.add(FoodType.MEAT);
         initStrategies();
-    }
-
-    /**
-     * Factory method — tạo Wolf với sinh học mặc định.
-     */
-    public static Wolf create(Vector2D pos, Environment env) {
-        return new Wolf(
-                UUID.randomUUID().toString(),
-                "Wolf",
-                pos,
-                env,
-                new GrowthComponent(1000f, 50f, 0.12f, 0.75f),
-                new SurvivalStatsComponent(70f, 20f, 0.12f, 0.12f),
-                new AdaptabilityComponent(
-                        List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
-                        new ValueRange(15f, 35f),
-                        new ValueRange(5f, 45f),
-                        new ValueRange(-100f, -0.1f)
-                ),
-                "FEMALE"
-        );
     }
 
     @Override
@@ -64,8 +38,9 @@ public class Wolf extends Animal {
     protected void addSurvivalStrategies() {
         float huntSpeedMult = AppConfig.getFloat("animal.wolf.hunt.speedMultiplier");
         float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
+        int huntSprintSteps = AppConfig.getInt("animal.wolf.hunt.sprintSteps");
 
-        // 1. Tránh apex predator (vd. Voi) — ưu tiên cao nhất: 30, không có named predator
+        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
         addStrategy(new wildlife.model.brain.ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,
@@ -82,6 +57,7 @@ public class Wolf extends Animal {
                 this.interactionRadius,
                 this.combatPower,
                 huntHungerThreshold,
+                huntSprintSteps,
                 Rabbit.class, Deer.class
         ));
 
@@ -97,28 +73,6 @@ public class Wolf extends Animal {
 
     @Override
     public void reproduce() {
-        if (environment == null) return;
-        int currentTick = environment.getTime().getCurrentTick();
-
-        if (canReproduce(currentTick)) {
-            lastReproduceTick = currentTick;
-
-            int offspringCount = AppConfig.getInt("animal.wolf.reproduce.offspringCount");
-            float spawnRadius = AppConfig.getFloat("animal.wolf.reproduce.spawnRadius");
-
-            for (int i = 0; i < offspringCount; i++) {
-                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
-                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
-
-                Vector2D childPos = new Vector2D(
-                        position.getX() + offsetX,
-                        position.getY() + offsetY
-                );
-
-                if (environment.getTerrain().isPassable(childPos, this)) {
-                    environment.getRegistry().add(Wolf.create(childPos, environment));
-                }
-            }
-        }
+        reproduceSameSpecies();
     }
 }

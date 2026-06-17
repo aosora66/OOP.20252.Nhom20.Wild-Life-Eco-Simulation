@@ -34,11 +34,11 @@
             </properties>
         </profile>
 
-        <!-- macOS -->
+        <!-- macOS x86_64 -->
         <profile>
             <id>mac</id>
             <activation>
-                <os><family>mac</family></os>
+                <os><family>mac</family><arch>x86_64</arch></os>
             </activation>
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
@@ -46,11 +46,23 @@
             </properties>
         </profile>
 
+        <!-- macOS Apple Silicon (aarch64) -->
+        <profile>
+            <id>mac-arm64</id>
+            <activation>
+                <os><family>mac</family><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+                <lwjgl.natives>natives-macos-arm64</lwjgl.natives>
+            </properties>
+        </profile>
+
         <!-- Linux -->
         <profile>
             <id>linux</id>
             <activation>
-                <os><family>unix</family></os>
+                <os><name>Linux</name></os>
             </activation>
             <properties>
                 <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
