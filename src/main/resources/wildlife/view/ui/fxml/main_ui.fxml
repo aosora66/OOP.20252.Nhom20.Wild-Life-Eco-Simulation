@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.*?>
-<?import javafx.scene.Group?>
+<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
@@ -53,7 +53,7 @@
             </VBox>
 
             <!-- Hunger Section -->
-            <VBox spacing="5">
+            <VBox spacing="5" fx:id="HungerBar">
                <!-- Label section -->
                <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="20.0" spacing="5">
                   <padding>
@@ -71,7 +71,7 @@
                      </StackPane>
                   </AnchorPane>
                   <!--Label-->
-                  <Label styleClass="label-text" text="Hunger" />
+                  <Label styleClass="label-text" text="Satiety" />
                </HBox>
                <!-- value bar -->
                <StackPane alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="500" styleClass="stat-bar-container">
@@ -94,7 +94,7 @@
                   <!-- Icon  -->
                   <SVGPath content="M10 2.24164L14.7167 6.95831C15.6495 7.89048 16.2849 9.07836 16.5424 10.3717C16.8 11.665 16.6683 13.0057 16.1638 14.2241C15.6594 15.4425 14.8049 16.484 13.7085 17.2167C12.612 17.9495 11.3229 18.3406 10.0042 18.3406C8.68547 18.3406 7.39636 17.9495 6.29994 17.2167C5.20352 16.484 4.34904 15.4425 3.84458 14.2241C3.34012 13.0057 3.20836 11.665 3.46595 10.3717C3.72353 9.07836 4.35891 7.89048 5.29169 6.95831L10 2.24164Z" fill="#8CC0DE" stroke="#2D3436" strokeLineCap="ROUND" strokeLineJoin="ROUND" />
                   <!--Label-->
-                  <Label styleClass="label-text" text="Thirsty" />
+                  <Label styleClass="label-text" text="Hydration" />
                </HBox>
                <!-- value bar -->
                <StackPane alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="500" styleClass="stat-bar-container">
@@ -110,12 +110,10 @@
          </VBox>
       </HBox>
       <!-- View button -->
-      <HBox fx:id="viewButton" alignment="CENTER" maxHeight="70" minHeight="70" onMouseEntered="#viewButtonExpand" onMouseExited="#viewButtonCollapse" onMousePressed="#viewButtonOnPressed" onMouseReleased="#ViewButtonOnReleased" prefHeight="70" spacing="43.0" styleClass="card-panel" AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
+      <HBox fx:id="viewButton" alignment="CENTER" maxHeight="70" minHeight="70"  onMousePressed="#viewButtonOnPressed" onMouseReleased="#ViewButtonOnReleased" prefHeight="70" spacing="43.0" styleClass="card-panel" AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
          <padding>
             <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
          </padding>
-         <!-- view mode label -->
-         <Label fx:id="sceneMode_label" managed="false" styleClass="header-text" text="Basic" visible="false" />
          <!-- view mode icon -->
          <StackPane maxHeight="30.98" maxWidth="47.95" minHeight="30.98" minWidth="47.95" prefHeight="30.98" prefWidth="47.95">
             <SVGPath content="M22.8865 9.33745C28.8549 8.78635 34.1383 13.1819 34.6821 19.1509C35.2259 25.12 30.8239 30.398 24.8541 30.9345C18.8948 31.4701 13.628 27.0773 13.0851 21.1186C12.5422 15.1599 16.9286 9.88764 22.8865 9.33745Z" fill="#2D3436" StackPane.alignment="BOTTOM_CENTER" />
@@ -129,15 +127,6 @@
          </padding>
          <SVGPath content="M35.1973 5.45737C35.1973 5.17188 35.3028 4.89778 35.4912 4.6939L39.3671 0.582032C38.2247 0.0336001 36.9519 -0.132455 35.7182 0.105997C34.4846 0.344448 33.3488 0.976081 32.4621 1.91672C31.5755 2.85736 30.9801 4.06233 30.7553 5.37105C30.5306 6.67977 30.6871 8.03008 31.204 9.24203L23.3718 17.551L15.9166 9.6421L20.9897 4.26012L18.8246 1.96322H10.0693L0 12.6455L6.54273 19.5866L11.5744 14.2486L19.0296 22.1575L11.1791 30.4859C10.0367 29.9375 8.76389 29.7714 7.53027 30.0099C6.29666 30.2483 5.16083 30.88 4.27417 31.8206C3.38751 32.7613 2.79212 33.9662 2.56735 35.2749C2.34258 36.5837 2.49911 37.934 3.01607 39.1459L6.89198 35.0341C7.08416 34.8342 7.34254 34.7223 7.61165 34.7223C7.88075 34.7223 8.13913 34.8342 8.33131 35.0341L9.97625 36.7792C10.1646 36.983 10.2701 37.2571 10.2701 37.5426C10.2701 37.8281 10.1646 38.1022 9.97625 38.3061L6.10035 42.418C7.24275 42.9664 8.51558 43.1325 9.7492 42.894C10.9828 42.6556 12.1186 42.0239 13.0053 41.0833C13.892 40.1426 14.4873 38.9377 14.7121 37.629C14.9369 36.3202 14.7804 34.9699 14.2634 33.758L22.1139 25.4295L36.8096 41.0194C37.2186 41.4533 37.7733 41.6971 38.3517 41.6971C38.9301 41.6971 39.4848 41.4533 39.8938 41.0194C40.3028 40.5855 41.6377 38.9373 41.7905 38.0489C41.9318 37.2276 41.6155 36.8974 41.2437 36.5094C41.2134 36.4777 41.1826 36.4456 41.1517 36.4129L26.4561 20.823L34.2883 12.5141C35.4307 13.0625 36.7035 13.2286 37.9372 12.9901C39.1708 12.7517 40.3066 12.12 41.1933 11.1794C42.0799 10.2387 42.6753 9.03377 42.9001 7.72505C43.1249 6.41633 42.9683 5.06602 42.4514 3.85407L38.5755 7.96594C38.3833 8.16578 38.1249 8.27771 37.8558 8.27771C37.5867 8.27771 37.3283 8.16578 37.1361 7.96594L35.4912 6.22085C35.3028 6.01697 35.1973 5.74286 35.1973 5.45737Z" fill="#2D3436" fillRule="EVEN_ODD" />
          <HBox alignment="CENTER" styleClass="toolbox-wrapper">
-
-            <!-- Entity toolset -->
-            <HBox fx:id="organismToolset" alignment="CENTER" styleClass="toolset-wrapper">
-               <!-- add later -->
-            </HBox>
-            <!-- Env toolset -->
-            <HBox fx:id="envTool" alignment="CENTER" styleClass="toolset-wrapper">
-               <!-- add later -->
-            </HBox>
             <!-- Edit tool -->
             <HBox alignment="CENTER" styleClass="toolset-wrapper">
                <Button styleClass="tool-item" />

@@ -41,6 +41,8 @@ public class SpriteBatch {
     private float colorB = 1f;
     private float colorA = 1f;
 
+    private int currentMode = 0;
+
     public SpriteBatch(int screenWidth, int screenHeight) {
         shader = new ShaderProgram();
         // Orthographic projection: đặt điểm gốc ở top-left, trục y hướng xuống dưới
@@ -146,6 +148,10 @@ public class SpriteBatch {
         glDisable(GL_BLEND);
     }
 
+    public void setRenderMode(int mode) {
+        this.currentMode = mode;
+    }
+
     public void setColor(float r, float g, float b, float a) {
         this.colorR = r;
         this.colorG = g;
@@ -203,6 +209,7 @@ public class SpriteBatch {
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferSubData(GL_ARRAY_BUFFER, 0, uploadBuffer);
 
+        shader.setMode(currentMode);
         // Vẽ tất cả các TỨ GIÁC đã đưa vào hàng đợi theo dạng ghép tam giác (1 tứ giác = 2 tam giác)
         glDrawElements(GL_TRIANGLES, spriteCount * INDICES_PER_SPRITE, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);

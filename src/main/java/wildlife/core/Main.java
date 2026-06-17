@@ -1,16 +1,12 @@
 package wildlife.core;
 import wildlife.model.dto.RenderData;
 import wildlife.model.environment.CompositeMap;
-import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.util.MapLoader;
 import wildlife.view.ApplicationFrame;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 
 import wildlife.model.organism.Organism;
-import wildlife.util.AppConfig;
 import wildlife.view.renderer.Renderer;
 import wildlife.view.ui.UIEventController;
 
@@ -46,45 +42,63 @@ public class Main {
 
             Renderer renderer = ApplicationFrame.getRendererInstance();
 
-            final int TICK_RATE = 20;
-            final long MS_PER_SECOND = 1000 / TICK_RATE;
-            int currentTick = 0;
+            final int  TICK_RATE       = 20;
+            final long NS_PER_TICK     = 1_000_000_000L / TICK_RATE;
+            // Số tick tối đa được phép bù trong 1 frame — ngăn "spiral of death"
+            // khi GC pause hoặc breakpoint làm đồng hồ nhảy vọt
+            final int  MAX_CATCHUP     = 5;
 
-            while(true) {
-                currentTick++;
-                long startTime = System.currentTimeMillis();
+            long lastTime    = System.nanoTime();
+            long accumulator = 0L;
+            int  currentTick = 0;
 
-                world.updateEnvironment(currentTick);
+            while (true) {
+                long frameStart = System.nanoTime();
+                long elapsed    = frameStart - lastTime;
+                lastTime = frameStart;
 
-                // Cập nhật danh sách sinh vật cho UI click detection
-                if (currentTick % 30 == 0) {
-                    List<Organism> all = world.getSubEnvironments().stream()
-                            .flatMap(env -> env.getRegistry().getAll(Organism.class).stream())
-                            .collect(Collectors.toList());
-                    UIEventController.setActiveOrganisms(all);
+                // Clamp delta: nếu elapsed vượt MAX_CATCHUP tick, bỏ phần thừa
+                accumulator += Math.min(elapsed, NS_PER_TICK * MAX_CATCHUP);
+
+                // --- Xử lý tất cả tick đã tích lũy ---
+                while (accumulator >= NS_PER_TICK) {
+                    currentTick++;
+                    world.updateEnvironment(currentTick);
+                    accumulator -= NS_PER_TICK;
+
+                    // Cập nhật danh sách sinh vật cho UI click detection
+                    if (currentTick % 30 == 0) {
+                        List<Organism> all = world.getSubEnvironments().stream()
+                                .flatMap(env -> env.getRegistry().getAll(Organism.class).stream())
+                                .collect(Collectors.toList());
+                        UIEventController.setActiveOrganisms(all);
+                    }
+
+                    if (currentTick % TICK_RATE == 0) {
+                        var timeInfo = world.getTime();
+                        System.out.printf("[Tick %d] Sinh vật: %d | Thời tiết: %s | Mùa: %s\n",
+                                currentTick,
+                                world.getTotalOrganismCount(),
+                                timeInfo.getCurrentWeather(),
+                                timeInfo.getCurrentSeason()
+                        );
+                    }
                 }
 
+                // --- Submit snapshot một lần duy nhất sau batch tick của frame ---
                 if (renderer != null) {
-                    for(RenderData o: world.getAllRenderSnapshots()){
+                    for (RenderData o : world.getAllRenderSnapshots()) {
                         renderer.submit(o);
                     }
                     renderer.commitFrame();
                 }
-                var timeInfo = world.getTime();
-                if(currentTick % (TICK_RATE) == 0) {
-                    System.out.printf("[Tick %d] Sinh vật: %d | Thời tiết: %s | Mùa: %s\n",
-                            currentTick,
-                            world.getTotalOrganismCount(),
-                            timeInfo.getCurrentWeather(),
-                            timeInfo.getCurrentSeason()
-                    );
-                }
 
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = MS_PER_SECOND - elapsedTime;
-                if(sleepTime > 0) {
-                    try{
-                        Thread.sleep(sleepTime);
+                // --- Ngủ đến khi tick kế tiếp, không spin CPU ---
+                long frameWork = System.nanoTime() - frameStart;
+                long sleepNs   = (NS_PER_TICK - accumulator) - frameWork;
+                if (sleepNs > 1_000_000L) { // > 1ms: đáng ngủ
+                    try {
+                        Thread.sleep(sleepNs / 1_000_000L, (int)(sleepNs % 1_000_000L));
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;

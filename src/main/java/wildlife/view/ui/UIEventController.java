@@ -23,6 +23,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import wildlife.model.dto.RenderData;
 import wildlife.model.organism.OrganismState;
+import wildlife.model.organism.plant.Plant;
 import wildlife.view.renderer.Renderer;
 import wildlife.view.renderer.SpriteBatch;
 import wildlife.view.renderer.SimpleTexture;
@@ -37,32 +38,12 @@ import static org.lwjgl.opengl.GL11.*;
 //Dieu khien cac thao tac tren man hinh UI (va animation) va ghi nhan cac event tac dong vao scene canvas de gui sang lwjgl
 public class UIEventController {
     public static boolean sceneModeIsBasic = true;
-    private Timeline timelineForAnimation;
-    
+
     //view button
     @FXML
     public HBox viewButton;
-    @FXML
-    public Label sceneMode_label;
-    
-    @FXML
-    public void viewButtonExpand() {
-        sceneMode_label.setManaged(true);
-        sceneMode_label.setVisible(true);
-        double targetWidth = sceneMode_label.prefWidth(-1);
-        timelineForAnimation = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(sceneMode_label.maxWidthProperty(), 0)),
-                new KeyFrame(Duration.millis(50), new KeyValue(sceneMode_label.maxWidthProperty(), targetWidth))
-        );
-        timelineForAnimation.play();
-    }
-    
-    @FXML
-    public void viewButtonCollapse() {
-        sceneMode_label.setManaged(false);
-        sceneMode_label.setVisible(false);
-    }
-    
+    public VBox HungerBar;
+
     @FXML
     public void viewButtonOnPressed() {
         viewButton.setStyle("-fx-background-color: #B0C7DD");
@@ -70,15 +51,11 @@ public class UIEventController {
     
     @FXML
     public void ViewButtonOnReleased() {
-        sceneModeIsBasic = !sceneModeIsBasic;
-        double currentWidth = sceneMode_label.getWidth();
-        sceneMode_label.setText((sceneModeIsBasic)?"Basic":"Sprite");
-        timelineForAnimation = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(sceneMode_label.maxWidthProperty(), currentWidth)),
-                new KeyFrame(Duration.millis(10), new KeyValue(sceneMode_label.maxWidthProperty(), sceneMode_label.prefWidth(-1)))
-        );
-        timelineForAnimation.play();
         viewButton.setStyle("-fx-background-color: #F8FAFC");
+        sceneModeIsBasic = !sceneModeIsBasic;
+        int mode = sceneModeIsBasic ? 0 : 1;
+        Renderer r = Renderer.getInstance();
+        if (r != null) r.setRenderMode(mode);
     }
 
     //entity panel
@@ -456,17 +433,22 @@ public class UIEventController {
             hpBarFill.setPrefWidth(500 * hpPercent);
             hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
 
-            // Hunger (0 is full, 100 is starving, so fill is 1.0 - hungerLevel/100.0)
-            double hungerPercent = 1.0 - (stats.getHungerLevel() / 100.0);
-            hungerPercent = Math.max(0.0, Math.min(1.0, hungerPercent));
-            hungerBarFill.setPrefWidth(500 * hungerPercent);
-            hungerValueLabel.setText(String.format("%.0f / 100", stats.getHungerLevel()));
+            if(selected instanceof Plant){
+                HungerBar.setDisable(true);
+                hungerValueLabel.setText("Unspecified");
+                hungerBarFill.setPrefWidth(0);
+            }else{
+                // 0 la no, 100 la doi
+                double hungerPercent = (stats.getHungerLevel() / 100.0);
+                hungerBarFill.setPrefWidth(500 * (1 - hungerPercent));
+                hungerValueLabel.setText(String.format("%.0f / 100", 100-stats.getHungerLevel()));
+                HungerBar.setDisable(false);
+            }
 
             // Thirst (0 is quenched, 100 is dehydrated)
-            double thirstPercent = 1.0 - (stats.getThirstLevel() / 100.0);
-            thirstPercent = Math.max(0.0, Math.min(1.0, thirstPercent));
-            thirstyBarFill.setPrefWidth(500 * thirstPercent);
-            thirstyValueLabel.setText(String.format("%.0f / 100", stats.getThirstLevel()));
+            double thirstPercent = 1- (stats.getThirstLevel() / 100.0);
+            thirstyBarFill.setPrefWidth(500 * (thirstPercent));
+            thirstyValueLabel.setText(String.format("%.0f / 100", 100-stats.getThirstLevel()));
 
             // Update Image depending on Species
             String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
@@ -479,10 +461,6 @@ public class UIEventController {
 
             entityPanel.setManaged(true);
             entityPanel.setVisible(true);
-            
-            entityPanelIsExpanded = true;
-            info.setManaged(true);
-            info.setVisible(true);
         });
     }
 
@@ -490,9 +468,6 @@ public class UIEventController {
         Platform.runLater(() -> {
             entityPanel.setManaged(false);
             entityPanel.setVisible(false);
-            entityPanelIsExpanded = false;
-            info.setManaged(false);
-            info.setVisible(false);
         });
     }
 

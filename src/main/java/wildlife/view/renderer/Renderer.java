@@ -8,17 +8,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Nhận các sinh vật vào dưới dạng {@link RenderData}, gom nhóm theo loài để tăng hiệu quả batch theo texture, giảm lượt gọi {@link SpriteBatch}
  */
 public class Renderer {
 
+    private static volatile Renderer instance;
+
     private static final float DEFAULT_SPRITE_WIDTH  = 32f;
     private static final float DEFAULT_SPRITE_HEIGHT = 32f;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
+
+    /** 0 = Basic (solid color), 1 = Sprite (textured). Written by the JavaFX thread, read by the render thread. */
+    private final AtomicInteger renderMode = new AtomicInteger(0);
 
     private record SpeciesGroup(String speciesName, List<float[]> positions) {}
 
@@ -36,6 +42,17 @@ public class Renderer {
     public Renderer(SpriteBatch spriteBatch, TextureRegistry textureRegistry) {
         this.spriteBatch     = Objects.requireNonNull(spriteBatch, "spriteBatch");
         this.textureRegistry = Objects.requireNonNull(textureRegistry, "textureRegistry");
+        instance = this;
+    }
+
+    /** Returns the most recently constructed Renderer, or {@code null} if none has been created yet. */
+    public static Renderer getInstance() {
+        return instance;
+    }
+
+    /** Called from the JavaFX thread to switch rendering mode. Thread-safe via AtomicInteger. */
+    public void setRenderMode(int mode) {
+        renderMode.set(mode);
     }
 
     /**
@@ -60,6 +77,8 @@ public class Renderer {
             renderQueue.clear();
         }
 
+        // Snapshot once so every flush() in this frame uses the same mode.
+        spriteBatch.setRenderMode(renderMode.get());
         spriteBatch.begin();
 
         for (SpeciesGroup group : groupsToRender) {

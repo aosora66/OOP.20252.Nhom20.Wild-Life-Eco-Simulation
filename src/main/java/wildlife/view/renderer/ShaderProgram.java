@@ -20,7 +20,7 @@ import static org.lwjgl.opengl.GL20.*;
 
 public class ShaderProgram {
     //  Embedded GLSL sources (OpenGL 3.3 core profile)
-    /** Vertex shader: transforms position and passes UV coords to fragment stage. */
+    /** Vertex shader: transforms position and forwards UV + color to the fragment stage. */
     private static final String VERTEX_SOURCE = """
             #version 330 core
             layout (location = 0) in vec2 aPos;
@@ -29,28 +29,37 @@ public class ShaderProgram {
 
             uniform mat4 uProjection;
 
-            out vec2 vTexCoord;
-            out vec4 vColor;
+            out vec2 fTexCoord;
+            out vec4 fColor;
 
             void main() {
-                vTexCoord  = aTexCoord;
-                vColor     = aColor;
+                fTexCoord   = aTexCoord;
+                fColor      = aColor;
                 gl_Position = uProjection * vec4(aPos, 0.0, 1.0);
             }
             """;
 
-    /** Fragment shader: samples the bound texture and modulates by vertex color. */
+    /**
+     * Fragment shader with two rendering modes selected by {@code uMode}:
+     *   0 – Basic: outputs the interpolated vertex color (solid / untextured).
+     *   1 – Sprite: samples the bound texture and tints it by the vertex color.
+     */
     private static final String FRAGMENT_SOURCE = """
             #version 330 core
-            in vec2 vTexCoord;
-            in vec4 vColor;
+            in vec2 fTexCoord;
+            in vec4 fColor;
 
             uniform sampler2D uTexture;
+            uniform int       uMode;
 
             out vec4 FragColor;
 
             void main() {
-                FragColor = texture(uTexture, vTexCoord) * vColor;
+                if (uMode == 0) {
+                    FragColor = fColor;
+                } else {
+                    FragColor = texture(uTexture, fTexCoord) * fColor;
+                }
             }
             """;
 
@@ -118,6 +127,15 @@ public class ShaderProgram {
     public void setUniform1i(String name, int value) {
         int location = getUniformLocation(name);
         glUniform1i(location, value);
+    }
+
+    /**
+     * Select the active rendering mode via the {@code uMode} uniform.
+     *
+     * @param mode 0 = Basic (solid color), 1 = Sprite (textured + tint)
+     */
+    public void setMode(int mode) {
+        setUniform1i("uMode", mode);
     }
 
     // ──────────────────────────────────────────────────────────────

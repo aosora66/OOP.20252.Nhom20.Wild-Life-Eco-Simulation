@@ -13,6 +13,11 @@ public class RenderData {
     public final float y;
     public final OrganismState state;
 
+    private float r = 1.0f;
+    private float g = 1.0f;
+    private float b = 1.0f;
+    private float a = 1.0f;
+
     public RenderData(String entityId, String speciesName, float x, float y, OrganismState state) {
         this.entityId = entityId;
         this.speciesName = speciesName;
@@ -27,5 +32,23 @@ public class RenderData {
         this.x = organism.getPosition().getX();
         this.y = organism.getPosition().getY();
         this.state = organism.getState();
+    }
+
+    public float getR() { return r; }
+    public float getG() { return g; }
+    public float getB() { return b; }
+    public float getA() { return a; }
+
+    public void setR(float r) { this.r = r; }
+    public void setG(float g) { this.g = g; }
+    public void setB(float b) { this.b = b; }
+    public void setA(float a) { this.a = a; }
+
+    /** Convenience setter for all four channels at once. */
+    public void setColor(float r, float g, float b, float a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
     }
 }
