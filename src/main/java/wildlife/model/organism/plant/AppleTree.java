@@ -70,6 +70,26 @@ public class AppleTree extends Plant {
     }
 
     /**
+     * Factory method — tạo AppleTree với sinh học mặc định.
+     */
+    public static AppleTree create(Vector2D pos, Environment env) {
+        return new AppleTree(
+                UUID.randomUUID().toString(),
+                "AppleTree",
+                pos,
+                env,
+                new GrowthComponent(1500f, 40f, 0.15f, 0.8f),
+                new SurvivalStatsComponent(80f, 5f, 0.05f, 0.06f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.GRASSLAND, TerrainType.FOREST),
+                        new ValueRange(20f, 35f),
+                        new ValueRange(10f, 60f),
+                        new ValueRange(-100f, -0.1f)
+                )
+        );
+    }
+
+    /**
      * Updates the AppleTree state during each simulation tick.
      * Performs basic plant metabolism and triggers fruit dropping if conditions are met.
      *
@@ -118,10 +138,9 @@ public class AppleTree extends Plant {
 
     /**
      * Seeds or creates a new AppleTree instance (reproduction behavior).
-     * Currently returns null as complex plant reproduction logic is not yet implemented.
      */
     @Override
     protected void addOffspring(Vector2D pos) {
-
+        environment.getRegistry().add(AppleTree.create(pos, environment));
     }
 }

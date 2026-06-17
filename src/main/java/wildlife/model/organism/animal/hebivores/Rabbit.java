@@ -4,14 +4,17 @@ import wildlife.model.brain.PassiveStrategy;
 import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
-import wildlife.model.organism.animal.canivores.Tiger;
-import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
+
+import java.util.List;
+import java.util.UUID;
 
 public class Rabbit extends Animal {
 
@@ -32,6 +35,27 @@ public class Rabbit extends Animal {
         initStrategies();
     }
 
+    /**
+     * Factory method — tạo Rabbit với sinh học mặc định.
+     */
+    public static Rabbit create(Vector2D pos, Environment env) {
+        return new Rabbit(
+                UUID.randomUUID().toString(),
+                "Rabbit",
+                pos,
+                env,
+                new GrowthComponent(1000f, 50f, 0.2f, 0.8f),
+                new SurvivalStatsComponent(40f, 10f, 0.1f, 0.1f),
+                new AdaptabilityComponent(
+                        List.of(TerrainType.GRASSLAND, TerrainType.FOREST),
+                        new ValueRange(15f, 35f),
+                        new ValueRange(5f, 45f),
+                        new ValueRange(-100f, 0f)
+                ),
+                "MALE"
+        );
+    }
+
     @Override
     protected void addSurvivalStrategies() {
         float fleeSpeedMult = AppConfig.getFloat("animal.rabbit.flee.speedMultiplier");
@@ -45,7 +69,7 @@ public class Rabbit extends Animal {
                 this.interactionRadius,
                 0.25f,
                 0.3f,
-                Tiger.class, Wolf.class
+                "Tiger", "Wolf"
         ));
 
         // Tìm thức ăn/nước uống khi không có kẻ thù
@@ -63,8 +87,32 @@ public class Rabbit extends Animal {
         executeStrategy(currentTick);
     }
 
-    /** Thỏ ăn cỏ — gặm trực tiếp cây Grass. */
     @Override
-    public boolean canGraze() { return true; }
+    public void reproduce() {
+        if (environment == null) return;
+        int currentTick = environment.getTime().getCurrentTick();
 
+        if (canReproduce(currentTick)) {
+            lastReproduceTick = currentTick;
+
+            int offspringCount = AppConfig.getInt("animal.rabbit.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("animal.rabbit.reproduce.spawnRadius");
+
+            for (int i = 0; i < offspringCount; i++) {
+                // Random spawn around the parent
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+
+                Vector2D childPos = new Vector2D(
+                        position.getX() + offsetX,
+                        position.getY() + offsetY
+                );
+
+                // Check if position is passable before adding offspring
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    environment.getRegistry().add(Rabbit.create(childPos, environment));
+                }
+            }
+        }
+    }
 }
