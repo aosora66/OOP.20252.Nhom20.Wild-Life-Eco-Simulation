@@ -143,14 +143,26 @@ public class UIEventController {
             if (selected != selectedOrganism) {
                 return;
             }
+            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
             entityIdLabel.setTextFill(Paint.valueOf("#2d3436"));
             if(!selected.isAlive()){
                 entityIdLabel.setText("[DEAD]   " + entityIdLabel.getText());
                 entityIdLabel.setTextFill(Paint.valueOf("#f28c8c"));
+                hpBarFill.setPrefWidth(0);
+                hpValueLabel.setText(String.format("0 / %.0f", stats.getMaxHp()));
+                hungerBarFill.setPrefWidth(0);
+                hungerValueLabel.setText("Unspecified");
+                hungerValueLabel.setDisable(true);
+                thirstyBarFill.setPrefWidth(0);
+                thirstyValueLabel.setText("Unspecified");
+                thirstyValueLabel.setDisable(true);
+                entityPanel.setManaged(true);
+                entityPanel.setVisible(true);
+                return;
             }
+
             // Populate stats
-            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             double hpPercent = stats.getHp() / stats.getMaxHp();
             hpBarFill.setPrefWidth(500 * hpPercent);
             hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
