@@ -125,9 +125,23 @@ public class Fish extends Animal {
 
         int pop = environment.getRegistry().getAllAlive(Fish.class).size();
         float chance = AppConfig.getFloat("animal.fish.reproduce.chance");
+
+        // Tăng cơ hội khi quần thể rất thấp để tránh tuyệt chủng
         if (pop <= 5) {
             chance = Math.max(chance, 0.35f);
         }
+
+        // Population cap: dừng hoàn toàn tại max, giảm dần từ 70% max
+        String maxPopStr = AppConfig.get("animal.fish.maxPopulation");
+        if (maxPopStr != null) {
+            int maxPop = Integer.parseInt(maxPopStr.trim());
+            if (pop >= maxPop) return;
+            float ratio = (float) pop / maxPop;
+            if (ratio > 0.7f) {
+                chance *= (1f - (ratio - 0.7f) / 0.3f);
+            }
+        }
+
         if (Math.random() >= chance) return;
 
         // Tìm vị trí con nằm trong nước (DEEP_WATER); nếu không có thì sinh ngay cạnh bố mẹ

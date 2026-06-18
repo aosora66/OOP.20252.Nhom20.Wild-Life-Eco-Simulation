@@ -57,9 +57,10 @@ public class GrassLand extends Environment {
         for (int i = 0; i < 50; i++) {
             registry.add(Grass.create(terrain.getRandomValidPosition(), this));
         }
-        // 10 Cây táo (Nhiều hơn rừng)
+        // 10 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
         for (int i = 0; i < 10; i++) {
-            registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this));
+            float startAge = random.nextFloat() * 1200f;
+            registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
         }
 
         // --- 2. VẬT CẢN (OBSTACLES) ---

@@ -53,18 +53,25 @@ public class AppleTree extends Plant {
     }
 
     public static AppleTree create(Vector2D pos, Environment env) {
+        return create(pos, env, 0f);
+    }
+
+    public static AppleTree create(Vector2D pos, Environment env, float startAge) {
+        float maxAge      = AppConfig.getFloat("plant.appletree.maxAge") * (0.8f + RNG.nextFloat() * 0.4f);
+        float maxHp       = AppConfig.getFloat("plant.appletree.maxHp");
+        float thirstDecay = AppConfig.getFloat("plant.appletree.thirstDecay");
         return new AppleTree(
-                "APPLETREE_" + System.nanoTime(),
+                "APPLETREE_" + System.nanoTime() + "_" + RNG.nextInt(9999),
                 "AppleTree",
                 pos,
                 env,
-                new GrowthComponent(1000f, 25f, 0.2f, 0.7f),
-                new SurvivalStatsComponent(80f, 15f, 0.0f, 0.06f),
+                new GrowthComponent(maxAge, 25f, 0.2f, 0.7f, startAge),
+                new SurvivalStatsComponent(maxHp, 15f, 0.0f, thirstDecay),
                 new AdaptabilityComponent(
                         List.of(TerrainType.FOREST, TerrainType.GRASSLAND),
-                        new ValueRange(18f, 30f),  // Mức tối ưu (Optimal)
-                        new ValueRange(5f, 40f),   // Mức chịu đựng (Tolerance)
-                        new ValueRange(-50f, 0f)   // Ngưỡng chết (Lethal) - Lạnh cóng
+                        new ValueRange(18f, 30f),
+                        new ValueRange(5f, 40f),
+                        new ValueRange(-50f, 0f)
                 )
         );
     }
@@ -116,12 +123,8 @@ public class AppleTree extends Plant {
         environment.getResources().spawnFood(applePos, nutrition, FoodType.APPLE, expiry);
     }
 
-    /**
-     * Seeds or creates a new AppleTree instance (reproduction behavior).
-     * Currently returns null as complex plant reproduction logic is not yet implemented.
-     */
     @Override
     protected void addOffspring(Vector2D pos) {
-
+        environment.addOrganism(AppleTree.create(pos, environment));
     }
 }

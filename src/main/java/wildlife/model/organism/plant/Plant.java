@@ -97,40 +97,57 @@ public abstract class Plant extends Organism {
         }
     }
 
-    protected boolean hasReproduced = false;
+    // -1 lớn để lần đầu luôn sẵn sàng sinh sản (không cần chờ cooldown)
+    protected int lastReproduceTick = Integer.MIN_VALUE / 2;
 
     @Override
     public void reproduce() {
-        if (hasReproduced || environment == null) return;
+        if (environment == null || !growth.isAdult()) return;
 
-        // check for maturity
-        if (!growth.isAdult()) return;
+        // Cooldown: mỗi cây có thể sinh nhiều lần, nhưng cần đủ thời gian giữa các lần
+        int currentTick = environment.getTime().getCurrentTick();
+        String species = getClass().getSimpleName().toLowerCase();
+        String cooldownStr = AppConfig.get("plant." + species + ".reproduce.cooldownTicks");
+        int cooldown = cooldownStr != null ? Integer.parseInt(cooldownStr.trim())
+                : AppConfig.getInt("plant.reproduce.cooldownTicks");
+        if (currentTick - lastReproduceTick < cooldown) return;
 
-        // check for health level (using a threshold from config)
-        // Cây không có khái niệm đói — dùng mức khát để quyết định có đủ điều kiện sinh sản không
+        // Cây không đói — chỉ dùng ngưỡng khát để quyết định sinh sản
         float thirstThreshold = AppConfig.getFloat("plant.reproduce.thirstThreshold");
         if (stats.getThirstLevel() > thirstThreshold) return;
 
-        // reproduce add number of offspring into enviroment
-        // every organism will only reproduce once in their life
-        hasReproduced = true;
+        // Xác suất sinh sản mỗi lần cooldown hết
+        float chance = AppConfig.getFloat("plant.reproduce.chance");
 
-        // specific number of offspring will get from Appconfig
+        // Population cap: kiểm tra giới hạn quần thể của loài này
+        String maxPopStr = AppConfig.get("plant." + species + ".maxPopulation");
+        if (maxPopStr != null) {
+            int maxPop = Integer.parseInt(maxPopStr.trim());
+            int currentPop = environment.getRegistry().getAllAlive(getClass()).size();
+            if (currentPop >= maxPop) return;
+            // Soft cap: giảm tỉ lệ sinh tuyến tính khi vượt 70% mức tối đa
+            float ratio = (float) currentPop / maxPop;
+            if (ratio > 0.7f) {
+                chance *= (1f - (ratio - 0.7f) / 0.3f);
+            }
+        }
+
+        if (Math.random() >= chance) return;
+
+        // Đặt cooldown ngay khi chance pass — kể cả khi terrain không hợp lệ,
+        // tránh vòng lặp thử lại mỗi tick (gây chậm simulation).
+        lastReproduceTick = currentTick;
+
         int offspringCount = AppConfig.getInt("plant.reproduce.offspringCount");
         float spawnRadius = AppConfig.getFloat("plant.reproduce.spawnRadius");
 
         for (int i = 0; i < offspringCount; i++) {
-            // Random spawn around the current plant
             float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
             float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
-
-            // Calculate child position manually (Vector2D has no add method)
             Vector2D childPos = new Vector2D(
                     position.getX() + offsetX,
                     position.getY() + offsetY
             );
-
-            // Optional: check if position is passable before adding
             if (environment.getTerrain().isPassable(childPos, this)) {
                 addOffspring(childPos);
             }

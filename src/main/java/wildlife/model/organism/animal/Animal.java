@@ -135,7 +135,7 @@ public abstract class Animal extends Organism {
         stats.consume(AppConfig.getFloat("animal.graze.nutritionPerBite"), false);
     }
 
-    /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi). */
+    /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi, giới hạn quần thể). */
     protected boolean canReproduce(int currentTick) {
         String species = getClass().getSimpleName().toLowerCase();
         float hungerThreshold = getSpeciesFloatOrDefault(species,
@@ -149,11 +149,26 @@ public abstract class Animal extends Organism {
         boolean cooldownReady = lastReproduceTick == 0
                 || (currentTick - lastReproduceTick) >= cooldown;
 
-        return growth.isAdult() &&
-                stats.getHungerLevel() < hungerThreshold &&
-                stats.getThirstLevel() < thirstThreshold &&
-                cooldownReady &&
-                Math.random() < chance;
+        if (!growth.isAdult()
+                || stats.getHungerLevel() >= hungerThreshold
+                || stats.getThirstLevel() >= thirstThreshold
+                || !cooldownReady) {
+            return false;
+        }
+
+        // Population cap: dừng hoàn toàn khi đạt max; giảm dần từ 70% max
+        String maxPopStr = AppConfig.get("animal." + species + ".maxPopulation");
+        if (maxPopStr != null && environment != null) {
+            int maxPop = Integer.parseInt(maxPopStr.trim());
+            int currentPop = environment.getRegistry().getAllAlive(getClass()).size();
+            if (currentPop >= maxPop) return false;
+            float ratio = (float) currentPop / maxPop;
+            if (ratio > 0.7f) {
+                chance *= (1f - (ratio - 0.7f) / 0.3f);
+            }
+        }
+
+        return Math.random() < chance;
     }
 
     private float getSpeciesFloatOrDefault(String species, String suffix, String fallbackKey) {

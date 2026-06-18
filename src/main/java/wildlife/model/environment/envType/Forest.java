@@ -58,9 +58,10 @@ public class Forest extends Environment {
         for (int i = 0; i < 30; i++) {
             registry.add(TreeForest.create(terrain.getRandomValidPosition(), this));
         }
-        // 5 Cây táo (Ít, mọc ven rừng)
+        // 5 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn
         for (int i = 0; i < 5; i++) {
-            registry.add(AppleTree.create(terrain.getRandomValidPosition(), this));
+            float startAge = random.nextFloat() * 1200f;
+            registry.add(AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
         }
 
         // --- 2. VẬT CẢN (OBSTACLES) ---
