@@ -15,7 +15,7 @@
    <Group fx:id="uiGroup">
       <AnchorPane prefHeight="1080.0" prefWidth="1920.0">
          <!-- ENTITY STATUS -->
-         <HBox fx:id="entityPanel" alignment="CENTER" onMouseClicked="#entityPanelFormChange" onMouseEntered="#entityPanelSolid" onMouseExited="#entityPanelTransparent" opacity="0.5" spacing="50" styleClass="card-panel" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="24.0">
+         <HBox fx:id="entityPanel" alignment="CENTER" spacing="50" styleClass="card-panel" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="24.0">
             <padding>
                <Insets bottom="20" left="20" right="20" top="20" />
             </padding>
@@ -24,7 +24,7 @@
                <Image url="@../assets/images/Fox.png" />
             </ImageView>
          <!-- Info -->
-         <VBox fx:id="info" alignment="CENTER_LEFT" managed="false" spacing="5.0" visible="false">
+         <VBox fx:id="info" alignment="CENTER_LEFT" spacing="5.0">
 
             <!-- id section -->
             <Label fx:id="entityIdLabel" styleClass="title-text" text="ID: #0001" />

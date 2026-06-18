@@ -99,7 +99,6 @@ public class UIEventController {
 
     //entity panel
     public VBox HungerBar;
-    private boolean entityPanelIsExpanded = false;
     @FXML
     public HBox entityPanel;
     @FXML
@@ -120,19 +119,6 @@ public class UIEventController {
     public Region thirstyBarFill;
     @FXML
     public Label thirstyValueLabel;
-    public void entityPanelFormChange() {
-        entityPanelIsExpanded = !entityPanelIsExpanded;
-        info.setManaged(entityPanelIsExpanded);
-        info.setVisible(entityPanelIsExpanded);
-    }
-    public void entityPanelSolid() {
-        entityPanel.setOpacity(1);
-    }
-    public void entityPanelTransparent() {
-        if(!entityPanelIsExpanded){
-            entityPanel.setOpacity(0.5);
-        }
-    }
     private void showEntityPanel(Organism selected) {
         if(selected == null){
             hideEntityPanel();
@@ -187,7 +173,7 @@ public class UIEventController {
             // Update Image depending on Species
             String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
             try {
-                javafx.scene.image.Image img = new javafx.scene.image.Image(getClass().getResourceAsStream(imagePath));
+                javafx.scene.image.Image img = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
                 entityImageView.setImage(img);
             } catch (Exception e) {
                 // Ignore if asset loading fails
@@ -197,7 +183,6 @@ public class UIEventController {
             entityPanel.setVisible(true);
         });
     }
-
     private void hideEntityPanel() {
         Platform.runLater(() -> {
             entityPanel.setManaged(false);
@@ -207,14 +192,6 @@ public class UIEventController {
 
 
     //toolBox
-    @FXML
-    public HBox organismToolset;
-    private void organism_list_load() {
-    }
-    @FXML
-    public HBox envTool;
-    private void environment_materials_load() {
-    }
 
 
     //Render Scene
@@ -412,7 +389,7 @@ public class UIEventController {
         renderThread.start();
     }
 
-    private static final int N_TICKS = 1;
+    private static final int N_TICKS = 15;
     private static volatile UIEventController instance;
     private int tickCount = 0;
 
@@ -504,7 +481,7 @@ public class UIEventController {
                 ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                 if (selected != null) {
                     if(selected.size() == 1){
-                        selectedOrganism = selected.get(0);
+                        selectedOrganism = selected.getFirst();
                     }else{
                         activeContextMenu = new ContextMenu();
                         for(Organism organism : selected){
@@ -575,8 +552,6 @@ public class UIEventController {
     // Khoi tao
     public void initialize() {
         instance = this;
-        organism_list_load();
-        environment_materials_load();
         setupLWJGLCanvas();
         setupScaling();
         setupCameraEvents();
