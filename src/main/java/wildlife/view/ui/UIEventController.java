@@ -145,17 +145,17 @@ public class UIEventController {
                 hungerValueLabel.setText("Unspecified");
                 hungerBarFill.setPrefWidth(0);
             }else{
-                // 0 la no, 100 la doi
-                double hungerPercent = (stats.getHungerLevel() / 100.0);
-                hungerBarFill.setPrefWidth(500 * (1 - hungerPercent));
-                hungerValueLabel.setText(String.format("%.0f / 100", 100-stats.getHungerLevel()));
+                // 0 = no, 100 = doi kiet — bar day len khi doi tang
+                double hungerPercent = stats.getHungerLevel() / 100.0;
+                hungerBarFill.setPrefWidth(500 * hungerPercent);
+                hungerValueLabel.setText(String.format("%.0f / 100", stats.getHungerLevel()));
                 HungerBar.setDisable(false);
             }
 
-            // Thirst (0 is quenched, 100 is dehydrated)
-            double thirstPercent = 1- (stats.getThirstLevel() / 100.0);
-            thirstyBarFill.setPrefWidth(500 * (thirstPercent));
-            thirstyValueLabel.setText(String.format("%.0f / 100", 100-stats.getThirstLevel()));
+            // Thirst: 0 = du nuoc, 100 = khat kiet — bar day len khi khat tang
+            double thirstPercent = stats.getThirstLevel() / 100.0;
+            thirstyBarFill.setPrefWidth(500 * thirstPercent);
+            thirstyValueLabel.setText(String.format("%.0f / 100", stats.getThirstLevel()));
 
             // Update Image depending on Species
             String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
