@@ -81,10 +81,11 @@ public class SurvivalStatsComponent {
     public void consume(float nutrition, boolean isWater) {
         if (isWater) {
             thirstLevel = Math.max(0f, thirstLevel - nutrition);
+            // Nước chỉ giảm khát, không hồi máu — chỉ thức ăn mới phục hồi HP
         } else {
             hungerLevel = Math.max(0f, hungerLevel - nutrition);
+            restoreHp(nutrition * AppConfig.getFloat("organism.stats.nutritionToHpRatio"));
         }
-        restoreHp(nutrition * AppConfig.getFloat("organism.stats.nutritionToHpRatio"));
     }
 
     // Getters
