@@ -418,9 +418,16 @@ public class UIEventController {
 
         sceneCanvas.setOnScroll(event -> {
             if(isCtrlPressed){
+                double currentX_OnScreen = event.getX();
+                double currentY_OnScreen = event.getY();
+                double currentX_OnMap = camera.getTopLeftX() + (currentX_OnScreen / canvasWidth) * (camera.getBotRightX()-camera.getTopLeftX());
+                double currentY_OnMap = camera.getTopLeftY() + (currentY_OnScreen / canvasHeight) * (camera.getBotRightY()-camera.getTopLeftY());
                 double deltaY = event.getDeltaY();
                 int zoomFactor = (int) (deltaY * 2);
                 camera.zoom(-zoomFactor);
+                double newX_OnMap = camera.getTopLeftX() + (currentX_OnScreen / canvasWidth) * (camera.getBotRightX()-camera.getTopLeftX());
+                double newY_OnMap = camera.getTopLeftY() + (currentY_OnScreen / canvasHeight) * (camera.getBotRightY()-camera.getTopLeftY());
+                camera.pan(-(int)(newX_OnMap-currentX_OnMap), -(int)(newY_OnMap-currentY_OnMap));
             }
         });
 

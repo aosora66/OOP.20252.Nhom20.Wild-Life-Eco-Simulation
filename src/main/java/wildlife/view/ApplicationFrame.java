@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 /*
- this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for lwjgl embedding (renderer).
+ this class init a javafx stage, in which we will put UI layer and a canvas layer behind it for LWJGL embedding (renderer).
  */
 public class ApplicationFrame extends Application {
     private static volatile Renderer renderer;

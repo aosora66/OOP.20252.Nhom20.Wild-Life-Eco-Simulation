@@ -49,7 +49,7 @@ public class Renderer {
 
         void addPosition(float x, float y) {
             if (positionBuffer.remaining() <= 0) {
-                throw new IllegalStateException("position buffer full");
+                return;
             }
             positionBuffer.put(x).put(y);
         }
