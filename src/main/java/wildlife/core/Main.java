@@ -74,6 +74,9 @@ public class Main {
                         UIEventController.setActiveOrganisms(all);
                     }
 
+                    // Cập nhật realtime UI panel của thực thể được chọn
+                    UIEventController.tickUpdate();
+
                     if (currentTick % TICK_RATE == 0) {
                         var timeInfo = world.getTime();
                         System.out.printf("[Tick %d] Sinh vật: %d | Thời tiết: %s | Mùa: %s\n",

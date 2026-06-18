@@ -16,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import wildlife.model.organism.Organism;
@@ -26,8 +27,10 @@ import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
 
+import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -130,10 +133,22 @@ public class UIEventController {
             entityPanel.setOpacity(0.5);
         }
     }
-    private void showEntityPanel(wildlife.model.organism.Organism selected) {
+    private void showEntityPanel(Organism selected) {
+        if(selected == null){
+            hideEntityPanel();
+            return;
+        }
         Platform.runLater(() -> {
+            // chống trường hợp chuaw kịp vẽ lại thì người dùng chọn sinh vật kh
+            if (selected != selectedOrganism) {
+                return;
+            }
             entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
-
+            entityIdLabel.setTextFill(Paint.valueOf("#2d3436"));
+            if(!selected.isAlive()){
+                entityIdLabel.setText("[DEAD]   " + entityIdLabel.getText());
+                entityIdLabel.setTextFill(Paint.valueOf("#f28c8c"));
+            }
             // Populate stats
             wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             double hpPercent = stats.getHp() / stats.getMaxHp();
@@ -170,6 +185,7 @@ public class UIEventController {
             entityPanel.setVisible(true);
         });
     }
+
     private void hideEntityPanel() {
         Platform.runLater(() -> {
             entityPanel.setManaged(false);
@@ -384,11 +400,16 @@ public class UIEventController {
         renderThread.start();
     }
 
+    private static final int N_TICKS = 1;
+    private static volatile UIEventController instance;
+    private int tickCount = 0;
+
     private final Camera camera = new Camera(400, 300, 1080);
     private boolean isSpacePressed = false;
     private boolean isCtrlPressed = false;
     private double lastMouseX;
     private double lastMouseY;
+    private volatile Organism selectedOrganism = null;
     private void setupCameraEvents() {
         sceneCanvas.setFocusTraversable(true);
         sceneCanvas.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -471,24 +492,24 @@ public class UIEventController {
                 ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                 if (selected != null) {
                     if(selected.size() == 1){
-                        showEntityPanel(selected.get(0));
+                        selectedOrganism = selected.get(0);
                     }else{
                         activeContextMenu = new ContextMenu();
                         for(Organism organism : selected){
                             MenuItem item = new MenuItem(organism.getSpeciesName() + ": " + organism.getId());
                             item.setOnAction(e ->{
-                                showEntityPanel(organism);
+                                selectedOrganism = organism;
                                 activeContextMenu.hide();
+                                showEntityPanel(selectedOrganism);
                             });
                             activeContextMenu.getItems().add(item);
                         }
                         activeContextMenu.show(sceneCanvas, clickX, clickY);
                     }
-
-
                 } else {
-                    hideEntityPanel();
+                    selectedOrganism = null;
                 }
+                showEntityPanel(selectedOrganism);
             }
         });
     }
@@ -524,8 +545,24 @@ public class UIEventController {
         return result;
     }
 
+    public static void tickUpdate() {
+        if (instance != null) {
+            instance.onTick();
+        }
+    }
+
+    private void onTick() {
+        tickCount++;
+        if (tickCount >= N_TICKS) {
+            tickCount = 0;
+            Organism selected = selectedOrganism;
+            showEntityPanel(selected);
+        }
+    }
+
     // Khoi tao
     public void initialize() {
+        instance = this;
         organism_list_load();
         environment_materials_load();
         setupLWJGLCanvas();
@@ -537,4 +574,5 @@ public class UIEventController {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }
     }
+
 }
