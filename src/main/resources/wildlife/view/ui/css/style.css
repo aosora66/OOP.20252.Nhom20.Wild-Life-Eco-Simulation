@@ -80,3 +80,27 @@
     -fx-max-width: 35;
     -fx-max-height: 35;
 }
+
+.context-menu {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #2D3436;
+    -fx-padding: 5px;
+}
+
+.menu-item {
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+}
+
+.menu-item:hover {
+    -fx-background-color: #8cc0de;
+}
+
+.menu-item .label{
+    -fx-text-fill: #2d3436;
+    -fx-font-size: 10px;
+    -fx-font-family: "Inter SemiBold";
+}

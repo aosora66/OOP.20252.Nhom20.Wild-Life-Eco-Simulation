@@ -1,14 +1,12 @@
 package wildlife.view.ui;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -18,38 +16,76 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Screen;
-import javafx.util.Duration;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
-import wildlife.model.dto.RenderData;
-import wildlife.model.organism.OrganismState;
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.plant.Plant;
 import wildlife.view.renderer.Renderer;
 import wildlife.view.renderer.SpriteBatch;
 import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
+import wildlife.view.renderer.utils.Camera;
 
 import java.nio.ByteBuffer;
-import java.util.EventListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-//Dieu khien cac thao tac tren man hinh UI (va animation) va ghi nhan cac event tac dong vao scene canvas de gui sang lwjgl
 public class UIEventController {
-    public static boolean sceneModeIsBasic = true;
+    //Root
+    @FXML
+    public StackPane rootStackPane;
+
+    // Auto-scaling
+    private void setupScaling() {
+        if (rootStackPane == null || uiGroup == null) return;
+
+        javafx.beans.value.ChangeListener<Number> resizeListener = (obs, oldVal, newVal) -> {
+            double windowWidth = rootStackPane.getWidth();
+            double windowHeight = rootStackPane.getHeight();
+
+            if (windowWidth <= 0 || windowHeight <= 0) return;
+
+            // Reference resolution is 1920x1080
+            double scaleX = windowWidth / 1920.0;
+            double scaleY = windowHeight / 1080.0;
+
+            // Preserve aspect ratio (uniform scaling)
+            double scale = Math.min(scaleX, scaleY);
+
+            uiGroup.setScaleX(scale);
+            uiGroup.setScaleY(scale);
+        };
+
+        rootStackPane.widthProperty().addListener(resizeListener);
+        rootStackPane.heightProperty().addListener(resizeListener);
+
+        // Run once for initial scaling if layout is already calculated
+        if (rootStackPane.getWidth() > 0 && rootStackPane.getHeight() > 0) {
+            double scaleX = rootStackPane.getWidth() / 1920.0;
+            double scaleY = rootStackPane.getHeight() / 1080.0;
+            double scale = Math.min(scaleX, scaleY);
+            uiGroup.setScaleX(scale);
+            uiGroup.setScaleY(scale);
+        }
+    }
+
+    //UI panel
+    @FXML
+    public Group uiGroup;
+    private ContextMenu activeContextMenu;
 
     //view button
+    public static boolean sceneModeIsBasic = true;
     @FXML
     public HBox viewButton;
-    public VBox HungerBar;
-
     @FXML
     public void viewButtonOnPressed() {
         viewButton.setStyle("-fx-background-color: #B0C7DD");
     }
-    
     @FXML
     public void ViewButtonOnReleased() {
         viewButton.setStyle("-fx-background-color: #F8FAFC");
@@ -60,12 +96,12 @@ public class UIEventController {
     }
 
     //entity panel
+    public VBox HungerBar;
     private boolean entityPanelIsExpanded = false;
     @FXML
     public HBox entityPanel;
     @FXML
     public VBox info;
-
     @FXML
     public ImageView entityImageView;
     @FXML
@@ -82,82 +118,137 @@ public class UIEventController {
     public Region thirstyBarFill;
     @FXML
     public Label thirstyValueLabel;
-    
     public void entityPanelFormChange() {
         entityPanelIsExpanded = !entityPanelIsExpanded;
         info.setManaged(entityPanelIsExpanded);
         info.setVisible(entityPanelIsExpanded);
     }
-    
     public void entityPanelSolid() {
         entityPanel.setOpacity(1);
     }
-    
     public void entityPanelTransparent() {
         if(!entityPanelIsExpanded){
             entityPanel.setOpacity(0.5);
         }
     }
+    private void showEntityPanel(wildlife.model.organism.Organism selected) {
+        Platform.runLater(() -> {
+            entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
+
+            // Populate stats
+            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
+            double hpPercent = stats.getHp() / stats.getMaxHp();
+            hpBarFill.setPrefWidth(500 * hpPercent);
+            hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
+
+            if(selected instanceof Plant){
+                HungerBar.setDisable(true);
+                hungerValueLabel.setText("Unspecified");
+                hungerBarFill.setPrefWidth(0);
+            }else{
+                // 0 la no, 100 la doi
+                double hungerPercent = (stats.getHungerLevel() / 100.0);
+                hungerBarFill.setPrefWidth(500 * (1 - hungerPercent));
+                hungerValueLabel.setText(String.format("%.0f / 100", 100-stats.getHungerLevel()));
+                HungerBar.setDisable(false);
+            }
+
+            // Thirst (0 is quenched, 100 is dehydrated)
+            double thirstPercent = 1- (stats.getThirstLevel() / 100.0);
+            thirstyBarFill.setPrefWidth(500 * (thirstPercent));
+            thirstyValueLabel.setText(String.format("%.0f / 100", 100-stats.getThirstLevel()));
+
+            // Update Image depending on Species
+            String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
+            try {
+                javafx.scene.image.Image img = new javafx.scene.image.Image(getClass().getResourceAsStream(imagePath));
+                entityImageView.setImage(img);
+            } catch (Exception e) {
+                // Ignore if asset loading fails
+            }
+
+            entityPanel.setManaged(true);
+            entityPanel.setVisible(true);
+        });
+    }
+    private void hideEntityPanel() {
+        Platform.runLater(() -> {
+            entityPanel.setManaged(false);
+            entityPanel.setVisible(false);
+        });
+    }
+
 
     //toolBox
     @FXML
     public HBox organismToolset;
     private void organism_list_load() {
     }
-    
     @FXML
     public HBox envTool;
     private void environment_materials_load() {
     }
 
-    //Pane nay de render scene
 
-
+    //Render Scene
     @FXML
     public AnchorPane sceneCanvas;
-    private boolean isSpacePressed = false;
-    private boolean isCtrlPressed = false;
-    @FXML
-    public StackPane rootStackPane;
 
-    @FXML
-    public Group uiGroup;
-
+    //Config de nhung vao JavaFX
     private volatile boolean running = true;
     private ImageView renderImageView;
     private WritableImage writableImage;
     private volatile int canvasWidth = 800;
     private volatile int canvasHeight = 600;
+    private void updateJavaFXImage(int[] pixels, int w, int h) {
+        if (writableImage == null || (int) writableImage.getWidth() != w || (int) writableImage.getHeight() != h) {
+            writableImage = new WritableImage(w, h);
+            renderImageView.setImage(writableImage);
+        }
+        writableImage.getPixelWriter().setPixels(
+                0, 0, w, h,
+                javafx.scene.image.PixelFormat.getIntArgbInstance(),
+                pixels, 0, w
+        );
+    }
 
     private volatile Renderer renderer;
-    private final java.util.concurrent.CountDownLatch rendererLatch = new java.util.concurrent.CountDownLatch(1);
+    private final CountDownLatch rendererLatch = new CountDownLatch(1);
+    public Renderer getRenderer(){
+        try {
+            rendererLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return this.renderer;
+    }
 
-    private static volatile java.util.List<wildlife.model.organism.Organism> activeOrganisms;
-
-    public static void setActiveOrganisms(java.util.List<wildlife.model.organism.Organism> list) {
+    private static volatile List<Organism> activeOrganisms;
+    public static void setActiveOrganisms(List<Organism> list) {
         activeOrganisms = list;
     }
 
-    private final wildlife.view.renderer.utils.Camera camera = new wildlife.view.renderer.utils.Camera(400, 300, 1080);
-    private double lastMouseX;
-    private double lastMouseY;
+    private SimpleTextureRegistry buildTextureRegistry() {
+        SimpleTextureRegistry registry = new SimpleTextureRegistry();
+        registry.register("Wolf",   new SimpleTexture(16, 16, (byte) 220, (byte)  50, (byte)  50, (byte) 255));
+        registry.register("Grass",  new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255));
+        registry.register("Rabbit", new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255));
+        return registry;
+    }
     private void setupLWJGLCanvas() {
-        // Create the ImageView for rendering
+        // tạo ImageView để nhúng LWJGL vào
         renderImageView = new ImageView();
         sceneCanvas.getChildren().add(renderImageView);
         
-        // Make the ImageView resize dynamically with the AnchorPane
+        // AutoScale cho vừa khung AnchorPane
         renderImageView.fitWidthProperty().bind(sceneCanvas.widthProperty());
         renderImageView.fitHeightProperty().bind(sceneCanvas.heightProperty());
-
-        // Listen to width and height changes of the AnchorPane
         sceneCanvas.widthProperty().addListener((obs, oldVal, newVal) -> {
             canvasWidth = Math.max(100, newVal.intValue());
         });
         sceneCanvas.heightProperty().addListener((obs, oldVal, newVal) -> {
             canvasHeight = Math.max(100, newVal.intValue());
         });
-        
         // Set initial sizes if already laid out
         if (sceneCanvas.getWidth() > 0) {
             canvasWidth = (int) sceneCanvas.getWidth();
@@ -165,8 +256,7 @@ public class UIEventController {
         if (sceneCanvas.getHeight() > 0) {
             canvasHeight = (int) sceneCanvas.getHeight();
         }
-
-        // Listen for window close to stop the thread
+        // lắng nghe xem JavaFX có tắt không -> nếu tắt, set cờ running = false và LWJGL sẽ dừng lại
         sceneCanvas.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 newScene.windowProperty().addListener((obsW, oldWindow, newWindow) -> {
@@ -179,25 +269,17 @@ public class UIEventController {
             }
         });
 
-        // Start the render loop on a background thread
         startLWJGLThread();
     }
-    
-    private SimpleTextureRegistry buildTextureRegistry() {
-        SimpleTextureRegistry registry = new SimpleTextureRegistry();
-        registry.register("Wolf",   new SimpleTexture(16, 16, (byte) 220, (byte)  50, (byte)  50, (byte) 255));
-        registry.register("Grass",  new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255));
-        registry.register("Rabbit", new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255));
-        return registry;
-    }
-
     private void startLWJGLThread() {
+        //MacOS khong dung duoc GLFW
         if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
             System.err.println("[UIEventController] macOS detected — skipping GLFW (JavaFX main thread conflict). Canvas sẽ trắng.");
             this.renderer = null;
             rendererLatch.countDown();
             return;
         }
+        // Luong render LWJGL nam trong JavaFX
         Thread renderThread = new Thread(() -> {
             if (!glfwInit()) {
                 System.err.println("LWJGL: glfwInit() thất bại");
@@ -212,7 +294,6 @@ public class UIEventController {
 
             int width = canvasWidth;
             int height = canvasHeight;
-
             long window = glfwCreateWindow(width, height, "Offscreen", 0, 0);
             if (window == 0) {
                 System.err.println("LWJGL: tạo offscreen window thất bại");
@@ -225,6 +306,7 @@ public class UIEventController {
 
             SimpleTextureRegistry textureRegistry = buildTextureRegistry();
             SpriteBatch spriteBatch = new SpriteBatch(width, height);
+
             this.renderer = new Renderer(spriteBatch, textureRegistry, camera);
             rendererLatch.countDown();
 
@@ -291,53 +373,12 @@ public class UIEventController {
         renderThread.setDaemon(true);
         renderThread.start();
     }
-    private void updateJavaFXImage(int[] pixels, int w, int h) {
-        if (writableImage == null || (int) writableImage.getWidth() != w || (int) writableImage.getHeight() != h) {
-            writableImage = new WritableImage(w, h);
-            renderImageView.setImage(writableImage);
-        }
-        writableImage.getPixelWriter().setPixels(
-                0, 0, w, h,
-                javafx.scene.image.PixelFormat.getIntArgbInstance(),
-                pixels, 0, w
-        );
-    }
 
-    
-    //responsive scaling
-    private void setupScaling() {
-        if (rootStackPane == null || uiGroup == null) return;
-
-        javafx.beans.value.ChangeListener<Number> resizeListener = (obs, oldVal, newVal) -> {
-            double windowWidth = rootStackPane.getWidth();
-            double windowHeight = rootStackPane.getHeight();
-
-            if (windowWidth <= 0 || windowHeight <= 0) return;
-
-            // Reference resolution is 1920x1080
-            double scaleX = windowWidth / 1920.0;
-            double scaleY = windowHeight / 1080.0;
-
-            // Preserve aspect ratio (uniform scaling)
-            double scale = Math.min(scaleX, scaleY);
-
-            uiGroup.setScaleX(scale);
-            uiGroup.setScaleY(scale);
-        };
-
-        rootStackPane.widthProperty().addListener(resizeListener);
-        rootStackPane.heightProperty().addListener(resizeListener);
-
-        // Run once for initial scaling if layout is already calculated
-        if (rootStackPane.getWidth() > 0 && rootStackPane.getHeight() > 0) {
-            double scaleX = rootStackPane.getWidth() / 1920.0;
-            double scaleY = rootStackPane.getHeight() / 1080.0;
-            double scale = Math.min(scaleX, scaleY);
-            uiGroup.setScaleX(scale);
-            uiGroup.setScaleY(scale);
-        }
-    }
-
+    private final Camera camera = new Camera(400, 300, 1080);
+    private boolean isSpacePressed = false;
+    private boolean isCtrlPressed = false;
+    private double lastMouseX;
+    private double lastMouseY;
     private void setupCameraEvents() {
         sceneCanvas.setFocusTraversable(true);
         sceneCanvas.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -398,7 +439,11 @@ public class UIEventController {
         });
 
         sceneCanvas.setOnMouseClicked(event -> {
+            if(activeContextMenu != null && activeContextMenu.isShowing()) {
+                activeContextMenu.hide();
+            }
             if (event.getButton() == MouseButton.PRIMARY && !isSpacePressed) {
+
                 double clickX = event.getX();
                 double clickY = event.getY();
 
@@ -406,9 +451,24 @@ public class UIEventController {
                 double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
                 double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
 
-                wildlife.model.organism.Organism selected = findOrganismAt(worldX, worldY);
+                ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                 if (selected != null) {
-                    showEntityPanel(selected);
+                    if(selected.size() == 1){
+                        showEntityPanel(selected.get(0));
+                    }else{
+                        activeContextMenu = new ContextMenu();
+                        for(Organism organism : selected){
+                            MenuItem item = new MenuItem(organism.getSpeciesName() + ": " + organism.getId());
+                            item.setOnAction(e ->{
+                                showEntityPanel(organism);
+                                activeContextMenu.hide();
+                            });
+                            activeContextMenu.getItems().add(item);
+                        }
+                        activeContextMenu.show(sceneCanvas, clickX, clickY);
+                    }
+
+
                 } else {
                     hideEntityPanel();
                 }
@@ -416,7 +476,8 @@ public class UIEventController {
         });
     }
 
-    private wildlife.model.organism.Organism findOrganismAt(double x, double y) {
+    private ArrayList<Organism> findOrganismAt(double x, double y) {
+        ArrayList<Organism> result = null;
         if (activeOrganisms == null) return null;
         synchronized (activeOrganisms) {
             for (wildlife.model.organism.Organism o : activeOrganisms) {
@@ -425,70 +486,17 @@ public class UIEventController {
                     double oy = o.getPosition().getY();
                     // Each organism is represented by a 32x32 sprite, so bounding box radius is 16
                     if (x >= ox - 16 && x <= ox + 16 && y >= oy - 16 && y <= oy + 16) {
-                        return o;
+                        result = ((result == null)? new ArrayList<Organism>() : result);
+                        result.add(o);
                     }
                 }
             }
+
         }
-        return null;
+        return result;
     }
 
-    private void showEntityPanel(wildlife.model.organism.Organism selected) {
-        Platform.runLater(() -> {
-            entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
-            
-            // Populate stats
-            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
-            double hpPercent = stats.getHp() / stats.getMaxHp();
-            hpBarFill.setPrefWidth(500 * hpPercent);
-            hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
-
-            if(selected instanceof Plant){
-                HungerBar.setDisable(true);
-                hungerValueLabel.setText("Unspecified");
-                hungerBarFill.setPrefWidth(0);
-            }else{
-                // 0 la no, 100 la doi
-                double hungerPercent = (stats.getHungerLevel() / 100.0);
-                hungerBarFill.setPrefWidth(500 * (1 - hungerPercent));
-                hungerValueLabel.setText(String.format("%.0f / 100", 100-stats.getHungerLevel()));
-                HungerBar.setDisable(false);
-            }
-
-            // Thirst (0 is quenched, 100 is dehydrated)
-            double thirstPercent = 1- (stats.getThirstLevel() / 100.0);
-            thirstyBarFill.setPrefWidth(500 * (thirstPercent));
-            thirstyValueLabel.setText(String.format("%.0f / 100", 100-stats.getThirstLevel()));
-
-            // Update Image depending on Species
-            String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
-            try {
-                javafx.scene.image.Image img = new javafx.scene.image.Image(getClass().getResourceAsStream(imagePath));
-                entityImageView.setImage(img);
-            } catch (Exception e) {
-                // Ignore if asset loading fails
-            }
-
-            entityPanel.setManaged(true);
-            entityPanel.setVisible(true);
-        });
-    }
-
-    private void hideEntityPanel() {
-        Platform.runLater(() -> {
-            entityPanel.setManaged(false);
-            entityPanel.setVisible(false);
-        });
-    }
-
-    public Renderer getRenderer(){
-        try {
-            rendererLatch.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return this.renderer;
-    }
+    // Khoi tao
     public void initialize() {
         organism_list_load();
         environment_materials_load();
@@ -497,8 +505,8 @@ public class UIEventController {
         setupCameraEvents();
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
-        if(uiGroup.getChildren().get(0) instanceof AnchorPane) {
-            ((AnchorPane)uiGroup.getChildren().get(0)).setPickOnBounds(false);
+        if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
+            ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }
     }
 }

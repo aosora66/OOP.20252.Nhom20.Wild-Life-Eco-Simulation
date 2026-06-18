@@ -48,11 +48,8 @@ public class Renderer {
         }
 
         void addPosition(float x, float y) {
-            if (positionBuffer.remaining() < 2) {
-                FloatBuffer bigger = BufferUtils.createFloatBuffer(positionBuffer.capacity() * 2);
-                positionBuffer.flip();
-                bigger.put(positionBuffer);
-                positionBuffer = bigger;
+            if (positionBuffer.remaining() <= 0) {
+                throw new IllegalStateException("position buffer full");
             }
             positionBuffer.put(x).put(y);
         }
