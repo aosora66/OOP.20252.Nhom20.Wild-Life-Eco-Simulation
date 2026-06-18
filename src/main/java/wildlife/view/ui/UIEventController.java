@@ -27,8 +27,7 @@ import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -194,6 +193,10 @@ public class UIEventController {
     @FXML
     public AnchorPane sceneCanvas;
 
+    //Grid
+    private static final int CELL_SIZE = 128;
+    private static volatile Map<String, List<Organism>> spatialGrid = new HashMap<>();
+
     //Config de nhung vao JavaFX
     private volatile boolean running = true;
     private ImageView renderImageView;
@@ -226,6 +229,17 @@ public class UIEventController {
     private static volatile List<Organism> activeOrganisms;
     public static void setActiveOrganisms(List<Organism> list) {
         activeOrganisms = list;
+        Map<String, List<Organism>> newGrid = new HashMap<>();
+        for(Organism org : list) {
+            if(org.isAlive()){
+                int cellX = (int) Math.floor(org.getPosition().getX() / CELL_SIZE);
+                int cellY = (int) Math.floor(org.getPosition().getY() / CELL_SIZE);
+
+                String key = cellX + "," + cellY;
+                newGrid.computeIfAbsent(key, k -> new ArrayList<>()).add(org);
+            }
+        }
+        spatialGrid = newGrid;
     }
 
     private SimpleTextureRegistry buildTextureRegistry() {
@@ -243,12 +257,8 @@ public class UIEventController {
         // AutoScale cho vừa khung AnchorPane
         renderImageView.fitWidthProperty().bind(sceneCanvas.widthProperty());
         renderImageView.fitHeightProperty().bind(sceneCanvas.heightProperty());
-        sceneCanvas.widthProperty().addListener((obs, oldVal, newVal) -> {
-            canvasWidth = Math.max(100, newVal.intValue());
-        });
-        sceneCanvas.heightProperty().addListener((obs, oldVal, newVal) -> {
-            canvasHeight = Math.max(100, newVal.intValue());
-        });
+        sceneCanvas.widthProperty().addListener((obs, oldVal, newVal) -> canvasWidth = Math.max(100, newVal.intValue()));
+        sceneCanvas.heightProperty().addListener((obs, oldVal, newVal) ->canvasHeight = Math.max(100, newVal.intValue()));
         // Set initial sizes if already laid out
         if (sceneCanvas.getWidth() > 0) {
             canvasWidth = (int) sceneCanvas.getWidth();
@@ -477,21 +487,32 @@ public class UIEventController {
     }
 
     private ArrayList<Organism> findOrganismAt(double x, double y) {
+        if(spatialGrid == null || spatialGrid.isEmpty()) return null;
+
         ArrayList<Organism> result = null;
-        if (activeOrganisms == null) return null;
-        synchronized (activeOrganisms) {
-            for (wildlife.model.organism.Organism o : activeOrganisms) {
-                if (o.isAlive()) {
-                    double ox = o.getPosition().getX();
-                    double oy = o.getPosition().getY();
-                    // Each organism is represented by a 32x32 sprite, so bounding box radius is 16
-                    if (x >= ox - 16 && x <= ox + 16 && y >= oy - 16 && y <= oy + 16) {
-                        result = ((result == null)? new ArrayList<Organism>() : result);
-                        result.add(o);
+
+        int centerCellX = (int) Math.floor(x / CELL_SIZE);
+        int centerCellY = (int) Math.floor(y / CELL_SIZE);
+        for(int dx = -1; dx <= 1; dx++){
+            for(int dy = -1; dy <= 1; dy++){
+                String key = (centerCellX + dx) + "," + (centerCellY + dy);
+                List<Organism> cellOrganisms = spatialGrid.get(key);
+
+                if(cellOrganisms != null){
+                    for(Organism organism : cellOrganisms){
+                        if(organism.isAlive()){
+                            double ox = organism.getPosition().getX();
+                            double oy = organism.getPosition().getY();
+                            if(x >= ox - 16 && x <= ox + 16 && y >= oy - 16 && y <= oy + 16){
+                                if(result == null){
+                                    result = new ArrayList<>();
+                                }
+                                result.add(organism);
+                            }
+                        }
                     }
                 }
             }
-
         }
         return result;
     }
