@@ -15,11 +15,32 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
+        <executions>
+          <execution>
+            <id>create-runtime-image</id>
+            <goals>
+              <goal>jlink</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <mainClass>wildlife.core.Main</mainClass>
+          <launcher>WildlifeSimulation</launcher>
+          <jlinkZipName>WildlifeSimulation</jlinkZipName>
+          <jlinkImageName>WildlifeSimulation</jlinkImageName>
+          <stripDebug>true</stripDebug>
+          <noHeaderFiles>true</noHeaderFiles>
+          <noManPages>true</noManPages>
         </configuration>
       </plugin>
       <plugin>
@@ -56,6 +77,9 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>module-info.class</exclude>
+                    <exclude>META-INF/versions/**</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -70,25 +94,38 @@
       <id>windows</id>
       <properties>
         <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.ico</app.icon>
+        <lwjgl.natives>natives-windows</lwjgl.natives>
       </properties>
     </profile>
     <profile>
       <id>mac</id>
       <properties>
         <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+        <lwjgl.natives>natives-macos</lwjgl.natives>
+      </properties>
+    </profile>
+    <profile>
+      <id>mac-arm64</id>
+      <properties>
+        <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.icns</app.icon>
+        <lwjgl.natives>natives-macos-arm64</lwjgl.natives>
       </properties>
     </profile>
     <profile>
       <id>linux</id>
       <properties>
         <app.icon>src/main/resources/wildlife/view/ui/assets/images/App_Icon.png</app.icon>
+        <lwjgl.natives>natives-linux</lwjgl.natives>
       </properties>
     </profile>
   </profiles>
   <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <lwjgl.natives>natives-windows</lwjgl.natives>
+    <joml.version>1.10.8</joml.version>
+    <lwjgl.version>3.3.6</lwjgl.version>
+    <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.11</javafx.version>
-    <maven.compiler.target>21</maven.compiler.target>
-    <maven.compiler.source>21</maven.compiler.source>
   </properties>
 </project>
