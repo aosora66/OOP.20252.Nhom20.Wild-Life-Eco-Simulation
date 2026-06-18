@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.animal.canivores.Hunter;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.animal.hebivores.Deer;
@@ -78,6 +79,7 @@ public class GrassLand extends Environment {
 
         spawnAnimals(Wolf.class, 2);
         spawnAnimals(Tiger.class, 1);
+        spawnAnimals(Hunter.class, 3);
     }
 
     @Override

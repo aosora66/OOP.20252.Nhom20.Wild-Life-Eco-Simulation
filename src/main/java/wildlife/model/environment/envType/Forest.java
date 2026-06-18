@@ -8,6 +8,7 @@ import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.organism.animal.canivores.Hunter;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.animal.hebivores.Deer;
@@ -82,6 +83,9 @@ public class Forest extends Environment {
 
         // Sinh 2 con Hổ (Chúa sơn lâm)
         spawnAnimals(Tiger.class, 2);
+
+        // Sinh 1 Thợ săn (Rừng rậm — ít hơn đồng cỏ)
+        spawnAnimals(Hunter.class, 1);
 
         // Sinh 2 con Voi (Động vật đầu bảng)
         spawnAnimals(Elephant.class, 2);
