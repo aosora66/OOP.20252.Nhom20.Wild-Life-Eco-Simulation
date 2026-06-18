@@ -150,7 +150,10 @@ public abstract class Organism {
 
         if (stats.reduceHp(hpDrain)) {
             die();
+            return;
         }
+        // Hồi máu thụ động khi đủ nước — chỉ chạy nếu còn sống sau drain
+        stats.restoreHp(stats.getHydrationRegen());
     }
 
     /**

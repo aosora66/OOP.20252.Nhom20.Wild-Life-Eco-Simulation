@@ -61,6 +61,18 @@ public class SurvivalStatsComponent {
         return 0f;
     }
 
+    /**
+     * HP hồi thụ động mỗi tick khi sinh vật đủ nước (thirstLevel dưới ngưỡng).
+     * Tích lũy chậm (~0.3 HP/tick) — tổng cộng khoảng 30–40 HP trước khi khát trở lại.
+     */
+    public float getHydrationRegen() {
+        float threshold = AppConfig.getFloat("organism.stats.hydrationRegenThreshold");
+        if (thirstLevel <= threshold) {
+            return AppConfig.getFloat("organism.stats.hydrationHpRegen");
+        }
+        return 0f;
+    }
+
     // Chỉ kiểm tra sinh vật đã hết HP chưa — không tự trừ HP
     public boolean checkHpThreshold() {
         return hp <= 0f;
