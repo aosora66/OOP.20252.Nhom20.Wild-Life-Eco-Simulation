@@ -65,6 +65,8 @@ public class TerrainAndReproductionRegressionTest {
     private static void landAnimalReproductionAddsOffspring() throws Exception {
         setConfig("animal.reproduce.chance", "1.0");
         setConfig("animal.reproduce.cooldownTicks", "0");
+        setConfig("animal.rabbit.reproduce.chance", "1.0");
+        setConfig("animal.rabbit.reproduce.cooldownTicks", "0");
 
         CompositeMap world = MapLoader.loadMapFromFile("reproduction-test", "Reproduction Test", "config/map.txt");
         Environment grass = findEnvironment(world, "grass");

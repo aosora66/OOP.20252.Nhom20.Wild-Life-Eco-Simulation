@@ -49,8 +49,8 @@ public abstract class Animal extends Organism {
                      String animalType) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
         this.animalType = animalType;
-        this.defaultHungerSearchThreshold = AppConfig.getFloat("organism.stats.hungerHpThreshold");
-        this.defaultThirstSearchThreshold = AppConfig.getFloat("organism.stats.thirstHpThreshold");
+        this.defaultHungerSearchThreshold = AppConfig.getFloat("organism.stats.hungerSearchThreshold");
+        this.defaultThirstSearchThreshold = AppConfig.getFloat("organism.stats.thirstSearchThreshold");
     }
 
     @Override
@@ -193,6 +193,7 @@ public abstract class Animal extends Organism {
 
         Animal child = createSameSpeciesOffspring(findOffspringPosition());
         environment.addOrganism(child);
+        environment.recordBirth(getClass().getSimpleName());
         lastReproduceTick = currentTick;
         return true;
     }

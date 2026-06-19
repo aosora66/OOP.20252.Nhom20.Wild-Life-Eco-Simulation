@@ -73,13 +73,13 @@ public class GrassLand extends Environment {
 
         // --- 3. ĐỘNG VẬT (ANIMALS) ---
         // Tỉ lệ: Rất nhiều thú ăn cỏ, Ít thú ăn thịt
-        spawnAnimals(Rabbit.class, 15);
-        spawnAnimals(Deer.class, 10);
-        spawnAnimals(Elephant.class, 3);
+        spawnAnimals(Rabbit.class, 30);
+        spawnAnimals(Deer.class, 20);
+        spawnAnimals(Elephant.class, 5);
 
-        spawnAnimals(Wolf.class, 2);
-        spawnAnimals(Tiger.class, 1);
-        spawnAnimals(Hunter.class, 3);
+        spawnAnimals(Wolf.class, 6);
+        spawnAnimals(Tiger.class, 4);
+        spawnAnimals(Hunter.class, 6);
     }
 
     @Override

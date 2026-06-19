@@ -3,7 +3,6 @@ package wildlife;
 import wildlife.model.environment.CompositeMap;
 import wildlife.model.environment.Environment;
 import wildlife.model.organism.Organism;
-import wildlife.model.organism.OrganismState;
 import wildlife.model.organism.animal.canivores.Hunter;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
@@ -26,7 +25,6 @@ public class Simulate10000TicksTest {
         CompositeMap world = MapLoader.loadMapFromFile("sim-10000", "Sim 10000", "config/map.txt");
 
         Map<String, Integer> startCount = snapshot(world);
-        Map<String, Integer> startDead  = deadCount(world);
 
         System.out.println("--- BAN DAU ---");
         printCounts(startCount);
@@ -43,24 +41,36 @@ public class Simulate10000TicksTest {
             }
         }
 
-        Map<String, Integer> endCount = snapshot(world);
-        Map<String, Integer> endDead  = deadCount(world);
+        Map<String, Integer> endCount   = snapshot(world);
+        Map<String, int[]>   tally      = mergedDeathTally(world);
+        Map<String, Integer> births     = mergedBirthTally(world);
 
         long totalMs = System.currentTimeMillis() - wallStart;
         System.out.printf("\n=== KET QUA SAU 10000 TICK [tong %.1fs wall] ===\n", totalMs / 1000.0);
-        System.out.printf("%-12s %8s %8s %8s %10s\n", "Loai", "Dau", "Cuoi", "Sinh", "Chet");
-        System.out.println("-".repeat(52));
+        System.out.printf("%-12s %6s %6s %8s %8s %8s %8s %8s\n",
+                "Loai", "Dau", "Cuoi", "BiGiet", "Gia", "Doi", "Khat", "Sinh");
+        System.out.println("-".repeat(70));
+
+        // Loài không dùng reproduceSameSpecies → hiện "X" thay vì số
+        java.util.Set<String> noReproduceTracking = java.util.Set.of("Fish", "Grass", "AppleTree");
 
         String[] order = {"Rabbit","Deer","Elephant","Fish","Wolf","Tiger","Hunter","Grass","AppleTree"};
         for (String species : order) {
-            int start = startCount.getOrDefault(species, 0);
-            int end   = endCount.getOrDefault(species, 0);
-            int dead  = endDead.getOrDefault(species, 0) - startDead.getOrDefault(species, 0);
-            int born  = end - start + dead;
-            String flag = "";
+            int   start  = startCount.getOrDefault(species, 0);
+            int   end    = endCount.getOrDefault(species, 0);
+            int[] t      = tally.getOrDefault(species, new int[5]);
+            String flag  = "";
             if (end == 0 && start > 0) flag = "  << TUYET CHUNG";
             else if (end > start * 5)  flag = "  << BU PHAT";
-            System.out.printf("%-12s %8d %8d %8d %10d%s\n", species, start, end, Math.max(0, born), dead, flag);
+            // t: [0]=killed [1]=oldAge [2]=starvation [3]=dehydration [4]=other
+            if (noReproduceTracking.contains(species)) {
+                System.out.printf("%-12s %6d %6d %8d %8d %8d %8d %8s%s\n",
+                        species, start, end, t[0], t[1], t[2], t[3], "X", flag);
+            } else {
+                int born = births.getOrDefault(species, 0);
+                System.out.printf("%-12s %6d %6d %8d %8d %8d %8d %8d%s\n",
+                        species, start, end, t[0], t[1], t[2], t[3], born, flag);
+            }
         }
     }
 
@@ -80,28 +90,27 @@ public class Simulate10000TicksTest {
         return counts;
     }
 
-    private static Map<String, Integer> deadCount(CompositeMap world) {
-        Map<String, Integer> counts = new HashMap<>();
+    private static Map<String, int[]> mergedDeathTally(CompositeMap world) {
+        Map<String, int[]> result = new HashMap<>();
         for (Environment env : world.getSubEnvironments()) {
-            mergeDead(env, Rabbit.class,   "Rabbit",   counts);
-            mergeDead(env, Deer.class,     "Deer",     counts);
-            mergeDead(env, Elephant.class, "Elephant", counts);
-            mergeDead(env, Fish.class,     "Fish",     counts);
-            mergeDead(env, Wolf.class,     "Wolf",     counts);
-            mergeDead(env, Tiger.class,    "Tiger",    counts);
-            mergeDead(env, Hunter.class,   "Hunter",   counts);
+            env.getDeathTally().forEach((species, t) ->
+                result.merge(species, t.clone(),
+                    (a, b) -> new int[]{a[0]+b[0], a[1]+b[1], a[2]+b[2], a[3]+b[3], a[4]+b[4]})
+            );
         }
-        return counts;
+        return result;
+    }
+
+    private static Map<String, Integer> mergedBirthTally(CompositeMap world) {
+        Map<String, Integer> result = new HashMap<>();
+        for (Environment env : world.getSubEnvironments()) {
+            env.getBirthTally().forEach((species, n) -> result.merge(species, n, Integer::sum));
+        }
+        return result;
     }
 
     private static <T extends Organism> void merge(Environment env, Class<T> cls, String name, Map<String, Integer> map) {
         map.merge(name, env.getRegistry().getAllAlive(cls).size(), Integer::sum);
-    }
-
-    private static <T extends Organism> void mergeDead(Environment env, Class<T> cls, String name, Map<String, Integer> map) {
-        long n = env.getRegistry().getAll(cls).stream()
-                .filter(o -> o.getState() == OrganismState.DEAD).count();
-        map.merge(name, (int) n, Integer::sum);
     }
 
     private static void printCounts(Map<String, Integer> counts) {

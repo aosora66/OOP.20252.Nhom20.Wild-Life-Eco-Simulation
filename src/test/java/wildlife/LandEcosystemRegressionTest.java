@@ -294,6 +294,8 @@ public class LandEcosystemRegressionTest {
     private static void initialAdultPreyCanReproduceWithoutWaitingFullCooldown() throws Exception {
         setConfig("animal.reproduce.chance", "1.0");
         setConfig("animal.reproduce.cooldownTicks", "80");
+        setConfig("animal.rabbit.reproduce.chance", "1.0");
+        setConfig("animal.rabbit.reproduce.cooldownTicks", "80");
 
         CompositeMap world = MapLoader.loadMapFromFile("initial-adult-repro-test", "Initial Adult Repro Test", "config/map.txt");
         Environment grass = findEnvironment(world, "grass");

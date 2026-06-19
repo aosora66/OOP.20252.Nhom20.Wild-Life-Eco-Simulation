@@ -36,6 +36,12 @@ public class SurvivalStatsComponent {
         this.thirstDecayRate  = thirstDecayRate;
     }
 
+    public SurvivalStatsComponent(float maxHp, float nutritionalValue,
+                                  float hungerDecayRate, float thirstDecayRate,
+                                  float ignoredRegenRate) {
+        this(maxHp, nutritionalValue, hungerDecayRate, thirstDecayRate);
+    }
+
     // Cập nhật mức đói/khát
     public void applyHungerThirstDecay(float hungerMultiplier, float thirstMultiplier) {
         hungerLevel = Math.min(100f, hungerLevel + (hungerDecayRate * hungerMultiplier));
@@ -63,7 +69,7 @@ public class SurvivalStatsComponent {
 
     /**
      * HP hồi thụ động mỗi tick khi sinh vật đủ nước (thirstLevel dưới ngưỡng).
-     * Tích lũy chậm (~0.3 HP/tick) — tổng cộng khoảng 30–40 HP trước khi khát trở lại.
+     * Đây là cơ chế hax cũ: nước không hồi ngay, nhưng giữ cơ thể hồi chậm một thời gian.
      */
     public float getHydrationRegen() {
         float threshold = AppConfig.getFloat("organism.stats.hydrationRegenThreshold");
@@ -91,11 +97,13 @@ public class SurvivalStatsComponent {
 
     // tiêu thụ -> khôi phục mức đói/khát/hp
     public void consume(float nutrition, boolean isWater) {
+        boolean needsHealing = hungerLevel > 30f || thirstLevel > 30f;
         if (isWater) {
             thirstLevel = Math.max(0f, thirstLevel - nutrition);
-            // Nước chỉ giảm khát, không hồi máu — chỉ thức ăn mới phục hồi HP
         } else {
             hungerLevel = Math.max(0f, hungerLevel - nutrition);
+        }
+        if (needsHealing) {
             restoreHp(nutrition * AppConfig.getFloat("organism.stats.nutritionToHpRatio"));
         }
     }

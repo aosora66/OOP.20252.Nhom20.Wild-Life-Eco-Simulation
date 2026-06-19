@@ -27,7 +27,9 @@ import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -85,6 +87,11 @@ public abstract class Environment {
 
     /** Component quản lý tài nguyên (thức ăn, nước, vật cản) */
     protected final ResourceManager resources;
+
+    /** Thống kê tử vong tích lũy: species → [killed, oldAge, starvation, dehydration, other] */
+    private final Map<String, int[]> deathTally = new HashMap<>();
+    /** Thống kê sinh nở tích lũy: species → số con sinh ra */
+    private final Map<String, Integer> birthTally = new HashMap<>();
 
     // ----------------------------------------------------------------
     //  Constructor
@@ -353,7 +360,6 @@ public abstract class Environment {
         for (Organism o : registry.getAll(Organism.class)) {
             if (o.getState() == OrganismState.DEAD) {
                 if (o instanceof Animal) {
-                    // Chuyển xác thành thịt
                     float nutrition = o.getStats().getNutritionalValue();
                     resources.convertDeadToMeat(o.getPosition(), nutrition);
                 }
@@ -361,11 +367,28 @@ public abstract class Environment {
             }
         }
 
-        // Xóa sau khi duyệt xong để tránh ConcurrentModificationException
         for (String id : toRemove) {
             registry.remove(id);
         }
     }
+
+    public void recordDeath(String species, Organism.DeathCause cause) {
+        int[] tally = deathTally.computeIfAbsent(species, k -> new int[5]);
+        switch (cause) {
+            case KILLED      -> tally[0]++;
+            case OLD_AGE     -> tally[1]++;
+            case STARVATION  -> tally[2]++;
+            case DEHYDRATION -> tally[3]++;
+            default          -> tally[4]++;
+        }
+    }
+
+    public void recordBirth(String species) {
+        birthTally.merge(species, 1, Integer::sum);
+    }
+
+    public Map<String, int[]> getDeathTally() { return deathTally; }
+    public Map<String, Integer> getBirthTally() { return birthTally; }
 
     /**
      * Đăng ký một sinh vật vào môi trường này.

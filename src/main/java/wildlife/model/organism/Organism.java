@@ -20,12 +20,15 @@ public abstract class Organism {
     // ----------------------------------------------------------
     //  5 thuộc tính nhận diện cơ bản
     // ----------------------------------------------------------
+    public enum DeathCause { OLD_AGE, KILLED, STARVATION, DEHYDRATION, OTHER }
+
     protected final String id;
     protected final String speciesName;
     protected Vector2D position;
     protected TerrainType currentTerrain;
     protected Environment environment;
     protected OrganismState state;
+    private DeathCause deathCause = DeathCause.OTHER;
 
     // ----------------------------------------------------------
     //  3 Components (gom 11 thuộc tính còn lại)
@@ -149,6 +152,11 @@ public abstract class Organism {
         hpDrain += stats.getStarvationPenalty();
 
         if (stats.reduceHp(hpDrain)) {
+            if (stats.getThirstLevel() >= AppConfig.getFloat("organism.stats.thirstHpThreshold")) {
+                deathCause = DeathCause.DEHYDRATION;
+            } else if (stats.getHungerLevel() >= AppConfig.getFloat("organism.stats.hungerHpThreshold")) {
+                deathCause = DeathCause.STARVATION;
+            }
             die();
             return;
         }
@@ -200,22 +208,21 @@ public abstract class Organism {
     protected void growUp() {
         growth.computeGrowth();
         if (growth.isDecaying()) {
-            // Lão hóa: trừ HP từ từ (đã loại bỏ magic number 0.5f)
             boolean died = stats.reduceHp(DECAY_HP_PENALTY);
-            if (died) die();
+            if (died) { deathCause = DeathCause.OLD_AGE; die(); }
         }
     }
 
     /**
-     * Trừ HP từ nguồn bên ngoài (bị tấn công, môi trường khắc nghiệt...).
+     * Trừ HP từ nguồn bên ngoài (bị tấn công bởi sinh vật khác).
      * Tự động gọi die() nếu HP về 0.
-     *
-     * @param amount lượng HP bị trừ
      */
     public void decreaseHp(float amount) {
         boolean died = stats.reduceHp(amount);
-        if (died) die();
+        if (died) { deathCause = DeathCause.KILLED; die(); }
     }
+
+    public DeathCause getDeathCause() { return deathCause; }
 
     /**
      * Xử lý khi sinh vật chết: chuyển trạng thái → DEAD,
@@ -226,7 +233,9 @@ public abstract class Organism {
     protected void die() {
         if (state == OrganismState.ALIVE) {
             state = OrganismState.DEAD;
-            // Environment sẽ lắng nghe trạng thái này và xóa sau N tick
+            if (environment != null) {
+                environment.recordDeath(speciesName, deathCause);
+            }
         }
     }
 
