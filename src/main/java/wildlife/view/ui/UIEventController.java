@@ -16,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import wildlife.model.organism.Organism;
@@ -26,8 +27,10 @@ import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
 
+import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -96,7 +99,6 @@ public class UIEventController {
 
     //entity panel
     public VBox HungerBar;
-    private boolean entityPanelIsExpanded = false;
     @FXML
     public HBox entityPanel;
     @FXML
@@ -117,25 +119,36 @@ public class UIEventController {
     public Region thirstyBarFill;
     @FXML
     public Label thirstyValueLabel;
-    public void entityPanelFormChange() {
-        entityPanelIsExpanded = !entityPanelIsExpanded;
-        info.setManaged(entityPanelIsExpanded);
-        info.setVisible(entityPanelIsExpanded);
-    }
-    public void entityPanelSolid() {
-        entityPanel.setOpacity(1);
-    }
-    public void entityPanelTransparent() {
-        if(!entityPanelIsExpanded){
-            entityPanel.setOpacity(0.5);
+    private void showEntityPanel(Organism selected) {
+        if(selected == null){
+            hideEntityPanel();
+            return;
         }
-    }
-    private void showEntityPanel(wildlife.model.organism.Organism selected) {
         Platform.runLater(() -> {
+            // chống trường hợp chuaw kịp vẽ lại thì người dùng chọn sinh vật kh
+            if (selected != selectedOrganism) {
+                return;
+            }
+            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
+            entityIdLabel.setTextFill(Paint.valueOf("#2d3436"));
+            if(!selected.isAlive()){
+                entityIdLabel.setText("[DEAD]   " + entityIdLabel.getText());
+                entityIdLabel.setTextFill(Paint.valueOf("#f28c8c"));
+                hpBarFill.setPrefWidth(0);
+                hpValueLabel.setText(String.format("0 / %.0f", stats.getMaxHp()));
+                hungerBarFill.setPrefWidth(0);
+                hungerValueLabel.setText("Unspecified");
+                hungerValueLabel.setDisable(true);
+                thirstyBarFill.setPrefWidth(0);
+                thirstyValueLabel.setText("Unspecified");
+                thirstyValueLabel.setDisable(true);
+                entityPanel.setManaged(true);
+                entityPanel.setVisible(true);
+                return;
+            }
 
             // Populate stats
-            wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             double hpPercent = stats.getHp() / stats.getMaxHp();
             hpBarFill.setPrefWidth(500 * hpPercent);
             hpValueLabel.setText(String.format("%.0f / %.0f", stats.getHp(), stats.getMaxHp()));
@@ -160,7 +173,7 @@ public class UIEventController {
             // Update Image depending on Species
             String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
             try {
-                javafx.scene.image.Image img = new javafx.scene.image.Image(getClass().getResourceAsStream(imagePath));
+                javafx.scene.image.Image img = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
                 entityImageView.setImage(img);
             } catch (Exception e) {
                 // Ignore if asset loading fails
@@ -179,14 +192,6 @@ public class UIEventController {
 
 
     //toolBox
-    @FXML
-    public HBox organismToolset;
-    private void organism_list_load() {
-    }
-    @FXML
-    public HBox envTool;
-    private void environment_materials_load() {
-    }
 
 
     //Render Scene
@@ -384,11 +389,16 @@ public class UIEventController {
         renderThread.start();
     }
 
+    private static final int N_TICKS = 15;
+    private static volatile UIEventController instance;
+    private int tickCount = 0;
+
     private final Camera camera = new Camera(400, 300, 1080);
     private boolean isSpacePressed = false;
     private boolean isCtrlPressed = false;
     private double lastMouseX;
     private double lastMouseY;
+    private volatile Organism selectedOrganism = null;
     private void setupCameraEvents() {
         sceneCanvas.setFocusTraversable(true);
         sceneCanvas.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -471,24 +481,24 @@ public class UIEventController {
                 ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                 if (selected != null) {
                     if(selected.size() == 1){
-                        showEntityPanel(selected.get(0));
+                        selectedOrganism = selected.getFirst();
                     }else{
                         activeContextMenu = new ContextMenu();
                         for(Organism organism : selected){
                             MenuItem item = new MenuItem(organism.getSpeciesName() + ": " + organism.getId());
                             item.setOnAction(e ->{
-                                showEntityPanel(organism);
+                                selectedOrganism = organism;
                                 activeContextMenu.hide();
+                                showEntityPanel(selectedOrganism);
                             });
                             activeContextMenu.getItems().add(item);
                         }
                         activeContextMenu.show(sceneCanvas, clickX, clickY);
                     }
-
-
                 } else {
-                    hideEntityPanel();
+                    selectedOrganism = null;
                 }
+                showEntityPanel(selectedOrganism);
             }
         });
     }
@@ -524,10 +534,24 @@ public class UIEventController {
         return result;
     }
 
+    public static void tickUpdate() {
+        if (instance != null) {
+            instance.onTick();
+        }
+    }
+
+    private void onTick() {
+        tickCount++;
+        if (tickCount >= N_TICKS) {
+            tickCount = 0;
+            Organism selected = selectedOrganism;
+            showEntityPanel(selected);
+        }
+    }
+
     // Khoi tao
     public void initialize() {
-        organism_list_load();
-        environment_materials_load();
+        instance = this;
         setupLWJGLCanvas();
         setupScaling();
         setupCameraEvents();
@@ -537,4 +561,5 @@ public class UIEventController {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }
     }
+
 }
