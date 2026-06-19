@@ -50,10 +50,17 @@ public class Grass extends Plant{
 
     @Override
     public void onTick(int currentTick) {
-        // Plants perform photosynthesis and absorb nutrients every tick.
         photosynthesis();
         absorbNutrients();
     }
+
+    /** Cỏ không đói, không khát — năng lượng từ quang hợp và đất. */
+    @Override
+    protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {}
+
+    /** Cỏ không mất HP thụ động — chỉ chết khi bị ăn hết HP. */
+    @Override
+    protected float getBaseHpDrainPerTick() { return 0f; }
 
     @Override
     protected void addOffspring(Vector2D pos) {

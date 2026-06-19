@@ -75,6 +75,8 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         );
         if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
+        } else {
+            wander(self, env);
         }
     }
 

@@ -4,6 +4,7 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.plant.Grass;
+import wildlife.util.Vector2D;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -18,6 +19,15 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
     // Ngưỡng đói/khát để bắt đầu tìm kiếm (0–100)
     private final float hungerSearchThreshold;
     private final float thirstSearchThreshold;
+
+    // Trạng thái wander có hướng: đi thẳng một đoạn rồi mới random hướng mới
+    private Vector2D wanderTarget = null;
+    private int wanderStepsLeft   = 0;
+    private static final int WANDER_PERSIST_TICKS = 25;
+    private static final float WANDER_DIST        = 50f;
+
+    // Chỉ uống nước cơ hội khi thực sự có nhu cầu — tránh con vật đứng mãi ở nước
+    private static final float OPPORTUNISTIC_DRINK_THRESHOLD = 15f;
 
     public PassiveStrategy(float stepSize, float sightRadius, float eatRange,
                            float hungerSearchThreshold, float thirstSearchThreshold) {
@@ -66,9 +76,8 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
             return;
         }
 
-        // Chưa tới ngưỡng đói/khát: đi lang thang. Nhưng nếu vô tình có thức ăn/nước
-        // ngay dưới chân và đang còn nhu cầu (đói/khát > 0) thì nhặt ăn luôn — không bỏ phí.
-        wander(self, env);
+        // Chưa tới ngưỡng đói/khát: đi theo hướng đã chọn một đoạn rồi mới random lại.
+        directedWander(self, env);
     }
 
     /**
@@ -131,11 +140,12 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
     }
 
     /**
-     * Ăn cơ hội: nếu có nước/thức ăn (hoặc cỏ với loài gặm cỏ) trong tầm với (attackRange)
-     * và còn nhu cầu thì tiêu thụ. Ưu tiên nước trước. Trả về true nếu đã ăn/uống.
+     * Ăn cơ hội: nếu có nước/thức ăn trong tầm với VÀ đang thực sự cần thì tiêu thụ.
+     * Nước chỉ uống khi thirstLevel > OPPORTUNISTIC_DRINK_THRESHOLD để tránh đứng mãi ở nước
+     * trong khi đang đói — không để uống nước thay thế việc đi tìm đồ ăn.
      */
     private boolean tryOpportunisticEat(Animal self, Environment env) {
-        if (self.getStats().getThirstLevel() > 0f) {
+        if (self.getStats().getThirstLevel() > OPPORTUNISTIC_DRINK_THRESHOLD) {
             var water = findNearestFood(self, env, true);
             if (water.isPresent()
                     && self.getPosition().distanceTo(water.get().position()) <= attackRange) {
@@ -160,5 +170,29 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
             }
         }
         return false;
+    }
+
+    /**
+     * Wander có hướng: chọn một điểm đích ngẫu nhiên cách WANDER_DIST đơn vị,
+     * đi thẳng về đó trong WANDER_PERSIST_TICKS tick, rồi mới chọn hướng mới.
+     * Tự nhiên hơn việc random góc mỗi tick và giúp con vật thoát khỏi vùng nước.
+     */
+    private void directedWander(Animal self, Environment env) {
+        if (wanderStepsLeft <= 0 || wanderTarget == null) {
+            float angle = RNG.nextFloat() * 2f * (float) Math.PI;
+            float dist  = WANDER_DIST * (0.5f + RNG.nextFloat() * 0.5f);
+            wanderTarget = new Vector2D(
+                    self.getPosition().getX() + (float) Math.cos(angle) * dist,
+                    self.getPosition().getY() + (float) Math.sin(angle) * dist
+            );
+            wanderStepsLeft = WANDER_PERSIST_TICKS;
+        }
+
+        if (self.getPosition().distanceTo(wanderTarget) <= stepSize) {
+            wanderStepsLeft = 0;
+        } else {
+            moveToward(self, wanderTarget, env);
+            wanderStepsLeft--;
+        }
     }
 }
