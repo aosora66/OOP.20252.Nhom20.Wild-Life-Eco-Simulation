@@ -108,6 +108,11 @@ public class SurvivalStatsComponent {
         }
     }
 
+    /** Hấp thụ độ ẩm thụ động từ môi trường (không hồi HP — khác với consume). */
+    public void absorbMoisture(float amount) {
+        thirstLevel = Math.max(0f, thirstLevel - amount);
+    }
+
     // Getters
     public float getHp()               { return hp; }
     public float getMaxHp()            { return maxHp; }

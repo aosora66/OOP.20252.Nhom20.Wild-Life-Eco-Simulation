@@ -25,11 +25,27 @@ public abstract class Plant extends Organism {
 
     /**
      * Cây không có khái niệm đói — năng lượng đến từ quang hợp (photosynthesis()),
-     * không phải ăn. Chỉ decay mức khát mỗi tick, hungerLevel luôn giữ ở 0.
+     * không phải ăn. Thirst tăng mỗi tick nhưng được bù lại bằng hấp thụ độ ẩm không khí/đất.
+     * Cây trong môi trường ẩm ướt (Forest) hồi đủ; cây trong đồng cỏ khô phụ thuộc thêm vào nguồn nước gần đó.
      */
     @Override
     protected void applyMetabolismDecay(float seasonMultiplier, float thirstMultiplier) {
         stats.applyThirstOnlyDecay(thirstMultiplier);
+        if (environment != null) {
+            float humidityFactor = environment.getHumidity()
+                    / AppConfig.getFloat("organism.stats.humidityMax");
+            float absorption = humidityFactor * AppConfig.getFloat("plant.humidity.absorptionRate");
+
+            // Nguồn nước gần đó (sông/hồ) tăng thêm lượng hấp thụ
+            boolean waterNearby = environment.getResources()
+                    .getFoodNear(position, nutritionAsorbRadius)
+                    .stream().anyMatch(FoodItem::isWater);
+            if (waterNearby) {
+                absorption += AppConfig.getFloat("plant.water.absorptionBonus");
+            }
+
+            stats.absorbMoisture(absorption);
+        }
     }
 
     /**
