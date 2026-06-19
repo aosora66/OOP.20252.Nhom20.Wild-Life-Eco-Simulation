@@ -79,17 +79,8 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 return;
             }
         }
-        // Tìm con mồi gần nhất trong tất cả các loài có thể săn được.
-        // Loại trừ apex predator (vd. Voi) — không loài nào săn được apex,
-        // dù preySpecies có khai báo Animal.class bắt tất cả subclass.
-        Optional<? extends Animal> prey = preySpecies.stream()
-                .flatMap(species -> findNearestBySpecies(self, env, species).stream())
-                .filter(a -> !a.isApexPredator())
-                // Không ăn thịt đồng loại (vd. Sói không săn Sói)
-                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
-                // Không ngắm con mồi đang ở dưới nước sâu (thú trên cạn không xuống nước được)
-                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
-                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
+        // Tìm con mồi gần nhất — trước tiên trong tầm nhìn, sau đó fallback toàn môi trường.
+        Optional<? extends Animal> prey = findNearestPrey(self, env);
         // =================================================================
         // ƯU TIÊN 2: Kích hoạt bản năng săn mồi sống
         // =================================================================
@@ -115,6 +106,27 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                 // =================================================================
                 () -> wander(self, env)
         );
+    }
+
+    /**
+     * Tìm con mồi trong tầm nhìn trước; nếu không có thì tìm con mồi gần nhất trong toàn
+     * môi trường (tương tự cách PassiveStrategy tìm food items toàn cục).
+     */
+    private Optional<? extends Animal> findNearestPrey(Animal self, Environment env) {
+        Optional<? extends Animal> inSight = preySpecies.stream()
+                .flatMap(species -> findNearestBySpecies(self, env, species).stream())
+                .filter(a -> !a.isApexPredator())
+                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
+                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
+        if (inSight.isPresent()) return inSight;
+
+        return preySpecies.stream()
+                .flatMap(species -> env.getRegistry().getAllAlive(species).stream())
+                .filter(a -> !a.isApexPredator())
+                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
+                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
+                .min(Comparator.comparingDouble(a -> a.getPosition().distanceTo(self.getPosition())));
     }
 
     private void attackAndEatIfKilled(Animal self, Environment env, Animal target) {

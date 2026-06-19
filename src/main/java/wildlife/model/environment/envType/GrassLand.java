@@ -54,12 +54,12 @@ public class GrassLand extends Environment {
     @Override
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
-        // 50 Bụi cỏ (Nguồn thức ăn dồi dào, phủ khắp nơi)
-        for (int i = 0; i < 50; i++) {
+        // 100 Bụi cỏ (Nguồn thức ăn dồi dào, phủ khắp nơi)
+        for (int i = 0; i < 100; i++) {
             registry.add(Grass.create(terrain.getRandomValidPosition(), this));
         }
-        // 10 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
-        for (int i = 0; i < 10; i++) {
+        // 20 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
+        for (int i = 0; i < 20; i++) {
             float startAge = random.nextFloat() * 1200f;
             registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
         }
