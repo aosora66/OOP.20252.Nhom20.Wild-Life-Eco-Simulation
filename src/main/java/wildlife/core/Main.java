@@ -62,8 +62,10 @@ public class Main {
 
                 // --- Xử lý tất cả tick đã tích lũy ---
                 while (accumulator >= NS_PER_TICK) {
-                    currentTick++;
-                    world.updateEnvironment(currentTick);
+                    if (!UIEventController.isPaused()) {
+                        currentTick++;
+                        world.updateEnvironment(currentTick);
+                    }
                     accumulator -= NS_PER_TICK;
 
                     // Cập nhật danh sách sinh vật cho UI click detection

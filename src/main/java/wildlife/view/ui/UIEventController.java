@@ -393,6 +393,9 @@ public class UIEventController {
     private static volatile UIEventController instance;
     private int tickCount = 0;
 
+    private static volatile boolean paused = false;
+    public static boolean isPaused() { return paused; }
+
     private final Camera camera = new Camera(400, 300, 1080);
     private boolean isSpacePressed = false;
     private boolean isCtrlPressed = false;
@@ -414,6 +417,10 @@ public class UIEventController {
             if(event.getCode() == KeyCode.CONTROL) {
                 isCtrlPressed = true;
                 sceneCanvas.setCursor(Cursor.NONE);
+            }
+            if(event.getCode() == KeyCode.P) {
+                paused = !paused;
+                System.out.println(paused ? "[PAUSED]" : "[RESUMED]");
             }
         });
         sceneCanvas.setOnKeyReleased(event -> {
