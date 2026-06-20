@@ -74,6 +74,7 @@
     -fx-max-height: 29;
     -fx-background-color: #e2e8f0;
     -fx-background-radius: 4;
+    -fx-border-color: rgb(45 52 54 / 0.5);
 }
 .tool-item:hover {
     -fx-min-width: 35;
@@ -104,4 +105,14 @@
     -fx-text-fill: #2d3436;
     -fx-font-size: 10px;
     -fx-font-family: "Inter SemiBold";
+}
+
+.button {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: #2d3436;
+}
+.button:hover {
+    -fx-background-color: #8cc0de;
 }

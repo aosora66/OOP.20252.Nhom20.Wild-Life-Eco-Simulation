@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -11,12 +12,14 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.SVGPath;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import wildlife.model.organism.Organism;
@@ -393,8 +396,6 @@ public class UIEventController {
     private static volatile UIEventController instance;
     private int tickCount = 0;
 
-    private static volatile boolean paused = false;
-    public static boolean isPaused() { return paused; }
 
     private final Camera camera = new Camera(400, 300, 1080);
     private boolean isSpacePressed = false;
@@ -417,10 +418,6 @@ public class UIEventController {
             if(event.getCode() == KeyCode.CONTROL) {
                 isCtrlPressed = true;
                 sceneCanvas.setCursor(Cursor.NONE);
-            }
-            if(event.getCode() == KeyCode.P) {
-                paused = !paused;
-                System.out.println(paused ? "[PAUSED]" : "[RESUMED]");
             }
         });
         sceneCanvas.setOnKeyReleased(event -> {
@@ -556,6 +553,23 @@ public class UIEventController {
         }
     }
 
+    // Pause Button
+    @FXML
+    public Button pauseButton;
+    @FXML
+    private SVGPath pauseIcon;
+    public void pauseStatusChange() {
+        synchronized (lock) {
+            paused = !paused;
+            if (pauseIcon != null) {
+                pauseIcon.setContent(paused ? "M3 2l7 4-7 4V2z" : "M3 2h2v8H3V2zm4 0h2v8H7V2z");
+            }
+        }
+    }
+    private static volatile boolean paused = false;
+    private static final Object lock = new Object();
+    public static boolean isPaused() { return paused; }
+
     // Khoi tao
     public void initialize() {
         instance = this;
@@ -564,6 +578,7 @@ public class UIEventController {
         setupCameraEvents();
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
+        pauseButton.setFocusTraversable(false);
         if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }
