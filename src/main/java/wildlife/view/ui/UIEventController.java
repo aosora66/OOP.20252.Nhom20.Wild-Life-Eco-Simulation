@@ -24,6 +24,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.plant.Plant;
+import wildlife.view.renderer.AtlasTexture;
 import wildlife.view.renderer.Renderer;
 import wildlife.view.renderer.SpriteBatch;
 import wildlife.view.renderer.SimpleTexture;
@@ -250,12 +251,36 @@ public class UIEventController {
         spatialGrid = newGrid;
     }
 
+    // Basic mode: solid-color textures per species.
+    // Warm tones for predators (Hunter, Tiger, Wolf), cool tones for prey (Deer, Elephant, Fish, Rabbit).
     private SimpleTextureRegistry buildTextureRegistry() {
         SimpleTextureRegistry registry = new SimpleTextureRegistry();
-        registry.register("Wolf",   new SimpleTexture(16, 16, (byte) 220, (byte)  50, (byte)  50, (byte) 255));
-        registry.register("Grass",  new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255));
-        registry.register("Rabbit", new SimpleTexture(16, 16, (byte) 100, (byte) 150, (byte) 255, (byte) 255));
+        // Predators — warm tones
+        registry.register("Hunter",   new SimpleTexture(16, 16, (byte) 230, (byte)  60, (byte)  30, (byte) 255)); // deep red-orange
+        registry.register("Tiger",    new SimpleTexture(16, 16, (byte) 240, (byte) 140, (byte)  20, (byte) 255)); // amber
+        registry.register("Wolf",     new SimpleTexture(16, 16, (byte) 210, (byte)  40, (byte)  70, (byte) 255)); // crimson
+        // Herbivores — cool tones
+        registry.register("Deer",     new SimpleTexture(16, 16, (byte)  60, (byte) 160, (byte) 140, (byte) 255)); // teal
+        registry.register("Elephant", new SimpleTexture(16, 16, (byte)  70, (byte) 110, (byte) 190, (byte) 255)); // steel blue
+        registry.register("Fish",     new SimpleTexture(16, 16, (byte)  30, (byte) 170, (byte) 230, (byte) 255)); // cyan
+        registry.register("Rabbit",   new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255)); // lavender
+        // Plants
+        registry.register("Grass",    new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255)); // green
         return registry;
+    }
+
+    private AtlasTexture buildAtlasTexture() {
+        try (var stream = getClass().getResourceAsStream(
+                "/wildlife/view/ui/assets/texture_sheet/atlas.png")) {
+            if (stream == null) {
+                System.err.println("[UIEventController] atlas.png not found — sprite mode will be unavailable");
+                return null;
+            }
+            return new AtlasTexture(stream);
+        } catch (Exception e) {
+            System.err.println("[UIEventController] Failed to load atlas: " + e.getMessage());
+            return null;
+        }
     }
     private void setupLWJGLCanvas() {
         // tạo ImageView để nhúng LWJGL vào
@@ -323,9 +348,10 @@ public class UIEventController {
             GL.createCapabilities();
 
             SimpleTextureRegistry textureRegistry = buildTextureRegistry();
+            AtlasTexture atlasTexture = buildAtlasTexture();
             SpriteBatch spriteBatch = new SpriteBatch(width, height);
 
-            this.renderer = new Renderer(spriteBatch, textureRegistry, camera);
+            this.renderer = new Renderer(spriteBatch, textureRegistry, atlasTexture, camera);
             rendererLatch.countDown();
 
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -384,6 +410,7 @@ public class UIEventController {
             renderer.stop();
             spriteBatch.dispose();
             textureRegistry.clear();
+            if (atlasTexture != null) atlasTexture.dispose();
             glfwDestroyWindow(window);
             glfwTerminate();
         }, "LWJGL-Render-Thread");

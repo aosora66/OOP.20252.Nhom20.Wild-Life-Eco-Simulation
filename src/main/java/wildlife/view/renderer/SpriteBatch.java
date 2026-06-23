@@ -97,11 +97,11 @@ public class SpriteBatch {
         shader.setUniform1i("uTexture", 0);    // texture unit 0
     }
 
-    public void draw(ITexture texture, float x, float y, float width, float height) {
-        draw(texture, x, y, width, height, 0f, 0f, 1f, 1f);
+    public void draw(ITexture texture, float x, float y, float goWest, float width, float height) {
+        draw(texture, x, y, goWest, width, height, 0f, 0f, 1f, 1f);
     }
 
-    public void draw(ITexture texture, float x, float y, float width, float height,
+    public void draw(ITexture texture, float x, float y, float goWest, float width, float height,
                      float u0, float v0, float u1, float v1) {
         if (!drawing) {
             throw new IllegalStateException("SpriteBatch.begin() must be called before draw().");
@@ -123,12 +123,17 @@ public class SpriteBatch {
         float bottom = y + height/2;
         float right = x + width/2;
         float left = x - width/2;
-
-        putVertex(left,  top,  u0, v0);
-        putVertex(right, top,  u1, v0);
-        putVertex(right, bottom, u1, v1);
-        putVertex(left, bottom, u0, v1);
-
+        if(goWest==1.0f){
+            putVertex(right,  top,  u0, v0);
+            putVertex(left, top,  u1, v0);
+            putVertex(left, bottom, u1, v1);
+            putVertex(right, bottom, u0, v1);
+        }else{
+            putVertex(left,  top,  u0, v0);
+            putVertex(right, top,  u1, v0);
+            putVertex(right, bottom, u1, v1);
+            putVertex(left, bottom, u0, v1);
+        }
         spriteCount++;
     }
 

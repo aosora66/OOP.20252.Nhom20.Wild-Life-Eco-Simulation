@@ -28,6 +28,7 @@ public abstract class Organism {
     protected TerrainType currentTerrain;
     protected Environment environment;
     protected OrganismState state;
+    protected boolean goWest;
     private DeathCause deathCause = DeathCause.OTHER;
 
     // ----------------------------------------------------------
@@ -245,6 +246,7 @@ public abstract class Organism {
      *
      * @return RenderData gửi cho view
      */
+    /*
     public RenderData getRenderData() {
         return new RenderData(
                 id,
@@ -254,7 +256,7 @@ public abstract class Organism {
                 state
         );
     }
-
+    */
     // ----------------------------------------------------------
     //  Getters / Setters
     // ----------------------------------------------------------
@@ -267,6 +269,7 @@ public abstract class Organism {
     public Environment getEnvironment()   { return environment; }
     public GrowthComponent getGrowth()           { return growth; }
     public SurvivalStatsComponent getStats()     { return stats; }
+    public boolean isGoingWest(){return goWest;}
     public AdaptabilityComponent getAdaptability() { return adaptability; }
 
     public void setPosition(Vector2D pos)                    { this.position = pos; }
@@ -290,4 +293,5 @@ public abstract class Organism {
                 stats.getHp(), growth.getCurrentAge(),
                 position, state);
     }
+
 }

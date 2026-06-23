@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+
 public class IndexedMap<K, V> {
 
     private final HashMap<K, Integer> indexMap = new HashMap<>();
@@ -12,19 +13,6 @@ public class IndexedMap<K, V> {
         Integer idx = indexMap.get(key);
         return idx != null ? values.get(idx) : null;
     }
-    public boolean containsKey(K key) {
-        return indexMap.containsKey(key);
-    }
-    public void put(K key, V value) {
-        Integer idx = indexMap.get(key);
-        if (idx != null) {
-            values.set(idx, value);
-        } else {
-            indexMap.put(key, values.size());
-            values.add(value);
-        }
-    }
-
     public V computeIfAbsent(K key, Function<K, V> factory) {
         Integer idx = indexMap.get(key);
         if (idx != null) {
@@ -39,10 +27,6 @@ public class IndexedMap<K, V> {
 
     public List<V> values() {
         return values;
-    }
-    public void clear() {
-        indexMap.clear();
-        values.clear();
     }
 
     public boolean isEmpty() {

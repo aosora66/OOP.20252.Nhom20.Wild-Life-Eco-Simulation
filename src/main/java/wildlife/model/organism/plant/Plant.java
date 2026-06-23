@@ -21,6 +21,7 @@ public abstract class Plant extends Organism {
      */
     protected Plant(String id, String speciesName, Vector2D startPos, Environment startEnv, GrowthComponent growth, SurvivalStatsComponent stats, AdaptabilityComponent adaptability) {
         super(id, speciesName, startPos, startEnv, growth, stats, adaptability);
+        goWest = false;
     }
 
     /**

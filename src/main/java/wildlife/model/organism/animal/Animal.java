@@ -82,11 +82,13 @@ public abstract class Animal extends Organism {
      */
     protected void executeStrategy(int currentTick) {
         if (environment == null || strategies.isEmpty()) return;
+        float xBefore = position.getX();
         strategies.stream()
                 .sorted(Comparator.comparingInt(SurvivalStrategy::getPriority).reversed())
                 .filter(s -> s.isApplicable(this, environment))
                 .findFirst()
                 .ifPresent(s -> s.execute(this, environment));
+        goWest = position.getX() < xBefore;
     }
 
     /**

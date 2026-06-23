@@ -15,11 +15,13 @@ import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.animal.hebivores.Deer;
 import wildlife.model.organism.animal.hebivores.Elephant;
+import wildlife.model.organism.animal.hebivores.Fish;
 import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.model.organism.plant.AppleTree;
+import wildlife.model.organism.plant.Plant;
 import wildlife.model.organism.plant.TreeForest;
 import wildlife.util.AppConfig;
 import wildlife.util.ValueRange;
@@ -428,7 +430,17 @@ public abstract class Environment {
     public Collection<? extends RenderData> getRenderSnapshot() {
         List<RenderData> list = new ArrayList<>();
         for(Organism o: registry.getAll(Organism.class)) {
-            list.add(new RenderData(o));
+            int layer;
+            if(o instanceof Plant){
+                layer = 2;
+            }else {
+                if (o instanceof Fish) {
+                    layer = 1;
+                } else {
+                    layer = 3;
+                }
+            }
+            list.add(new RenderData(o, layer));
         }
         return list;
     }
