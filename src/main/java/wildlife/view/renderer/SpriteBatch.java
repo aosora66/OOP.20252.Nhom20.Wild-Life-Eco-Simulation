@@ -107,15 +107,7 @@ public class SpriteBatch {
             throw new IllegalStateException("SpriteBatch.begin() must be called before draw().");
         }
 
-        if (texture != currentTexture) {
-            flush();
-            currentTexture = texture;
-            glActiveTexture(GL_TEXTURE0);
-            currentTexture.bind();
-        }
-        if (spriteCount >= MAX_SPRITES) {
-            flush();
-        }
+        prepareTexture(texture);
 
         // ── Emit 4 vertices (top-left, top-right, bottom-right, bottom-left) ──
         // đặt x, y làm tâm của quad
@@ -134,6 +126,46 @@ public class SpriteBatch {
             putVertex(right, bottom, u1, v1);
             putVertex(left, bottom, u0, v1);
         }
+        spriteCount++;
+    }
+
+    /**
+     * Tam giác thuận — đỉnh quay lên trên, đáy ở dưới (Herbivore).
+     * Dùng degenerate quad: v0=v1=apex → triangle 2 (v2,v3,v0) hiển thị.
+     */
+    public void drawTriangleUp(ITexture texture, float x, float y, float width, float height) {
+        if (!drawing) throw new IllegalStateException("SpriteBatch.begin() must be called before draw().");
+        prepareTexture(texture);
+
+        float top    = y - height / 2;
+        float bottom = y + height / 2;
+        float left   = x - width  / 2;
+        float right  = x + width  / 2;
+
+        putVertex(x,     top,    0.5f, 0f);  // v0 = apex
+        putVertex(x,     top,    0.5f, 0f);  // v1 = apex (duplicate → triangle 1 suy biến)
+        putVertex(right, bottom, 1f,   1f);  // v2 = đáy phải
+        putVertex(left,  bottom, 0f,   1f);  // v3 = đáy trái
+        spriteCount++;
+    }
+
+    /**
+     * Tam giác ngược — đỉnh quay xuống dưới, đáy ở trên (Predator).
+     * Dùng degenerate quad: v2=v3=apex → triangle 1 (v0,v1,v2) hiển thị.
+     */
+    public void drawTriangleDown(ITexture texture, float x, float y, float width, float height) {
+        if (!drawing) throw new IllegalStateException("SpriteBatch.begin() must be called before draw().");
+        prepareTexture(texture);
+
+        float top    = y - height / 2;
+        float bottom = y + height / 2;
+        float left   = x - width  / 2;
+        float right  = x + width  / 2;
+
+        putVertex(left,  top,    0f,   0f);  // v0 = đáy trái
+        putVertex(right, top,    1f,   0f);  // v1 = đáy phải
+        putVertex(x,     bottom, 0.5f, 1f);  // v2 = apex (duplicate → triangle 2 suy biến)
+        putVertex(x,     bottom, 0.5f, 1f);  // v3 = apex
         spriteCount++;
     }
 
@@ -187,6 +219,16 @@ public class SpriteBatch {
         glDeleteBuffers(vboId);
         glDeleteBuffers(iboId);
         glDeleteVertexArrays(vaoId);
+    }
+
+    private void prepareTexture(ITexture texture) {
+        if (texture != currentTexture) {
+            flush();
+            currentTexture = texture;
+            glActiveTexture(GL_TEXTURE0);
+            currentTexture.bind();
+        }
+        if (spriteCount >= MAX_SPRITES) flush();
     }
 
     /** gắn vertex mới vào VBO */

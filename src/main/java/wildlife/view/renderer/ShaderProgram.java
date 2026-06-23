@@ -41,8 +41,8 @@ public class ShaderProgram {
 
     /**
      * Fragment shader with two rendering modes selected by {@code uMode}:
-     *   0 – Basic: outputs the interpolated vertex color (solid / untextured).
-     *   1 – Sprite: samples the bound texture and tints it by the vertex color.
+     *   0 – Basic: samples the bound solid-color texture (SimpleTexture stores the species color).
+     *   1 – Sprite: samples the bound atlas texture and tints it by the vertex color.
      */
     private static final String FRAGMENT_SOURCE = """
             #version 330 core
@@ -56,7 +56,7 @@ public class ShaderProgram {
 
             void main() {
                 if (uMode == 0) {
-                    FragColor = fColor;
+                    FragColor = texture(uTexture, fTexCoord);
                 } else {
                     FragColor = texture(uTexture, fTexCoord) * fColor;
                 }

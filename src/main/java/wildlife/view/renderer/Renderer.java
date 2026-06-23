@@ -11,6 +11,7 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,6 +28,9 @@ public class Renderer {
     private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
     private static final int   MAP_COLS  = 20;
     private static final int   MAP_ROWS  = 20;
+
+    private static final Set<String> PREDATORS  = Set.of("Hunter", "Tiger", "Wolf");
+    private static final Set<String> HERBIVORES = Set.of("Deer", "Elephant", "Fish", "Rabbit");
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
@@ -171,14 +175,24 @@ public class Renderer {
                                      uvs[0], uvs[1], uvs[2], uvs[3]);
                 }
             } else {
-                // Basic mode (or species not in atlas): draw with solid-color texture
+                // Basic mode (or species not in atlas): draw with solid-color texture + shape
                 ITexture texture = textureRegistry.getTexture(group.speciesName);
                 if (texture == null) {
                     buf.clear();
                     continue;
                 }
+                boolean isPredator  = PREDATORS.contains(group.speciesName);
+                boolean isHerbivore = HERBIVORES.contains(group.speciesName);
                 while (buf.hasRemaining()) {
-                    spriteBatch.draw(texture, buf.get(), buf.get(), buf.get(), DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
+                    float x = buf.get(), y = buf.get();
+                    buf.get(); // goWest — không dùng trong basic mode
+                    if (isPredator) {
+                        spriteBatch.drawTriangleDown(texture, x, y, DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
+                    } else if (isHerbivore) {
+                        spriteBatch.drawTriangleUp(texture, x, y, DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
+                    } else {
+                        spriteBatch.draw(texture, x, y, 0f, DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
+                    }
                 }
             }
 
