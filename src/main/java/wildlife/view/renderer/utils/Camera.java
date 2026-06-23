@@ -1,39 +1,56 @@
 package wildlife.view.renderer.utils;
 
+import wildlife.model.environment.Environment;
+import wildlife.util.AppConfig;
+
 public class Camera {
     private final int[] center = new int[2];
     private int top_left_x, top_left_y, bot_right_x, bot_right_y;
-    private int diagonal;
+    private int width, height;
 
-    public Camera(int x, int y, int diagonal){
+    public Camera(int x, int y, int width) {
         center[0] = x;
         center[1] = y;
-        this.diagonal = diagonal;
-        setBounds(this.diagonal, this.center);
+        this.width = width;
+        this.height = (int)(width/16*9);
+        setBounds();
     }
 
-    private void setBounds(int diagonal, int[] center){
-        this.top_left_x = center[0] - diagonal / 2;
-        this.top_left_y = center[1] - diagonal / 2;
-        this.bot_right_x = this.top_left_x + diagonal;
-        this.bot_right_y = this.top_left_y + diagonal;
+    private void setBounds(){
+        this.top_left_x = center[0] - width / 2;
+        this.top_left_y = center[1] - height / 2;
+        this.bot_right_x = this.top_left_x + width;
+        this.bot_right_y = this.top_left_y +  height;
     }
 
     public synchronized void zoom(int n){
-        // Giới hạn zoom: không cho diagonal quá nhỏ (phóng quá to) hoặc quá lớn
-        int targetDiagonal = this.diagonal + n;
-        if (targetDiagonal < 200 || targetDiagonal > 5000) {
+        int targetWidth = (int)((this.width + n)/16) * 16;
+        if(targetWidth < 200) {
             return;
         }
-        this.diagonal = targetDiagonal;
-        setBounds(this.diagonal, this.center);
+        if(targetWidth > 1000) {
+            targetWidth = 1000;
+        }
+
+        this.width = targetWidth;
+        this.height = targetWidth /16 * 9;
+        setBounds();
     }
 
     public synchronized void pan(int deltaX, int deltaY){
-        // Cho phép dịch chuyển tự do tâm camera
         center[0] += deltaX;
+        if(center[0] - width/2 < 0){
+           center[0] = width/2;
+        }else if(center[0] + width/2 > 1000){
+            center[0] = 1000-width/2;
+        }
         center[1] += deltaY;
-        setBounds(this.diagonal, this.center);
+        if(center[1] - height/2 < 0){
+            center[1] = height/2;
+        }else if(center[1] + height/2 > 1000) {
+            center[1] = 1000 - height / 2;
+        }
+        setBounds();
     }
 
     public synchronized int getTopLeftX() {

@@ -60,22 +60,22 @@ public class MapLoader {
                 // Dùng số nguyên để map với TerrainType
                 switch (tileCode) {
                     case 0 -> { // 0: Nước sâu
-                        world.getTerrain().addCustomTerrain(pos, TerrainType.DEEP_WATER);
+                        world.getTerrain().setTile(c, r, TerrainType.DEEP_WATER);
                         waterRegion.addTile(pos);
                     }
                     case 1 -> { // 1: Đồng cỏ
-                        world.getTerrain().addCustomTerrain(pos, TerrainType.GRASSLAND);
+                        world.getTerrain().setTile(c, r, TerrainType.GRASSLAND);
                         grassRegion.addTile(pos);
                     }
                     case 2 -> { // 2: Rừng rậm
-                        world.getTerrain().addCustomTerrain(pos, TerrainType.FOREST);
+                        world.getTerrain().setTile(c, r, TerrainType.FOREST);
                         forestRegion.addTile(pos);
                     }
                     case 3 -> { // 3: Núi đá
-                        world.getTerrain().addCustomTerrain(pos, TerrainType.MOUNTAIN);
+                        world.getTerrain().setTile(c, r, TerrainType.MOUNTAIN);
                     }
                     case 4 -> { // 4: Bùn lầy (nhưng thuộc vùng Grassland)
-                        world.getTerrain().addCustomTerrain(pos, TerrainType.MUD);
+                        world.getTerrain().setTile(c, r, TerrainType.MUD);
                         grassRegion.addTile(pos);
                     }
                     default -> throw new IllegalArgumentException("Mã địa hình không hợp lệ: " + tileCode);

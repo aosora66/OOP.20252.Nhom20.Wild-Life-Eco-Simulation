@@ -1,6 +1,9 @@
 package wildlife.view.renderer;
 
 import wildlife.model.dto.RenderData;
+import wildlife.model.environment.component.TerrainComponent;
+import wildlife.model.environment.enums.TerrainType;
+import wildlife.util.AppConfig;
 import wildlife.view.renderer.utils.Camera;
 import wildlife.view.renderer.utils.IndexedMap;
 
@@ -21,6 +24,9 @@ public class Renderer {
 
     private static final float DEFAULT_SPRITE_WIDTH  = 32f;
     private static final float DEFAULT_SPRITE_HEIGHT = 32f;
+    private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
+    private static final int   MAP_COLS  = 20;
+    private static final int   MAP_ROWS  = 20;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
@@ -29,6 +35,8 @@ public class Renderer {
 
     /** 0 = Basic , 1 = Sprite*/
     private final AtomicInteger renderMode = new AtomicInteger(0);
+
+    private volatile TerrainComponent terrain;
 
     /**
      * Các nhóm được lưu liên tục trên 1 mảng liên tục, kết hợp với HashMap để tăng tốc độ insert / iterate.
@@ -57,8 +65,44 @@ public class Renderer {
         renderMode.set(mode);
     }
 
+    /** Gắn TerrainComponent để renderer truy vấn địa hình khi vẽ tilemap. */
+    public void setTerrain(TerrainComponent terrain) {
+        this.terrain = terrain;
+    }
 
+    private void renderTerrain() {
+        if (terrain == null || spriteAtlas == null) return;
+        AtlasTexture.SubAtlas envAtlas = spriteAtlas.getEnvAtlas();
+        if (envAtlas == null) return;
 
+        int camLeft   = camera.getTopLeftX();
+        int camTop    = camera.getTopLeftY();
+        int camRight  = camera.getBotRightX();
+        int camBottom = camera.getBotRightY();
+
+        for (int row = 0; row < MAP_ROWS; row++) {
+            for (int col = 0; col < MAP_COLS; col++) {
+                float tileLeft   = col * TILE_SIZE;
+                float tileTop    = row * TILE_SIZE;
+                float tileRight  = tileLeft + TILE_SIZE;
+                float tileBottom = tileTop  + TILE_SIZE;
+
+                // Culling: bỏ qua ô nằm hoàn toàn ngoài tầm nhìn camera
+                if (tileRight < camLeft || tileLeft > camRight ||
+                    tileBottom < camTop || tileTop  > camBottom) continue;
+
+                TerrainType type = terrain.getTerrainAtTile(col, row);
+                if (!envAtlas.has(type.name())) continue;
+
+                float[] uvs = envAtlas.getUVs(type.name());
+                float cx = tileLeft + TILE_SIZE / 2f;
+                float cy = tileTop  + TILE_SIZE / 2f;
+                spriteBatch.draw(envAtlas, cx, cy, 0f, TILE_SIZE, TILE_SIZE,
+                                 uvs[0], uvs[1], uvs[2], uvs[3]);
+            }
+        }
+        spriteBatch.flush();
+    }
 
     /**
      * Usage:
@@ -148,6 +192,7 @@ public class Renderer {
         int mode = renderMode.get();
         spriteBatch.setRenderMode(mode);
         spriteBatch.begin();
+        renderTerrain();
         renderMap(background, mode);
         renderMap(midground, mode);
         renderMap(foreground, mode);

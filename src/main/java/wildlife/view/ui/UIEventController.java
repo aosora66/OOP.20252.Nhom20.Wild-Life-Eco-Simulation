@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -133,6 +134,19 @@ public class UIEventController {
             if (selected != selectedOrganism) {
                 return;
             }
+
+            // Cập nhật ảnh đại diện của loài (áp dụng cho cả sinh vật sống và chết)
+            String imagePath = "/wildlife/view/ui/assets/images/pfp/" + selected.getSpeciesName() + ".png";
+            try {
+                java.io.InputStream stream = getClass().getResourceAsStream(imagePath);
+                if (stream != null) {
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(stream);
+                    entityImageView.setImage(img);
+                }
+            } catch (Exception e) {
+                // Ignore if asset loading fails
+            }
+
             wildlife.model.organism.component.SurvivalStatsComponent stats = selected.getStats();
             entityIdLabel.setText("ID: " + selected.getId() + " (" + selected.getSpeciesName() + ")");
             entityIdLabel.setTextFill(Paint.valueOf("#2d3436"));
@@ -173,15 +187,6 @@ public class UIEventController {
             double thirstPercent = 1- (stats.getThirstLevel() / 100.0);
             thirstyBarFill.setPrefWidth(500 * (thirstPercent));
             thirstyValueLabel.setText(String.format("%.0f / 100", 100-stats.getThirstLevel()));
-
-            // Update Image depending on Species
-            String imagePath = "/wildlife/view/ui/assets/images/Fox.png";
-            try {
-                javafx.scene.image.Image img = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream(imagePath)));
-                entityImageView.setImage(img);
-            } catch (Exception e) {
-                // Ignore if asset loading fails
-            }
 
             entityPanel.setManaged(true);
             entityPanel.setVisible(true);
@@ -266,21 +271,52 @@ public class UIEventController {
         registry.register("Rabbit",   new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255)); // lavender
         // Plants
         registry.register("Grass",    new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255)); // green
+        registry.register("AppleTree", new SimpleTexture(16, 16, (byte) 50, (byte) 210, (byte) 20, (byte) 255));
+        registry.register("TreeForest", new SimpleTexture(16, 16, (byte) 20, (byte) 255, (byte) 10, (byte) 255));
+        // env
+        registry.register("DEEP_WATER", new SimpleTexture(16, 16, (byte) 29, (byte) 77, (byte) 253, (byte) 255));
+        registry.register("GRASSLAND", new SimpleTexture(16, 16, (byte) 115, (byte) 186, (byte) 103, (byte) 255));
+        registry.register("FOREST", new SimpleTexture(16, 16, (byte) 34, (byte) 94, (byte) 53, (byte) 255));
+        registry.register("MOUNTAIN", new SimpleTexture(16, 16, (byte) 120, (byte) 120, (byte) 120, (byte) 255));
+        registry.register("MUD", new SimpleTexture(16, 16, (byte) 128, (byte) 85, (byte) 50, (byte) 255));
         return registry;
     }
 
     private AtlasTexture buildAtlasTexture() {
+        AtlasTexture atlas;
         try (var stream = getClass().getResourceAsStream(
                 "/wildlife/view/ui/assets/texture_sheet/atlas.png")) {
             if (stream == null) {
                 System.err.println("[UIEventController] atlas.png not found — sprite mode will be unavailable");
                 return null;
             }
-            return new AtlasTexture(stream);
+            atlas = new AtlasTexture(stream);
         } catch (Exception e) {
             System.err.println("[UIEventController] Failed to load atlas: " + e.getMessage());
             return null;
         }
+
+        // Terrain atlas (env_atlas.png có thể chưa có — bỏ qua nếu null)
+        try (var png  = getClass().getResourceAsStream(
+                    "/wildlife/view/ui/assets/texture_sheet/env_atlas.png");
+             var json = getClass().getResourceAsStream(
+                    "/wildlife/view/ui/assets/texture_sheet/env_atlas_coordinates.json")) {
+            atlas.loadEnvAtlas(png, json);
+        } catch (Exception e) {
+            System.err.println("[UIEventController] Failed to load env atlas: " + e.getMessage());
+        }
+
+        // Resources atlas (resources_atlas.png có thể chưa có — bỏ qua nếu null)
+        try (var png  = getClass().getResourceAsStream(
+                    "/wildlife/view/ui/assets/texture_sheet/resources_atlas.png");
+             var json = getClass().getResourceAsStream(
+                    "/wildlife/view/ui/assets/texture_sheet/resources_atlas_coordinates.json")) {
+            atlas.loadResourcesAtlas(png, json);
+        } catch (Exception e) {
+            System.err.println("[UIEventController] Failed to load resources atlas: " + e.getMessage());
+        }
+
+        return atlas;
     }
     private void setupLWJGLCanvas() {
         // tạo ImageView để nhúng LWJGL vào
@@ -424,7 +460,7 @@ public class UIEventController {
     private int tickCount = 0;
 
 
-    private final Camera camera = new Camera(400, 300, 1080);
+    private final Camera camera = new Camera(500, 500, 1000);
     private boolean isSpacePressed = false;
     private boolean isCtrlPressed = false;
     private double lastMouseX;
@@ -444,7 +480,7 @@ public class UIEventController {
             }
             if(event.getCode() == KeyCode.CONTROL) {
                 isCtrlPressed = true;
-                sceneCanvas.setCursor(Cursor.NONE);
+                sceneCanvas.setCursor(Cursor.V_RESIZE);
             }
         });
         sceneCanvas.setOnKeyReleased(event -> {
@@ -468,7 +504,10 @@ public class UIEventController {
                 camera.zoom(-zoomFactor);
                 double newX_OnMap = camera.getTopLeftX() + (currentX_OnScreen / canvasWidth) * (camera.getBotRightX()-camera.getTopLeftX());
                 double newY_OnMap = camera.getTopLeftY() + (currentY_OnScreen / canvasHeight) * (camera.getBotRightY()-camera.getTopLeftY());
-                camera.pan(-(int)(newX_OnMap-currentX_OnMap), -(int)(newY_OnMap-currentY_OnMap));
+                camera.pan((int)(currentX_OnMap-newX_OnMap), (int)(currentY_OnMap-newY_OnMap));
+            }else{
+                double deltaY =  event.getDeltaY();
+                camera.pan(0, -(int)deltaY);
             }
         });
 

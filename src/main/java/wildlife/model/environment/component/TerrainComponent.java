@@ -80,6 +80,19 @@ public class TerrainComponent {
         return customTiles.getOrDefault(new TileIndex(tileX, tileY), defaultTerrain);
     }
 
+    /** Ghi trực tiếp địa hình vào ô (col, row) — không kiểm tra ranh giới.
+     *  Dùng cho các trường hợp ranh giới chưa được khởi tạo (vd. CompositeMap). */
+    public void setTile(int col, int row, TerrainType type) {
+        customTiles.put(new TileIndex(col, row), type);
+        containedTerrains.add(type);
+    }
+
+    /** Đọc địa hình tại ô (col, row) — không kiểm tra ranh giới.
+     *  Trả về defaultTerrain nếu ô chưa được đặt. */
+    public TerrainType getTerrainAtTile(int col, int row) {
+        return customTiles.getOrDefault(new TileIndex(col, row), defaultTerrain);
+    }
+
     // xoa terrain
     public void removeCustomTerrain(Vector2D pos) {
         if (containsPosition(pos)) {

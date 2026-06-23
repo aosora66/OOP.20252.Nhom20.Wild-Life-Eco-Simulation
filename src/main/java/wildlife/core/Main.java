@@ -41,6 +41,7 @@ public class Main {
             System.out.println("Khởi động vòng lặp sinh thái...");
 
             Renderer renderer = ApplicationFrame.getRendererInstance();
+            if (renderer != null) renderer.setTerrain(world.getTerrain());
 
             final int  TICK_RATE       = 30;
             final long NS_PER_TICK     = 1_000_000_000L / TICK_RATE;

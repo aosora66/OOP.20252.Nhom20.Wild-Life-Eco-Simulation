@@ -5,7 +5,9 @@ import wildlife.model.environment.component.OrganismRegistry;
 import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
+import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.ObstacleType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
@@ -429,18 +431,34 @@ public abstract class Environment {
 
     public Collection<? extends RenderData> getRenderSnapshot() {
         List<RenderData> list = new ArrayList<>();
+        //Sinh vat
         for(Organism o: registry.getAll(Organism.class)) {
-            int layer;
-            if(o instanceof Plant){
-                layer = 2;
-            }else {
-                if (o instanceof Fish) {
-                    layer = 1;
-                } else {
-                    layer = 3;
-                }
-            }
+            int layer = (o instanceof Plant)? 2 : (o instanceof Fish)? 1 : 3;
             list.add(new RenderData(o, layer));
+        }
+        //Thuc an
+        for(FoodItem f: resources.getAllFood()){
+            int layer = (f.type() == FoodType.ALGAE)? 1 : 2;
+            list.add(new RenderData("FOOD_" + f.hashCode(),
+                    f.type().name(),
+                    f.position().getX(),
+                    f.position().getY(),
+                    OrganismState.ALIVE,
+                    layer,
+                    false
+            ));
+        }
+        //Vat can
+        for(ObstacleItem obs : resources.getAllObstacles()){
+            list.add(new RenderData(
+                    "OBS_" + obs.hashCode(),
+                    obs.type().name(),
+                    obs.position().getX(),
+                    obs.position().getY(),
+                    OrganismState.ALIVE,
+                    2,
+                    false
+            ));
         }
         return list;
     }
