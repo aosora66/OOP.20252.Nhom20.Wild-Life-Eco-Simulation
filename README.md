@@ -43,7 +43,7 @@ Dự án được chia thành các package chuyên biệt, đảm bảo nguyên 
 
 *   **`src/main/resources/`**: Nơi lưu trữ toàn bộ tài nguyên tĩnh của game.
     *   `config/`: Chứa file `setting.properties` để cấu hình thông số bản đồ, số lượng sinh vật ban đầu mà không cần can thiệp vào code.
-    *   `images/`: Chứa ảnh động (Gif/Sprite) phục vụ cho ViewLogic hiển thị đồ họa.
+    *   `wildlife/view/ui`: Chứa các tài nguyên phục vụ cho mục đích render
     *   `sounds/`: Chứa các file âm thanh môi trường.
 *   **`docs/`**: Nơi lưu trữ tài liệu mềm nộp kèm theo yêu cầu của môn học. Các thành viên phụ trách viết tài liệu sẽ làm việc chủ yếu ở đây:
     *   `UML/`: Chứa các file ảnh Biểu đồ lớp (Class Diagram) và Biểu đồ phụ thuộc gói (Package Diagram).
