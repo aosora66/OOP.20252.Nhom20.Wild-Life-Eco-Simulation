@@ -37,6 +37,12 @@ public class TimeComponent {
         seasonOffset = offset;
     }
 
+    private static volatile WeatherType weatherOverride = null;
+
+    public static void setWeatherOverride(WeatherType weather) {
+        weatherOverride = weather;
+    }
+
     // ----------------------------------------------------------------
     //  Trạng thái nội tại
     // ----------------------------------------------------------------
@@ -107,6 +113,11 @@ public class TimeComponent {
     public void updateWeatherBySeason() {
         // Chỉ xét thay đổi thời tiết định kỳ (mỗi nửa ngày)
         if (currentTick % (ticksPerDayCycle / 2) != 0) return;
+
+        if (weatherOverride != null) {
+            currentWeather = weatherOverride;
+            return;
+        }
 
         float roll = random.nextFloat(); // [0.0, 1.0)
 
@@ -179,4 +190,8 @@ public class TimeComponent {
     public WeatherType getCurrentWeather() { return currentWeather; }
     public int getTicksPerDayCycle()     { return ticksPerDayCycle; }
     public int getTicksPerSeason()       { return ticksPerSeason; }
+
+    public void setCurrentWeather(WeatherType weather) {
+        this.currentWeather = weather;
+    }
 }

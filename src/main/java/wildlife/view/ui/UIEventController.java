@@ -12,6 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -24,6 +25,7 @@ import org.lwjgl.opengl.GL;
 import wildlife.model.environment.CompositeMap;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.Season;
+import wildlife.model.environment.enums.WeatherType;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.plant.Plant;
@@ -46,9 +48,6 @@ public class UIEventController {
     //Root
     @FXML
     public StackPane rootStackPane;
-    public SVGPath PrevSeason;
-    public Label SeasonLabel;
-    public SVGPath NextSeason;
 
     // Auto-scaling
     private void setupScaling() {
@@ -628,15 +627,16 @@ public class UIEventController {
         if (world != null) {
             worldLock.readLock().lock();
             String seasonText;
+            String weatherText;
             try {
                 seasonText = world.getTime().getCurrentSeason().name();
+                weatherText = world.getTime().getCurrentWeather().name();
             } finally {
                 worldLock.readLock().unlock();
             }
             Platform.runLater(() -> {
-                if (SeasonLabel != null) {
-                    SeasonLabel.setText(seasonText);
-                }
+                if (SeasonLabel != null) SeasonLabel.setText(seasonText);
+                if (WeatherLabel != null) WeatherLabel.setText(weatherText);
             });
         }
 
@@ -645,67 +645,6 @@ public class UIEventController {
             tickCount = 0;
             Organism selected = selectedOrganism;
             showEntityPanel(selected);
-        }
-    }
-
-    @FXML
-    public void prevSeasonClick() {
-        changeSeason(false);
-    }
-
-    @FXML
-    public void nextSeasonClick() {
-        changeSeason(true);
-    }
-
-    private void changeSeason(boolean next) {
-        if (world == null) return;
-
-        worldLock.writeLock().lock();
-        try {
-            TimeComponent timeComp = world.getTime();
-            int ticksPerSeason = timeComp.getTicksPerSeason();
-            int cycleLength = ticksPerSeason * 3;
-            int currentTick = timeComp.getCurrentTick();
-
-            Season currentSeason = timeComp.getCurrentSeason();
-            int currentSeasonIdx = switch (currentSeason) {
-                case NORMAL -> 0;
-                case BREEDING -> 1;
-                case DROUGHT -> 2;
-            };
-
-            int targetSeasonIdx;
-            if (next) {
-                targetSeasonIdx = (currentSeasonIdx + 1) % 3;
-            } else {
-                targetSeasonIdx = (currentSeasonIdx + 2) % 3;
-            }
-
-            int posInCycle = currentTick % cycleLength;
-            int targetStartTick = targetSeasonIdx * ticksPerSeason;
-
-            int delta = targetStartTick - posInCycle;
-            if (delta <= 0) {
-                delta += cycleLength;
-            }
-
-            TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
-
-            int newTick = currentTick + delta;
-            timeComp.advance(newTick);
-            for (Environment sub : world.getSubEnvironments()) {
-                sub.getTime().advance(newTick);
-            }
-
-            String seasonText = timeComp.getCurrentSeason().name();
-            Platform.runLater(() -> {
-                if (SeasonLabel != null) {
-                    SeasonLabel.setText(seasonText);
-                }
-            });
-        } finally {
-            worldLock.writeLock().unlock();
         }
     }
 
@@ -726,6 +665,97 @@ public class UIEventController {
     private static final Object lock = new Object();
     public static boolean isPaused() { return paused; }
 
+    // Season
+    @FXML
+    public SVGPath PrevSeason;
+    public Label SeasonLabel;
+    public SVGPath NextSeason;
+    public void prevSeasonClick() {
+        changeSeason(false);
+    }
+    public void nextSeasonClick() {
+        changeSeason(true);
+    }
+    private void changeSeason(boolean next) {
+        if (world == null) return;
+        worldLock.writeLock().lock();
+        try {
+            TimeComponent timeComp = world.getTime();
+            int ticksPerSeason = timeComp.getTicksPerSeason();
+            int cycleLength = ticksPerSeason * 3;
+            int currentTick = timeComp.getCurrentTick();
+            Season currentSeason = timeComp.getCurrentSeason();
+            int currentSeasonIdx = switch (currentSeason) {
+                case NORMAL -> 0;
+                case BREEDING -> 1;
+                case DROUGHT -> 2;
+            };
+            int targetSeasonIdx;
+            if (next) {
+                targetSeasonIdx = (currentSeasonIdx + 1) % 3;
+            } else {
+                targetSeasonIdx = (currentSeasonIdx + 2) % 3;
+            }
+            int posInCycle = currentTick % cycleLength;
+            int targetStartTick = targetSeasonIdx * ticksPerSeason;
+            int delta = targetStartTick - posInCycle;
+            if (delta <= 0) {
+                delta += cycleLength;
+            }
+            TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
+            int newTick = currentTick + delta;
+            timeComp.advance(newTick);
+            for (Environment sub : world.getSubEnvironments()) {
+                sub.getTime().advance(newTick);
+            }
+            String seasonText = timeComp.getCurrentSeason().name();
+            Platform.runLater(() -> {
+                if (SeasonLabel != null) {
+                    SeasonLabel.setText(seasonText);
+                }
+            });
+        } finally {
+            worldLock.writeLock().unlock();
+        }
+    }
+
+    // Weather
+    @FXML
+    public SVGPath PrevWeather;
+    public Label WeatherLabel;
+    public SVGPath NextWeather;
+    public void prevWeatherClick(MouseEvent mouseEvent) {
+        changeWeather(false);
+    }
+    public void nextWeatherClick(MouseEvent mouseEvent) {
+        changeWeather(true);
+    }
+    private void changeWeather(boolean next) {
+        if (world == null) return;
+        worldLock.writeLock().lock();
+        try {
+            WeatherType[] values = WeatherType.values();
+            WeatherType current = world.getTime().getCurrentWeather();
+            int idx = 0;
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] == current) { idx = i; break; }
+            }
+            int targetIdx = next ? (idx + 1) % values.length : (idx + values.length - 1) % values.length;
+            WeatherType newWeather = values[targetIdx];
+
+            TimeComponent.setWeatherOverride(newWeather);
+            world.getTime().setCurrentWeather(newWeather);
+            for (Environment sub : world.getSubEnvironments()) {
+                sub.getTime().setCurrentWeather(newWeather);
+            }
+
+            Platform.runLater(() -> {
+                if (WeatherLabel != null) WeatherLabel.setText(newWeather.name());
+            });
+        } finally {
+            worldLock.writeLock().unlock();
+        }
+    }
     // Khoi tao
     public void initialize() {
         instance = this;
