@@ -23,8 +23,28 @@ import wildlife.model.environment.CompositeMap;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.WeatherType;
+import wildlife.model.environment.enums.ObstacleType;
+import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.organism.Organism;
+import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Tiger;
+import wildlife.model.organism.animal.canivores.Wolf;
+import wildlife.model.organism.animal.canivores.Hunter;
+import wildlife.model.organism.animal.hebivores.Deer;
+import wildlife.model.organism.animal.hebivores.Elephant;
+import wildlife.model.organism.animal.hebivores.Fish;
+import wildlife.model.organism.animal.hebivores.Rabbit;
+import wildlife.model.organism.plant.AppleTree;
+import wildlife.model.organism.plant.Grass;
+import wildlife.model.organism.plant.TreeForest;
+import wildlife.model.organism.component.GrowthComponent;
+import wildlife.model.organism.component.SurvivalStatsComponent;
+import wildlife.model.organism.component.AdaptabilityComponent;
+import wildlife.model.environment.enums.TerrainType;
+import wildlife.util.AppConfig;
+import wildlife.util.Vector2D;
+import wildlife.util.ValueRange;
 import wildlife.model.organism.plant.Plant;
 import wildlife.view.renderer.AtlasTexture;
 import wildlife.view.renderer.Renderer;
@@ -281,6 +301,14 @@ public class UIEventController {
         registry.register("FOREST", new SimpleTexture(16, 16, (byte) 34, (byte) 94, (byte) 53, (byte) 255));
         registry.register("MOUNTAIN", new SimpleTexture(16, 16, (byte) 120, (byte) 120, (byte) 120, (byte) 255));
         registry.register("MUD", new SimpleTexture(16, 16, (byte) 128, (byte) 85, (byte) 50, (byte) 255));
+        // Food — fallback khi resources_atlas.png chưa có
+        registry.register("MEAT",  new SimpleTexture(16, 16, (byte) 200, (byte)  60, (byte)  60, (byte) 255)); // đỏ
+        registry.register("APPLE", new SimpleTexture(16, 16, (byte) 220, (byte)  80, (byte)  30, (byte) 255)); // cam đỏ
+        registry.register("ALGAE", new SimpleTexture(16, 16, (byte)  60, (byte) 190, (byte)  90, (byte) 255)); // xanh lá
+        // registry.register("WATER", new SimpleTexture(16, 16, (byte)  80, (byte) 160, (byte) 240, (byte) 255)); // xanh nước
+        // Obstacles — fallback khi resources_atlas.png chưa có
+        registry.register("ROCK",  new SimpleTexture(16, 16, (byte) 140, (byte) 140, (byte) 140, (byte) 255)); // xám
+        registry.register("BUSH",  new SimpleTexture(16, 16, (byte)  40, (byte) 140, (byte)  50, (byte) 255)); // xanh đậm
         return registry;
     }
 
@@ -476,6 +504,13 @@ public class UIEventController {
             }
         });
         sceneCanvas.setOnKeyPressed(event -> {
+            if(event.getCode() == KeyCode.ESCAPE) {
+                activeSpawningClass = null;
+                activeSpawningObstacle = null;
+                activeSpawningFood = null;
+                isInKillMode = false;
+                sceneCanvas.setCursor(Cursor.DEFAULT);
+            }
             if(event.getCode() == KeyCode.SPACE) {
                 isSpacePressed = true;
                 sceneCanvas.setCursor(Cursor.OPEN_HAND);
@@ -548,7 +583,154 @@ public class UIEventController {
             if(activeContextMenu != null && activeContextMenu.isShowing()) {
                 activeContextMenu.hide();
             }
-            if (event.getButton() == MouseButton.PRIMARY && !isSpacePressed) {
+            if (activeSpawningClass != null) {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    double clickX = event.getX();
+                    double clickY = event.getY();
+
+                    // Convert screen space to world space coordinates
+                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
+                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
+
+                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
+
+                    // Find target sub-environment containing this position
+                    Environment targetEnv = null;
+                    if (world != null) {
+                        for (Environment sub : world.getSubEnvironments()) {
+                            if (sub.getTerrain().containsPosition(spawnPos)) {
+                                targetEnv = sub;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetEnv != null) {
+                        try {
+                            Organism newOrg = createOrganism(activeSpawningClass, spawnPos, targetEnv);
+                            targetEnv.addOrganism(newOrg);
+                            System.out.println("Spawned " + activeSpawningClass.getSimpleName() + " at " + spawnPos + " in environment " + targetEnv.getName());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+
+                    activeSpawningClass = null;
+                    sceneCanvas.setCursor(Cursor.DEFAULT);
+                }
+            } else if (activeSpawningObstacle != null) {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    double clickX = event.getX();
+                    double clickY = event.getY();
+
+                    // Convert screen space to world space coordinates
+                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
+                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
+
+                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
+
+                    // Find target sub-environment containing this position
+                    Environment targetEnv = null;
+                    if (world != null) {
+                        for (Environment sub : world.getSubEnvironments()) {
+                            if (sub.getTerrain().containsPosition(spawnPos)) {
+                                targetEnv = sub;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetEnv != null) {
+                        try {
+                            targetEnv.getResources().placeObstacle(spawnPos, activeSpawningObstacle);
+                            System.out.println("Placed obstacle " + activeSpawningObstacle.name() + " at " + spawnPos + " in environment " + targetEnv.getName());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+
+                    activeSpawningObstacle = null;
+                    sceneCanvas.setCursor(Cursor.DEFAULT);
+                }
+            } else if (activeSpawningFood != null) {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    double clickX = event.getX();
+                    double clickY = event.getY();
+
+                    // Convert screen space to world space coordinates
+                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
+                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
+
+                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
+
+                    // Find target sub-environment containing this position
+                    Environment targetEnv = null;
+                    if (world != null) {
+                        for (Environment sub : world.getSubEnvironments()) {
+                            if (sub.getTerrain().containsPosition(spawnPos)) {
+                                targetEnv = sub;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetEnv != null) {
+                        try {
+                            float nutrition = 0f;
+                            int expiry = 100;
+                            if (activeSpawningFood == FoodType.MEAT) {
+                                nutrition = AppConfig.getFloat("food.meat.nutritionalValue");
+                                String expStr = AppConfig.get("food.meat.expiryTicks");
+                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 120;
+                            } else if (activeSpawningFood == FoodType.APPLE) {
+                                nutrition = AppConfig.getFloat("food.apple.nutritionalValue");
+                                String expStr = AppConfig.get("food.apple.expiryTicks");
+                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 100;
+                            } else if (activeSpawningFood == FoodType.ALGAE) {
+                                nutrition = AppConfig.getFloat("food.algae.nutritionalValue");
+                                String expStr = AppConfig.get("food.algae.expiryTicks");
+                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 90;
+                            }
+                            targetEnv.getResources().spawnFood(spawnPos, nutrition, activeSpawningFood, expiry);
+                            System.out.println("Spawned food " + activeSpawningFood.name() + " at " + spawnPos + " in environment " + targetEnv.getName());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+
+                    activeSpawningFood = null;
+                    sceneCanvas.setCursor(Cursor.DEFAULT);
+                }
+            } else if (isInKillMode) {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    double clickX = event.getX();
+                    double clickY = event.getY();
+
+                    // Convert screen space to world space coordinates
+                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
+                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
+
+                    ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
+                    if (selected != null) {
+                        if (selected.size() == 1) {
+                            selected.getFirst().decreaseHp(Float.MAX_VALUE);
+                        } else {
+                            activeContextMenu = new ContextMenu();
+                            for (Organism organism : selected) {
+                                MenuItem item = new MenuItem("Kill " + organism.getSpeciesName() + ": " + organism.getId());
+                                item.setOnAction(e -> {
+                                    organism.decreaseHp(Float.MAX_VALUE);
+                                    activeContextMenu.hide();
+                                });
+                                activeContextMenu.getItems().add(item);
+                            }
+                            activeContextMenu.show(sceneCanvas, clickX, clickY);
+                        }
+                    }
+                    isInKillMode = false;
+                    sceneCanvas.setCursor(Cursor.DEFAULT);
+                }
+            } else if (event.getButton() == MouseButton.PRIMARY && !isSpacePressed) {
 
                 double clickX = event.getX();
                 double clickY = event.getY();
@@ -627,17 +809,23 @@ public class UIEventController {
             String seasonText;
             String weatherText;
             String daytimeText;
+            int aliveCount = 0;
             try {
                 seasonText = world.getTime().getCurrentSeason().name();
                 weatherText = world.getTime().getCurrentWeather().name();
                 daytimeText = world.getTime().isDaytime() ? "DAY" : "NIGHT";
+                for (Environment sub : world.getSubEnvironments()) {
+                    aliveCount += sub.getRegistry().getAllAlive(Organism.class).size();
+                }
             } finally {
                 worldLock.readLock().unlock();
             }
+            final int count = aliveCount;
             Platform.runLater(() -> {
                 if (SeasonLabel != null) SeasonLabel.setText(seasonText);
                 if (WeatherLabel != null) WeatherLabel.setText(weatherText);
                 if (DaytimeLabel != null) DaytimeLabel.setText(daytimeText);
+                if (OrganismCount != null) OrganismCount.setText(String.valueOf(count));
             });
         }
 
@@ -649,6 +837,8 @@ public class UIEventController {
         }
     }
 
+    @FXML
+    public Label OrganismCount;
     @FXML
     public Slider simulationSpeed;
     private static volatile int tickRate = 30;
@@ -818,6 +1008,150 @@ public class UIEventController {
         }
         if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
+        }
+    }
+
+    private Class<? extends Organism> activeSpawningClass = null;
+    private ObstacleType activeSpawningObstacle = null;
+    private FoodType activeSpawningFood = null;
+
+    @FXML
+    public void handleOrganismSelection(javafx.event.ActionEvent event) {
+        activeSpawningObstacle = null;
+        activeSpawningFood = null;
+        isInKillMode = false;
+        Button btn = (Button) event.getSource();
+        String speciesName = btn.getText();
+        switch (speciesName) {
+            case "Tiger" -> activeSpawningClass = Tiger.class;
+            case "Wolf" -> activeSpawningClass = Wolf.class;
+            case "Hunter" -> activeSpawningClass = Hunter.class;
+            case "Deer" -> activeSpawningClass = Deer.class;
+            case "Elephant" -> activeSpawningClass = Elephant.class;
+            case "Fish" -> activeSpawningClass = Fish.class;
+            case "Rabbit" -> activeSpawningClass = Rabbit.class;
+            case "AppleTree" -> activeSpawningClass = AppleTree.class;
+            case "Grass" -> activeSpawningClass = Grass.class;
+            case "TreeForest" -> activeSpawningClass = TreeForest.class;
+            default -> activeSpawningClass = null;
+        }
+        if (activeSpawningClass != null) {
+            sceneCanvas.setCursor(Cursor.CROSSHAIR);
+        } else {
+            sceneCanvas.setCursor(Cursor.DEFAULT);
+        }
+    }
+
+    @FXML
+    public void handleObstacleSelection(javafx.event.ActionEvent event) {
+        activeSpawningClass = null;
+        activeSpawningFood = null;
+        isInKillMode = false;
+        Button btn = (Button) event.getSource();
+        String obstacleName = btn.getText();
+        switch (obstacleName) {
+            case "Rock" -> activeSpawningObstacle = ObstacleType.ROCK;
+            case "Bush" -> activeSpawningObstacle = ObstacleType.BUSH;
+            default -> activeSpawningObstacle = null;
+        }
+        if (activeSpawningObstacle != null) {
+            sceneCanvas.setCursor(Cursor.CROSSHAIR);
+        } else {
+            sceneCanvas.setCursor(Cursor.DEFAULT);
+        }
+    }
+
+    @FXML
+    public void handleFoodsSelection(javafx.event.ActionEvent event) {
+        activeSpawningClass = null;
+        activeSpawningObstacle = null;
+        isInKillMode = false;
+        Button btn = (Button) event.getSource();
+        String foodName = btn.getText();
+        switch (foodName) {
+            case "Meat" -> activeSpawningFood = FoodType.MEAT;
+            case "Apple" -> activeSpawningFood = FoodType.APPLE;
+            case "Algae" -> activeSpawningFood = FoodType.ALGAE;
+            default -> activeSpawningFood = null;
+        }
+        if (activeSpawningFood != null) {
+            sceneCanvas.setCursor(Cursor.CROSSHAIR);
+        } else {
+            sceneCanvas.setCursor(Cursor.DEFAULT);
+        }
+    }
+
+    private boolean isInKillMode = false;
+
+    @FXML
+    public void handleKillButton(javafx.event.ActionEvent event) {
+        activeSpawningClass = null;
+        activeSpawningObstacle = null;
+        activeSpawningFood = null;
+        isInKillMode = true;
+        sceneCanvas.setCursor(Cursor.CROSSHAIR);
+    }
+
+    @FXML
+    public void handleDestroyButton(javafx.event.ActionEvent event) {
+        if (world != null) {
+            for (Environment sub : world.getSubEnvironments()) {
+                List<Organism> allAlive = new ArrayList<>(sub.getRegistry().getAllAlive(Organism.class));
+                for (Organism o : allAlive) {
+                    o.decreaseHp(Float.MAX_VALUE);
+                }
+            }
+            System.out.println("Destroyed all organisms in the system.");
+        }
+    }
+
+    private Organism createOrganism(Class<?> clazz, Vector2D pos, Environment env) throws Exception {
+        if (clazz == AppleTree.class) {
+            return AppleTree.create(pos, env);
+        } else if (clazz == Grass.class) {
+            return Grass.create(pos, env);
+        } else if (clazz == TreeForest.class) {
+            return TreeForest.create(pos, env);
+        } else {
+            String species = clazz.getSimpleName().toLowerCase();
+            Random random = new Random();
+            float baseHp = AppConfig.getFloat("animal." + species + ".maxHp");
+            float baseNutrition = AppConfig.getFloat("animal." + species + ".nutrition");
+            float hungerDecay = AppConfig.getFloat("animal." + species + ".hungerDecay");
+            float thirstDecay = AppConfig.getFloat("animal." + species + ".thirstDecay");
+
+            float baseAge = AppConfig.getFloat("animal." + species + ".maxAge");
+            float baseSize = AppConfig.getFloat("animal." + species + ".maxSize");
+
+            float randomFactorHp = 0.85f + (random.nextFloat() * 0.3f);
+            float randomFactorAge = 0.85f + (random.nextFloat() * 0.3f);
+            float randomFactorSize = 0.85f + (random.nextFloat() * 0.3f);
+
+            float finalHp = baseHp * randomFactorHp;
+            float finalMaxAge = baseAge * randomFactorAge;
+            float finalMaxSize = baseSize * randomFactorSize;
+
+            float startAge = finalMaxAge * 0.4f;
+            GrowthComponent growth = new GrowthComponent(finalMaxAge, finalMaxSize, 0.2f, 0.7f, startAge);
+            SurvivalStatsComponent stats = new SurvivalStatsComponent(finalHp, baseNutrition, hungerDecay, thirstDecay);
+
+            List<TerrainType> survivableTerrains = species.equals("fish")
+                    ? List.of(TerrainType.DEEP_WATER)
+                    : List.of(TerrainType.GRASSLAND, TerrainType.FOREST, TerrainType.MUD);
+
+            AdaptabilityComponent adapt = new AdaptabilityComponent(
+                    survivableTerrains,
+                    new ValueRange(15f, 35f),
+                    new ValueRange(0f, 45f),
+                    new ValueRange(-60f, -10f)
+            );
+
+            String id = clazz.getSimpleName().toUpperCase() + "_" + System.nanoTime();
+
+            return (Organism) clazz.getDeclaredConstructor(
+                    String.class, String.class, Vector2D.class, Environment.class,
+                    GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class
+            ).newInstance(id, clazz.getSimpleName(), pos, env, growth, stats, adapt);
         }
     }
 

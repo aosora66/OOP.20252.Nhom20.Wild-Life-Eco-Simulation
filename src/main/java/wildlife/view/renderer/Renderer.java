@@ -29,8 +29,10 @@ public class Renderer {
     private static final int   MAP_COLS  = 20;
     private static final int   MAP_ROWS  = 20;
 
-    private static final Set<String> PREDATORS  = Set.of("Hunter", "Tiger", "Wolf");
-    private static final Set<String> HERBIVORES = Set.of("Deer", "Elephant", "Fish", "Rabbit");
+    private static final Set<String> PREDATORS     = Set.of("Hunter", "Tiger", "Wolf");
+    private static final Set<String> HERBIVORES    = Set.of("Deer", "Elephant", "Fish", "Rabbit");
+    private static final Set<String> RESOURCE_NAMES = Set.of("MEAT", "APPLE", "ALGAE", "WATER", "ROCK", "BUSH");
+    private static final float RESOURCE_SIZE = 4f;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
@@ -47,9 +49,14 @@ public class Renderer {
      * Các nhóm được lưu liên tục trên 1 mảng liên tục, kết hợp với HashMap để tăng tốc độ insert / iterate.
      * (Tham khảo kỹ hơn trong {@link IndexedMap})
      */
-    private final IndexedMap<String, SpeciesGroup> background = new IndexedMap<>();
-    private final IndexedMap<String, SpeciesGroup> midground = new IndexedMap<>();
-    private final IndexedMap<String, SpeciesGroup> foreground = new IndexedMap<>();
+    // Layer 1 — background   : ALGAE (underwater food)
+    // Layer 2 — resourceLayer: food (non-algae) + obstacles — always below organisms
+    // Layer 3 — midground    : Fish + Plants
+    // Layer 4 — foreground   : land Animals
+    private final IndexedMap<String, SpeciesGroup> background     = new IndexedMap<>();
+    private final IndexedMap<String, SpeciesGroup> resourceLayer  = new IndexedMap<>();
+    private final IndexedMap<String, SpeciesGroup> midground      = new IndexedMap<>();
+    private final IndexedMap<String, SpeciesGroup> foreground     = new IndexedMap<>();
 
     private boolean running = true;
     private final Semaphore framePending = new Semaphore(0);
@@ -136,12 +143,18 @@ public class Renderer {
                 }
                 break;
             case 2:
+                synchronized (resourceLayer) {
+                    resourceLayer.computeIfAbsent(data.speciesName, SpeciesGroup::new)
+                            .addPosition(data.x, data.y, data.goWest);
+                }
+                break;
+            case 3:
                 synchronized (midground) {
                     midground.computeIfAbsent(data.speciesName, SpeciesGroup::new)
                             .addPosition(data.x, data.y, data.goWest);
                 }
                 break;
-            case 3:
+            case 4:
                 synchronized (foreground) {
                     foreground.computeIfAbsent(data.speciesName, SpeciesGroup::new)
                             .addPosition(data.x, data.y, data.goWest);
@@ -173,16 +186,26 @@ public class Renderer {
         for (SpeciesGroup group : groupsToRender) {
             FloatBuffer buf = group.renderBuffer; // đã flip
 
+            AtlasTexture.SubAtlas resAtlas = (spriteAtlas != null) ? spriteAtlas.getResourcesAtlas() : null;
+
             if (mode == 1 && spriteAtlas != null && spriteAtlas.hasSprite(group.speciesName)) {
-                // Sprite mode
+                // Sprite mode — creatures / plants
                 float[] uvs = spriteAtlas.getIdleUVs(group.speciesName);
                 while (buf.hasRemaining()) {
                     spriteBatch.draw(spriteAtlas, buf.get(), buf.get(), buf.get(),
                                      DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT,
                                      uvs[0], uvs[1], uvs[2], uvs[3]);
                 }
+            } else if (mode == 1 && resAtlas != null && resAtlas.has(group.speciesName)) {
+                // Sprite mode — resources atlas: food items and obstacles
+                float[] uvs = resAtlas.getUVs(group.speciesName);
+                while (buf.hasRemaining()) {
+                    spriteBatch.draw(resAtlas, buf.get(), buf.get(), buf.get(),
+                                     DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT,
+                                     uvs[0], uvs[1], uvs[2], uvs[3]);
+                }
             } else {
-                // Basic mode (or species not in atlas): draw with solid-color texture + shape
+                // Basic mode: draw with solid-color texture + shape
                 ITexture texture = textureRegistry.getTexture(group.speciesName);
                 if (texture == null) {
                     buf.clear();
@@ -190,10 +213,13 @@ public class Renderer {
                 }
                 boolean isPredator  = PREDATORS.contains(group.speciesName);
                 boolean isHerbivore = HERBIVORES.contains(group.speciesName);
+                boolean isResource  = RESOURCE_NAMES.contains(group.speciesName);
                 while (buf.hasRemaining()) {
                     float x = buf.get(), y = buf.get();
                     buf.get(); // goWest — không dùng trong basic mode
-                    if (isPredator) {
+                    if (isResource) {
+                        spriteBatch.draw(texture, x, y, 0f, RESOURCE_SIZE, RESOURCE_SIZE);
+                    } else if (isPredator) {
                         spriteBatch.drawTriangleDown(texture, x, y, DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
                     } else if (isHerbivore) {
                         spriteBatch.drawTriangleUp(texture, x, y, DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT);
@@ -215,6 +241,7 @@ public class Renderer {
         spriteBatch.begin();
         renderTerrain();
         renderMap(background, mode);
+        renderMap(resourceLayer, mode);
         renderMap(midground, mode);
         renderMap(foreground, mode);
         spriteBatch.end();

@@ -433,7 +433,7 @@ public abstract class Environment {
         List<RenderData> list = new ArrayList<>();
         //Sinh vat
         for(Organism o: registry.getAll(Organism.class)) {
-            int layer = (o instanceof Plant)? 2 : (o instanceof Fish)? 1 : 3;
+            int layer = (o instanceof Plant)? 3 : (o instanceof Fish)? 3 : 4;
             list.add(new RenderData(o, layer));
         }
         //Thuc an

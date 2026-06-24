@@ -216,6 +216,62 @@
             </HBox>
          </HBox>
 
+
+
+         <HBox alignment="CENTER" layoutX="34.0" layoutY="997.0" styleClass="card-panel" AnchorPane.bottomAnchor="24.0"
+               AnchorPane.rightAnchor="24.0">
+            <padding>
+               <Insets bottom="10" left="20" right="20" top="10"/>
+            </padding>
+            <HBox alignment="CENTER_LEFT" spacing="5.0" styleClass="toolbox-wrapper">
+               <VBox>
+                  <HBox>
+                     <Label text="Organism:"/>
+                     <Label fx:id="OrganismCount" text="Label"/>
+                  </HBox>
+                  <HBox spacing="10.0">
+                      <Button styleClass="kill-btn" focusTraversable="false" onAction="#handleKillButton" text="Kill" />
+                      <Button styleClass="destroy-btn" focusTraversable="false" onAction="#handleDestroyButton" text="Destroy" />
+                      <HBox spacing="5.0">
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Tiger" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Wolf" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Hunter" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Deer" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Elephant" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Fish" />
+                         <Button styleClass="action-btn"  focusTraversable="false" onAction="#handleOrganismSelection" text="Rabbit" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="AppleTree" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="Grass" />
+                         <Button styleClass="action-btn" focusTraversable="false" onAction="#handleOrganismSelection" text="TreeForest" />
+                      </HBox>
+                  </HBox>
+               </VBox>
+
+                <VBox>
+                   <HBox>
+                      <Label text="Obstacles:"/>
+                   </HBox>
+                   <HBox spacing="5.0">
+                      <Button styleClass="action-btn" focusTraversable="false" onAction="#handleObstacleSelection" text="Rock" />
+                      <Button styleClass="action-btn" focusTraversable="false" onAction="#handleObstacleSelection" text="Bush" />
+                   </HBox>
+                </VBox>
+
+
+               <VBox>
+                  <HBox>
+                     <Label text="Foods:"/>
+                  </HBox>
+                  <HBox spacing="5.0">
+                     <Button styleClass="action-btn" focusTraversable="false" onAction="#handleFoodsSelection" text="Meat" />
+                     <Button styleClass="action-btn" focusTraversable="false" onAction="#handleFoodsSelection" text="Apple" />
+                     <Button styleClass="action-btn" focusTraversable="false" onAction="#handleFoodsSelection" text="Algae" />
+                  </HBox>
+               </VBox>
+
+            </HBox>
+         </HBox>
+
 <!--      <Label style="-fx-font-size: 55" AnchorPane.leftAnchor="24" AnchorPane.topAnchor="24" text="${controller.imageHeight}" />-->
    </AnchorPane>
    </Group>

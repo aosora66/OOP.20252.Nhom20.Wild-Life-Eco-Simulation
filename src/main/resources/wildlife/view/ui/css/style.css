@@ -115,3 +115,60 @@
     -fx-border-color: none;
     -fx-font-family: "Roboto Medium";
 }
+
+.action-btn {
+    -fx-background-color: #f3f5f6;
+    -fx-text-fill: #2d3436;
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+    -fx-border-color: #2d3436;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.action-btn:hover {
+    -fx-background-color: #8cc0de;
+    -fx-text-fill: #2d3436;
+}
+
+.action-btn:pressed {
+    -fx-background-color: #7bb5d7;
+}
+
+.kill-btn {
+    -fx-background-color: #f28c8c;
+    -fx-text-fill: #2d3436;
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+    -fx-border-color: #2d3436;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.kill-btn:hover {
+    -fx-background-color: #d16b6b;
+    -fx-text-fill: #ffffff;
+}
+
+.destroy-btn {
+    -fx-background-color: #ffd082;
+    -fx-text-fill: #2d3436;
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 12px;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+    -fx-border-color: #2d3436;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.destroy-btn:hover {
+    -fx-background-color: #e5be74;
+}
