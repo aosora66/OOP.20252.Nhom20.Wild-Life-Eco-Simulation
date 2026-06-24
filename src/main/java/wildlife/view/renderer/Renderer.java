@@ -26,13 +26,13 @@ public class Renderer {
     private static final float DEFAULT_SPRITE_WIDTH  = 32f;
     private static final float DEFAULT_SPRITE_HEIGHT = 32f;
     private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
-    private static final int   MAP_COLS  = 20;
-    private static final int   MAP_ROWS  = 20;
+    private static final float   MAP_COLS  = AppConfig.getFloat("environment.terrain.map_cols");;
+    private static final float   MAP_ROWS  = AppConfig.getFloat("environment.terrain.map_rows");;
 
     private static final Set<String> PREDATORS     = Set.of("Hunter", "Tiger", "Wolf");
     private static final Set<String> HERBIVORES    = Set.of("Deer", "Elephant", "Fish", "Rabbit");
     private static final Set<String> RESOURCE_NAMES = Set.of("MEAT", "APPLE", "ALGAE", "WATER", "ROCK", "BUSH");
-    private static final float RESOURCE_SIZE = 4f;
+    private static final float RESOURCE_SIZE = 2f;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;

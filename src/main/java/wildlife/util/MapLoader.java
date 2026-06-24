@@ -28,10 +28,17 @@ public class MapLoader {
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String line;
+            // Tìm đoạn đọc file trong MapLoader.java và sửa lại thành:
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (!line.isEmpty() && !line.startsWith("#")) { // Bỏ qua dòng trống và dòng comment
-                    layout.add(line);
+                // Bỏ qua dòng trống và dòng bắt đầu bằng #
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                // Chỉ lấy các ký tự là số (0-4) và khoảng trắng
+                String cleanLine = line.replaceAll("[^0-4\\s]", "");
+                if (!cleanLine.trim().isEmpty()) {
+                    layout.add(cleanLine.trim());
                 }
             }
         } catch (Exception e) {

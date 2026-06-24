@@ -490,7 +490,7 @@ public class UIEventController {
     private int tickCount = 0;
 
 
-    private final Camera camera = new Camera(500, 500, 1000);
+    private final Camera camera = new Camera(800, 800, 2500);
     private boolean isSpacePressed = false;
     private boolean isCtrlPressed = false;
     private double lastMouseX;
@@ -841,7 +841,7 @@ public class UIEventController {
     public Label OrganismCount;
     @FXML
     public Slider simulationSpeed;
-    private static volatile int tickRate = 30;
+    private static volatile int tickRate = 5;
     public static int getTickRate() { return tickRate; }
 
     // Pause Button
@@ -999,10 +999,10 @@ public class UIEventController {
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
         if (simulationSpeed != null) {
-            simulationSpeed.setMin(15);
-            simulationSpeed.setMax(60);
+            simulationSpeed.setMin(1);
+            simulationSpeed.setMax(10);
             simulationSpeed.setValue(tickRate);
-            simulationSpeed.setBlockIncrement(1);
+            simulationSpeed.setBlockIncrement(0.25);
             simulationSpeed.valueProperty().addListener((obs, oldVal, newVal) ->
                     tickRate = newVal.intValue());
         }

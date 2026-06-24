@@ -28,8 +28,8 @@ public class Camera {
         if(targetWidth < 200) {
             return;
         }
-        if(targetWidth > 1000) {
-            targetWidth = 1000;
+        if(targetWidth > 2500) {
+            targetWidth = 2500;
         }
 
         this.width = targetWidth;
@@ -39,16 +39,20 @@ public class Camera {
 
     public synchronized void pan(int deltaX, int deltaY){
         center[0] += deltaX;
-        if(center[0] - width/2 < 0){
-           center[0] = width/2;
-        }else if(center[0] + width/2 > 1000){
-            center[0] = 1000-width/2;
+        if (width >= 1600) {
+            center[0] = 800;
+        } else if(center[0] - width/2 < 0){
+            center[0] = width/2;
+        }else if(center[0] + width/2 > 1600){
+            center[0] = 1600-width/2;
         }
         center[1] += deltaY;
-        if(center[1] - height/2 < 0){
+        if (height >= 1600) {
+            center[1] = 800;
+        } else if(center[1] - height/2 < 0){
             center[1] = height/2;
-        }else if(center[1] + height/2 > 1000) {
-            center[1] = 1000 - height / 2;
+        }else if(center[1] + height/2 > 800) {
+            center[1] = 1600 - height / 2;
         }
         setBounds();
     }

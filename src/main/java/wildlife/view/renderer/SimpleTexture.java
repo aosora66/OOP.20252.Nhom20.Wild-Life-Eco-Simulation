@@ -8,7 +8,8 @@ import static org.lwjgl.opengl.GL11.*;
  * Concrete implementation of ITexture representing an OpenGL 2D texture.
  * Supports solid color generation for placeholders and default rendering.
  */
-public class SimpleTexture implements ITexture {
+public class
+SimpleTexture implements ITexture {
     private final int id;
     private final int width;
     private final int height;
