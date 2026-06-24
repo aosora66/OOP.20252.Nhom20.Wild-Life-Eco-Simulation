@@ -92,14 +92,9 @@ public class UIEventController {
     //view button
     public static boolean sceneModeIsBasic = true;
     @FXML
-    public HBox viewButton;
+    public Button viewButton;
     @FXML
-    public void viewButtonOnPressed() {
-        viewButton.setStyle("-fx-background-color: #B0C7DD");
-    }
-    @FXML
-    public void ViewButtonOnReleased() {
-        viewButton.setStyle("-fx-background-color: #F8FAFC");
+    public void ViewButtonClicked() {
         sceneModeIsBasic = !sceneModeIsBasic;
         int mode = sceneModeIsBasic ? 0 : 1;
         Renderer r = Renderer.getInstance();
@@ -493,6 +488,12 @@ public class UIEventController {
                 isCtrlPressed = true;
                 sceneCanvas.setCursor(Cursor.V_RESIZE);
             }
+            if(event.getCode() == KeyCode.V) {
+                ViewButtonClicked();
+            }
+            if(event.getCode() == KeyCode.P){
+                pauseStatusChange();
+            }
         });
         sceneCanvas.setOnKeyReleased(event -> {
             if(event.getCode() == KeyCode.SPACE) {
@@ -733,7 +734,7 @@ public class UIEventController {
         setupCameraEvents();
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
-
+        viewButton.setFocusTraversable(false);
         pauseButton.setFocusTraversable(false);
         PrevSeason.setFocusTraversable(false);
         NextSeason.setFocusTraversable(false);

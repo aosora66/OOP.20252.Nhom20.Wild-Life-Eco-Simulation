@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.Group?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.SVGPath?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
-<StackPane fx:id="rootStackPane" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.ui.UIEventController">
+<StackPane fx:id="rootStackPane" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.ui.UIEventController">
    <!-- LWJGL Render Layer (Background Layer) -->
    <AnchorPane fx:id="sceneCanvas" />
 
@@ -117,17 +109,6 @@
 
          </VBox>
       </HBox>
-         <!-- View button -->
-         <HBox fx:id="viewButton" alignment="CENTER" maxHeight="70" minHeight="70" onMousePressed="#viewButtonOnPressed" onMouseReleased="#ViewButtonOnReleased" prefHeight="70" spacing="43.0" styleClass="card-panel" AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
-            <padding>
-               <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-            </padding>
-            <!-- view mode icon -->
-            <StackPane maxHeight="30.98" maxWidth="47.95" minHeight="30.98" minWidth="47.95" prefHeight="30.98" prefWidth="47.95">
-               <SVGPath content="M22.8865 9.33745C28.8549 8.78635 34.1383 13.1819 34.6821 19.1509C35.2259 25.12 30.8239 30.398 24.8541 30.9345C18.8948 31.4701 13.628 27.0773 13.0851 21.1186C12.5422 15.1599 16.9286 9.88764 22.8865 9.33745Z" fill="#2D3436" StackPane.alignment="BOTTOM_CENTER" />
-               <SVGPath content="M23.2185 0.0123251C23.5453 0.000639592 23.8724 -0.00275056 24.1994 0.00221428C30.7141 0.10581 36.9122 2.83072 41.3928 7.56119C44.3955 10.6916 47.2877 15.6877 47.8504 20.2068C47.8599 20.6033 47.6545 21.0583 47.3504 21.2772C45.6687 22.4881 44.7244 20.8228 44.5315 19.3121C44.4954 19.03 44.2464 18.3054 44.1653 18.0567C43.2482 15.2521 41.7783 12.6597 39.8425 10.4327C35.847 5.85098 30.7302 3.49583 24.7168 3.09464C23.9295 3.05135 22.9576 3.09501 22.167 3.16367C14.2573 3.91215 7.40277 8.95576 4.33498 16.2845C3.69887 17.7722 3.37059 19.1082 2.94107 20.6451C2.69852 21.5132 1.56441 21.9615 0.736375 21.4662C-0.529841 20.7087 0.149677 18.9337 0.485227 17.8191C1.56865 14.1707 3.45947 10.8129 6.01746 7.99483C10.5679 3.01509 16.5054 0.309974 23.2185 0.0123251Z" fill="#2D3436" StackPane.alignment="TOP_CENTER" />
-            </StackPane>
-         </HBox>
          <!-- TOOLBOX panel -->
          <HBox alignment="CENTER" styleClass="card-panel" AnchorPane.bottomAnchor="24.0" AnchorPane.leftAnchor="24.0">
             <padding>
@@ -138,14 +119,24 @@
 
                <VBox alignment="CENTER_LEFT">
                   <padding>
-                     <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+                     <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                   </padding>
-                  <Label text="System"/>
-                  <Separator/>
+                  <Label text="System" />
+                  <Separator />
                   <HBox alignment="CENTER_LEFT" spacing="2.0">
-                     <Button fx:id="pauseButton" onMouseClicked="#pauseStatusChange" styleClass="tool-item">
+                      <Button fx:id="viewButton" onMouseClicked="#ViewButtonClicked" prefWidth="30.0" styleClass="tool-item">
+                         <graphic>
+                            <Group>
+                               <StackPane prefHeight="30.0" scaleX="0.25" scaleY="0.25">
+                                  <SVGPath content="M22.8865 9.33745C28.8549 8.78635 34.1383 13.1819 34.6821 19.1509C35.2259 25.12 30.8239 30.398 24.8541 30.9345C18.8948 31.4701 13.628 27.0773 13.0851 21.1186C12.5422 15.1599 16.9286 9.88764 22.8865 9.33745Z" fill="#2D3436" StackPane.alignment="BOTTOM_CENTER" />
+                                  <SVGPath content="M23.2185 0.0123251C23.5453 0.000639592 23.8724 -0.00275056 24.1994 0.00221428C30.7141 0.10581 36.9122 2.83072 41.3928 7.56119C44.3955 10.6916 47.2877 15.6877 47.8504 20.2068C47.8599 20.6033 47.6545 21.0583 47.3504 21.2772C45.6687 22.4881 44.7244 20.8228 44.5315 19.3121C44.4954 19.03 44.2464 18.3054 44.1653 18.0567C43.2482 15.2521 41.7783 12.6597 39.8425 10.4327C35.847 5.85098 30.7302 3.49583 24.7168 3.09464C23.9295 3.05135 22.9576 3.09501 22.167 3.16367C14.2573 3.91215 7.40277 8.95576 4.33498 16.2845C3.69887 17.7722 3.37059 19.1082 2.94107 20.6451C2.69852 21.5132 1.56441 21.9615 0.736375 21.4662C-0.529841 20.7087 0.149677 18.9337 0.485227 17.8191C1.56865 14.1707 3.45947 10.8129 6.01746 7.99483C10.5679 3.01509 16.5054 0.309974 23.2185 0.0123251Z" fill="#2D3436" StackPane.alignment="TOP_CENTER" />
+                               </StackPane>
+                            </Group>
+                         </graphic>
+                      </Button>
+                     <Button fx:id="pauseButton" onMouseClicked="#pauseStatusChange" prefWidth="30.0" styleClass="tool-item">
                         <graphic>
-                           <SVGPath fx:id="pauseIcon" content="M3 2h2v8H3V2zm4 0h2v8H7V2z" fill="#2D3436"/>
+                           <SVGPath fx:id="pauseIcon" content="M3 2h2v8H3V2zm4 0h2v8H7V2z" fill="#2D3436" />
                         </graphic>
                      </Button>
                   </HBox>
@@ -153,21 +144,20 @@
 
                <VBox alignment="CENTER_LEFT">
                   <padding>
-                     <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+                     <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                   </padding>
-                  <Label text="Environment"/>
-                  <Separator/>
+                  <Label text="Environment" />
+                  <Separator />
                   <HBox alignment="CENTER_LEFT" spacing="2.0">
-                     <Button onMouseClicked="#prevSeasonClick" styleClass="tool-item">
+                     <Button onMouseClicked="#prevSeasonClick" prefWidth="30.0" styleClass="tool-item">
                         <graphic>
-                           <SVGPath fx:id="PrevSeason" content="M8 2 L3 6 L8 10 H6.5 L1.5 6 L6.5 2 Z" fill="#2D3436"/>
+                           <SVGPath fx:id="PrevSeason" content="M8 2 L3 6 L8 10 H6.5 L1.5 6 L6.5 2 Z" fill="#2D3436" />
                         </graphic>
                      </Button>
-                     <Label fx:id="SeasonLabel" alignment="CENTER" text = "Hehe" styleClass="status_label" prefHeight="25.0" prefWidth="80.0"
-                            HBox.hgrow="ALWAYS" style="-fx-background-color: #F8FAFC"/>
-                     <Button onMouseClicked="#nextSeasonClick" styleClass="tool-item">
+                     <Label fx:id="SeasonLabel" alignment="CENTER" prefHeight="25.0" prefWidth="80.0" style="-fx-background-color: #F8FAFC" styleClass="status_label" text="Hehe" HBox.hgrow="ALWAYS" />
+                     <Button onMouseClicked="#nextSeasonClick" prefWidth="30.0" styleClass="tool-item">
                         <graphic>
-                           <SVGPath fx:id="NextSeason" content="M3.5 2 L8.5 6 L3.5 10 H5 L10 6 L5 2 Z" fill="#2D3436"/>
+                           <SVGPath fx:id="NextSeason" content="M3.5 2 L8.5 6 L3.5 10 H5 L10 6 L5 2 Z" fill="#2D3436" />
                         </graphic>
                      </Button>
                   </HBox>
