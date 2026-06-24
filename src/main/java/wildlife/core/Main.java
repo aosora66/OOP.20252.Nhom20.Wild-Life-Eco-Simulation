@@ -44,8 +44,6 @@ public class Main {
             Renderer renderer = ApplicationFrame.getRendererInstance();
             if (renderer != null) renderer.setTerrain(world.getTerrain());
 
-            final int  TICK_RATE       = 30;
-            final long NS_PER_TICK     = 1_000_000_000L / TICK_RATE;
             // Số tick tối đa được phép bù trong 1 frame — ngăn "spiral of death"
             // khi GC pause hoặc breakpoint làm đồng hồ nhảy vọt
             final int  MAX_CATCHUP     = 5;
@@ -55,15 +53,18 @@ public class Main {
             int  currentTick = 0;
 
             while (true) {
-                long frameStart = System.nanoTime();
-                long elapsed    = frameStart - lastTime;
+                long frameStart  = System.nanoTime();
+                int  tickRate    = UIEventController.getTickRate();
+                long nsPerTick   = 1_000_000_000L / tickRate;
+
+                long elapsed = frameStart - lastTime;
                 lastTime = frameStart;
 
                 // Clamp delta: nếu elapsed vượt MAX_CATCHUP tick, bỏ phần thừa
-                accumulator += Math.min(elapsed, NS_PER_TICK * MAX_CATCHUP);
+                accumulator += Math.min(elapsed, nsPerTick * MAX_CATCHUP);
 
                 // --- Xử lý tất cả tick đã tích lũy ---
-                while (accumulator >= NS_PER_TICK) {
+                while (accumulator >= nsPerTick) {
                     if (!UIEventController.isPaused()) {
                         currentTick++;
 
@@ -74,7 +75,7 @@ public class Main {
                             UIEventController.worldLock.writeLock().unlock();
                         }
                     }
-                    accumulator -= NS_PER_TICK;
+                    accumulator -= nsPerTick;
 
                     // Cập nhật danh sách sinh vật cho UI click detection
                     if (currentTick % 30 == 0) {
@@ -87,7 +88,7 @@ public class Main {
                     // Cập nhật realtime UI panel của thực thể được chọn
                     UIEventController.tickUpdate();
 
-                    if (currentTick % TICK_RATE == 0) {
+                    if (currentTick % tickRate == 0) {
                         var timeInfo = world.getTime();
                         System.out.printf("[Tick %d] Sinh vật: %d | Thời tiết: %s | Mùa: %s\n",
                                 currentTick,
@@ -108,7 +109,7 @@ public class Main {
 
                 // --- Ngủ đến khi tick kế tiếp, không spin CPU ---
                 long frameWork = System.nanoTime() - frameStart;
-                long sleepNs   = (NS_PER_TICK - accumulator) - frameWork;
+                long sleepNs   = (nsPerTick - accumulator) - frameWork;
                 if (sleepNs > 1_000_000L) { // > 1ms: đáng ngủ
                     try {
                         Thread.sleep(sleepNs / 1_000_000L, (int)(sleepNs % 1_000_000L));

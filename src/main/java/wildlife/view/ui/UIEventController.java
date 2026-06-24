@@ -4,10 +4,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
@@ -547,6 +544,7 @@ public class UIEventController {
         });
 
         sceneCanvas.setOnMouseClicked(event -> {
+            sceneCanvas.requestFocus();
             if(activeContextMenu != null && activeContextMenu.isShowing()) {
                 activeContextMenu.hide();
             }
@@ -628,15 +626,18 @@ public class UIEventController {
             worldLock.readLock().lock();
             String seasonText;
             String weatherText;
+            String daytimeText;
             try {
                 seasonText = world.getTime().getCurrentSeason().name();
                 weatherText = world.getTime().getCurrentWeather().name();
+                daytimeText = world.getTime().isDaytime() ? "DAY" : "NIGHT";
             } finally {
                 worldLock.readLock().unlock();
             }
             Platform.runLater(() -> {
                 if (SeasonLabel != null) SeasonLabel.setText(seasonText);
                 if (WeatherLabel != null) WeatherLabel.setText(weatherText);
+                if (DaytimeLabel != null) DaytimeLabel.setText(daytimeText);
             });
         }
 
@@ -647,6 +648,11 @@ public class UIEventController {
             showEntityPanel(selected);
         }
     }
+
+    @FXML
+    public Slider simulationSpeed;
+    private static volatile int tickRate = 30;
+    public static int getTickRate() { return tickRate; }
 
     // Pause Button
     @FXML
@@ -756,6 +762,44 @@ public class UIEventController {
             worldLock.writeLock().unlock();
         }
     }
+
+    // Daytime
+    @FXML
+    public Label DaytimeLabel;
+    public SVGPath NextDaytime;
+    public void nextDaytimeClick(MouseEvent mouseEvent) {
+        changeDaytime();
+    }
+    private void changeDaytime() {
+        if (world == null) return;
+        worldLock.writeLock().lock();
+        try {
+            TimeComponent timeComp = world.getTime();
+            int ticksPerDayCycle = timeComp.getTicksPerDayCycle();
+            int currentTick = timeComp.getCurrentTick();
+            int posInCycle = currentTick % ticksPerDayCycle;
+
+            // Day → jump to night start (half-cycle mark); Night → jump to next day start
+            int delta = timeComp.isDaytime()
+                    ? ticksPerDayCycle / 2 - posInCycle
+                    : ticksPerDayCycle - posInCycle;
+
+            TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
+            int newTick = currentTick + delta;
+            timeComp.advance(newTick);
+            for (Environment sub : world.getSubEnvironments()) {
+                sub.getTime().advance(newTick);
+            }
+
+            String daytimeText = timeComp.isDaytime() ? "DAY" : "NIGHT";
+            Platform.runLater(() -> {
+                if (DaytimeLabel != null) DaytimeLabel.setText(daytimeText);
+            });
+        } finally {
+            worldLock.writeLock().unlock();
+        }
+    }
+
     // Khoi tao
     public void initialize() {
         instance = this;
@@ -764,10 +808,14 @@ public class UIEventController {
         setupCameraEvents();
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
-        viewButton.setFocusTraversable(false);
-        pauseButton.setFocusTraversable(false);
-        PrevSeason.setFocusTraversable(false);
-        NextSeason.setFocusTraversable(false);
+        if (simulationSpeed != null) {
+            simulationSpeed.setMin(15);
+            simulationSpeed.setMax(60);
+            simulationSpeed.setValue(tickRate);
+            simulationSpeed.setBlockIncrement(1);
+            simulationSpeed.valueProperty().addListener((obs, oldVal, newVal) ->
+                    tickRate = newVal.intValue());
+        }
         if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }

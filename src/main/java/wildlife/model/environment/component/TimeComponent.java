@@ -154,7 +154,6 @@ public class TimeComponent {
     public boolean isDaytime() {
         return (currentTick % ticksPerDayCycle) < (ticksPerDayCycle / 2);
     }
-
     /**
      * Trả về hệ số nhân tổng hợp của mùa + thời tiết.
      * Quy ước: > 1.0 = khắc nghiệt hơn, < 1.0 = dễ chịu hơn.
