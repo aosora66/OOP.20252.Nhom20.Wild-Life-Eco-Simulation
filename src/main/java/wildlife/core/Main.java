@@ -27,6 +27,7 @@ public class Main {
                 "Hệ Sinh Thái Nhiệt Đới",
                 "config/map.txt"
         );
+        UIEventController.setWorld(world);
 
 
         //Kiểm tra và in log xác nhận
@@ -65,7 +66,13 @@ public class Main {
                 while (accumulator >= NS_PER_TICK) {
                     if (!UIEventController.isPaused()) {
                         currentTick++;
-                        world.updateEnvironment(currentTick);
+
+                        UIEventController.worldLock.writeLock().lock();
+                        try {
+                            world.updateEnvironment(currentTick);
+                        } finally {
+                            UIEventController.worldLock.writeLock().unlock();
+                        }
                     }
                     accumulator -= NS_PER_TICK;
 

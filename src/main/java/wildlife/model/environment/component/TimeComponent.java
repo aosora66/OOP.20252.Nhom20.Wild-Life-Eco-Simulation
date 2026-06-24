@@ -27,6 +27,17 @@ public class TimeComponent {
     private static final float NORMAL_DROUGHT_CHANCE  = AppConfig.getFloat("environment.time.normal.droughtChance");
 
     // ----------------------------------------------------------------
+    private static volatile int seasonOffset = 0;
+
+    public static int getSeasonOffset() {
+        return seasonOffset;
+    }
+
+    public static void setSeasonOffset(int offset) {
+        seasonOffset = offset;
+    }
+
+    // ----------------------------------------------------------------
     //  Trạng thái nội tại
     // ----------------------------------------------------------------
 
@@ -67,7 +78,7 @@ public class TimeComponent {
      * @param tick tick hiện tại từ hệ thống (dùng để đồng bộ nếu cần)
      */
     public void advance(int tick) {
-        this.currentTick = tick;
+        this.currentTick = tick + seasonOffset;
         updateSeason();
         updateWeatherBySeason();
     }

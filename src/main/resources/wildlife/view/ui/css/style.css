@@ -62,25 +62,15 @@
     -fx-padding: 0 10 0 10;
 }
 
-.toolset-wrapper {
-    -fx-padding: 0 20 0 20;
-    -fx-spacing: 5;
-}
-
 .tool-item {
     -fx-min-width: 29;
     -fx-min-height: 29;
     -fx-max-width: 29;
     -fx-max-height: 29;
-    -fx-background-color: #e2e8f0;
-    -fx-background-radius: 4;
-    -fx-border-color: rgb(45 52 54);
+    -fx-background-color: #f3f5f6;
 }
 .tool-item:hover {
-    -fx-min-width: 35;
-    -fx-min-height: 35;
-    -fx-max-width: 35;
-    -fx-max-height: 35;
+    -fx-background-color: #8cc0de;
 }
 
 .context-menu {
@@ -107,12 +97,21 @@
     -fx-font-family: "Inter SemiBold";
 }
 
-.button {
-    -fx-background-color: #F8FAFC;
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
-    -fx-border-color: #2d3436;
+.status_label {
+    -fx-text-fill: #2d3436;
+    -fx-background-color: f3f5f6;
+    -fx-border-color: none;
+    -fx-font-family: "Roboto Medium";
 }
-.button:hover {
-    -fx-background-color: #8cc0de;
+.status_label:hover {
+    -fx-text-fill: #2d3436;
+    -fx-background-color: f3f5f6;
+    -fx-border-color: none;
+    -fx-font-family: "Roboto Medium";
+}
+.status-label:focused {
+    -fx-text-fill: #2d3436;
+    -fx-background-color: f3f5f6;
+    -fx-border-color: none;
+    -fx-font-family: "Roboto Medium";
 }

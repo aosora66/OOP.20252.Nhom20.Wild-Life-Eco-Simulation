@@ -8,12 +8,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -23,6 +21,10 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
+import wildlife.model.environment.CompositeMap;
+import wildlife.model.environment.Environment;
+import wildlife.model.environment.enums.Season;
+import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.plant.Plant;
 import wildlife.view.renderer.AtlasTexture;
@@ -32,7 +34,6 @@ import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
 
-import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.List;
@@ -45,6 +46,9 @@ public class UIEventController {
     //Root
     @FXML
     public StackPane rootStackPane;
+    public SVGPath PrevSeason;
+    public Label SeasonLabel;
+    public SVGPath NextSeason;
 
     // Auto-scaling
     private void setupScaling() {
@@ -238,6 +242,13 @@ public class UIEventController {
             Thread.currentThread().interrupt();
         }
         return this.renderer;
+    }
+
+    public static final java.util.concurrent.locks.ReentrantReadWriteLock worldLock = new java.util.concurrent.locks.ReentrantReadWriteLock();
+    private static volatile CompositeMap world;
+
+    public static void setWorld(CompositeMap w) {
+        world = w;
     }
 
     private static volatile List<Organism> activeOrganisms;
@@ -604,6 +615,8 @@ public class UIEventController {
         return result;
     }
 
+
+
     public static void tickUpdate() {
         if (instance != null) {
             instance.onTick();
@@ -611,11 +624,87 @@ public class UIEventController {
     }
 
     private void onTick() {
+        if (world != null) {
+            worldLock.readLock().lock();
+            String seasonText;
+            try {
+                seasonText = world.getTime().getCurrentSeason().name();
+            } finally {
+                worldLock.readLock().unlock();
+            }
+            Platform.runLater(() -> {
+                if (SeasonLabel != null) {
+                    SeasonLabel.setText(seasonText);
+                }
+            });
+        }
+
         tickCount++;
         if (tickCount >= N_TICKS) {
             tickCount = 0;
             Organism selected = selectedOrganism;
             showEntityPanel(selected);
+        }
+    }
+
+    @FXML
+    public void prevSeasonClick() {
+        changeSeason(false);
+    }
+
+    @FXML
+    public void nextSeasonClick() {
+        changeSeason(true);
+    }
+
+    private void changeSeason(boolean next) {
+        if (world == null) return;
+
+        worldLock.writeLock().lock();
+        try {
+            TimeComponent timeComp = world.getTime();
+            int ticksPerSeason = timeComp.getTicksPerSeason();
+            int cycleLength = ticksPerSeason * 3;
+            int currentTick = timeComp.getCurrentTick();
+
+            Season currentSeason = timeComp.getCurrentSeason();
+            int currentSeasonIdx = switch (currentSeason) {
+                case NORMAL -> 0;
+                case BREEDING -> 1;
+                case DROUGHT -> 2;
+            };
+
+            int targetSeasonIdx;
+            if (next) {
+                targetSeasonIdx = (currentSeasonIdx + 1) % 3;
+            } else {
+                targetSeasonIdx = (currentSeasonIdx + 2) % 3;
+            }
+
+            int posInCycle = currentTick % cycleLength;
+            int targetStartTick = targetSeasonIdx * ticksPerSeason;
+
+            int delta = targetStartTick - posInCycle;
+            if (delta <= 0) {
+                delta += cycleLength;
+            }
+
+            TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
+
+            int newTick = currentTick + delta;
+            timeComp.advance(newTick);
+            for (Environment sub : world.getSubEnvironments()) {
+                sub.getTime().advance(newTick);
+            }
+
+            String seasonText = timeComp.getCurrentSeason().name();
+            Platform.runLater(() -> {
+                if (SeasonLabel != null) {
+                    SeasonLabel.setText(seasonText);
+                }
+            });
+        } finally {
+            worldLock.writeLock().unlock();
         }
     }
 
@@ -644,7 +733,10 @@ public class UIEventController {
         setupCameraEvents();
         hideEntityPanel();
         uiGroup.setPickOnBounds(false);
+
         pauseButton.setFocusTraversable(false);
+        PrevSeason.setFocusTraversable(false);
+        NextSeason.setFocusTraversable(false);
         if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
             ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
         }

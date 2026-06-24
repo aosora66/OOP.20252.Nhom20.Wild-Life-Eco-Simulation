@@ -41,6 +41,7 @@ public class Renderer {
     private final AtomicInteger renderMode = new AtomicInteger(0);
 
     private volatile TerrainComponent terrain;
+    private volatile Set<Integer> regionFilter = null;
 
     /**
      * Các nhóm được lưu liên tục trên 1 mảng liên tục, kết hợp với HashMap để tăng tốc độ insert / iterate.
@@ -74,6 +75,9 @@ public class Renderer {
         this.terrain = terrain;
     }
 
+    public void setRegionFilter(Set<Integer> filter) { this.regionFilter = filter; }
+    public void clearRegionFilter() { this.regionFilter = null; }
+
     private void renderTerrain() {
         if (terrain == null || spriteAtlas == null) return;
         AtlasTexture.SubAtlas envAtlas = spriteAtlas.getEnvAtlas();
@@ -94,6 +98,9 @@ public class Renderer {
                 // Culling: bỏ qua ô nằm hoàn toàn ngoài tầm nhìn camera
                 if (tileRight < camLeft || tileLeft > camRight ||
                     tileBottom < camTop || tileTop  > camBottom) continue;
+
+                Set<Integer> filter = this.regionFilter;
+                if (filter != null && !filter.contains(row * MAP_COLS + col)) continue;
 
                 TerrainType type = terrain.getTerrainAtTile(col, row);
                 if (!envAtlas.has(type.name())) continue;
