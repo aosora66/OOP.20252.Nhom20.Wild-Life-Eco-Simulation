@@ -3,7 +3,7 @@
     "sheet": "atlas.png",
     "size": {
       "w": 64,
-      "h": 224
+      "h": 384
     }
   },
   "creature": {
@@ -46,6 +46,12 @@
     "ForestTree": {
       "idle": {"x":  0, "y":  288, "w":  32, "h": 32},
       "dead": {"x":  32, "y":  288, "w":  32, "h": 32}
+    },
+    "ElephantEating": {
+      "idle": {"x":  0, "y":  320, "w":  32, "h": 32}
+    },
+    "RabbitEating": {
+      "idle": {"x":  0, "y":  352, "w":  32, "h": 32}
     }
   }
 }

@@ -2,6 +2,7 @@ package wildlife.model.dto;
 
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.OrganismState;
+import wildlife.model.organism.animal.Animal;
 
 /**
  * Gói thông tin phục vụ cho View
@@ -31,13 +32,29 @@ public class RenderData {
     }
 
     public RenderData(Organism organism, int layer) {
+        this(organism, layer, -1);
+    }
+
+    public RenderData(Organism organism, int layer, int currentTick) {
         this.entityId = organism.getId();
-        this.speciesName = organism.getSpeciesName();
+        this.speciesName = renderSpeciesName(organism, currentTick);
         this.x = organism.getPosition().getX();
         this.y = organism.getPosition().getY();
         this.state = organism.getState();
         this.layer = layer;
         this.goWest = organism.isGoingWest();
+    }
+
+    private static String renderSpeciesName(Organism organism, int currentTick) {
+        String speciesName = organism.getSpeciesName();
+        if (currentTick >= 0
+                && organism instanceof Animal animal
+                && organism.isAlive()
+                && animal.isPausedForEating(currentTick)
+                && ("Elephant".equals(speciesName) || "Rabbit".equals(speciesName))) {
+            return speciesName + "Eating";
+        }
+        return speciesName;
     }
 
     public float getR() { return r; }

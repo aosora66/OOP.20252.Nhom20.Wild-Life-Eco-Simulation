@@ -28,22 +28,24 @@ import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 public class AtlasTexture implements ITexture {
 
     // -------------------------------------------------------------------------
-    //  Sprite atlas — UVs hardcoded (creatures / plants), atlas.png 64×320
+    //  Sprite atlas — UVs hardcoded (creatures / plants), atlas.png 64×384
     // -------------------------------------------------------------------------
     private static final float ATLAS_W = 64f;
-    private static final float ATLAS_H = 320f;
+    private static final float ATLAS_H = 384f;
 
-    private static final Map<String, float[]> IDLE_UVS = Map.of(
-        "Hunter",      spriteUV(0,   0),
-        "Tiger",       spriteUV(0,  32),
-        "Wolf",        spriteUV(0,  64),
-        "Deer",        spriteUV(0,  96),
-        "Elephant",    spriteUV(0, 128),
-        "Fish",        spriteUV(0, 160),
-        "Rabbit",      spriteUV(0, 192),
-        "AppleTree",   spriteUV(0, 224),
-        "Grass",       spriteUV(0, 256),
-        "TreeForest",  spriteUV(0, 288)
+    private static final Map<String, float[]> IDLE_UVS = Map.ofEntries(
+        Map.entry("Hunter",      spriteUV(0,   0)),
+        Map.entry("Tiger",       spriteUV(0,  32)),
+        Map.entry("Wolf",        spriteUV(0,  64)),
+        Map.entry("Deer",        spriteUV(0,  96)),
+        Map.entry("Elephant",    spriteUV(0, 128)),
+        Map.entry("Fish",        spriteUV(0, 160)),
+        Map.entry("Rabbit",      spriteUV(0, 192)),
+        Map.entry("AppleTree",   spriteUV(0, 224)),
+        Map.entry("Grass",       spriteUV(0, 256)),
+        Map.entry("TreeForest",  spriteUV(0, 288)),
+        Map.entry("ElephantEating", spriteUV(0, 320)),
+        Map.entry("RabbitEating",   spriteUV(0, 352))
     );
 
     private static float[] spriteUV(int x, int y) {

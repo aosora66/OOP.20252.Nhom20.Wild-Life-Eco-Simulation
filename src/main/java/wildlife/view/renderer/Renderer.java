@@ -32,7 +32,9 @@ public class Renderer {
     private static final float   MAP_ROWS  = AppConfig.getFloat("environment.terrain.map_rows");;
 
     private static final Set<String> PREDATORS     = Set.of("Hunter", "Tiger", "Wolf");
-    private static final Set<String> HERBIVORES    = Set.of("Deer", "Elephant", "Fish", "Rabbit");
+    private static final Set<String> HERBIVORES    = Set.of(
+            "Deer", "Elephant", "ElephantEating", "Fish", "Rabbit", "RabbitEating"
+    );
     private static final Set<String> RESOURCE_NAMES = Set.of("MEAT", "APPLE", "ALGAE", "WATER", "ROCK", "BUSH");
     private static final float RESOURCE_SIZE = 16f;
     private static final float BUSH_RENDER_SIZE = 28f;
@@ -243,14 +245,14 @@ public class Renderer {
     }
 
     private float getSpriteRenderWidth(String name) {
-        if ("Elephant".equals(name)) return ELEPHANT_SPRITE_WIDTH;
+        if ("Elephant".equals(name) || "ElephantEating".equals(name)) return ELEPHANT_SPRITE_WIDTH;
         if ("BUSH".equals(name)) return BUSH_RENDER_SIZE;
         if (RESOURCE_NAMES.contains(name)) return RESOURCE_SIZE;
         return DEFAULT_SPRITE_WIDTH;
     }
 
     private float getSpriteRenderHeight(String name) {
-        if ("Elephant".equals(name)) return ELEPHANT_SPRITE_HEIGHT;
+        if ("Elephant".equals(name) || "ElephantEating".equals(name)) return ELEPHANT_SPRITE_HEIGHT;
         if ("BUSH".equals(name)) return BUSH_RENDER_SIZE;
         if (RESOURCE_NAMES.contains(name)) return RESOURCE_SIZE;
         return DEFAULT_SPRITE_HEIGHT;

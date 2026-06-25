@@ -270,8 +270,10 @@ public class UIEventController {
         // Herbivores — cool tones
         registry.register("Deer",     new SimpleTexture(16, 16, (byte)  60, (byte) 160, (byte) 140, (byte) 255)); // teal
         registry.register("Elephant", new SimpleTexture(16, 16, (byte)  70, (byte) 110, (byte) 190, (byte) 255)); // steel blue
+        registry.register("ElephantEating", new SimpleTexture(16, 16, (byte)  70, (byte) 110, (byte) 190, (byte) 255));
         registry.register("Fish",     new SimpleTexture(16, 16, (byte)  30, (byte) 170, (byte) 230, (byte) 255)); // cyan
         registry.register("Rabbit",   new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255)); // lavender
+        registry.register("RabbitEating", new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255));
         // Plants
         registry.register("Grass",    new SimpleTexture(16, 16, (byte)  50, (byte) 200, (byte)  50, (byte) 255)); // green
         registry.register("AppleTree", new SimpleTexture(16, 16, (byte) 50, (byte) 210, (byte) 20, (byte) 255));
