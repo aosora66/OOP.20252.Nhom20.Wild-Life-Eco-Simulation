@@ -19,6 +19,8 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
 
     /** Sinh số random — protected để ScaredStrategy có thể dùng trực tiếp */
     protected static final Random RNG = new Random();
+    private static final int AVOIDANCE_ATTEMPTS = 10;
+    private static final float MAX_AVOIDANCE_ANGLE = (float) Math.toRadians(120.0);
 
     /** Độ dài bước đi */
     protected final float stepSize;
@@ -69,15 +71,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         float dx = (target.getX() - pos.getX()) / dist;
         float dy = (target.getY() - pos.getY()) / dist;
 
-        Vector2D next = new Vector2D(
-                pos.getX() + dx * step,
-                pos.getY() + dy * step
-        );
-        if (env.isPositionPassable(next, self)) {
-            self.setPosition(next);
-        } else {
-            wander(self, env);
-        }
+        moveAlongDirectionWithAvoidance(self, env, dx, dy, step);
     }
 
     /**
@@ -93,15 +87,53 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         float dx = (pos.getX() - threat.getX()) / dist;
         float dy = (pos.getY() - threat.getY()) / dist;
 
+        moveAlongDirectionWithAvoidance(self, env, dx, dy, step);
+    }
+
+    /**
+     * Bước theo hướng mong muốn. Nếu gặp vật cản/địa hình không đi được, thử các hướng
+     * lệch ngẫu nhiên quanh hướng đó để vẫn bám mục tiêu hoặc tiếp tục chạy thoát.
+     */
+    private void moveAlongDirectionWithAvoidance(Animal self, Environment env,
+                                                 float desiredDx, float desiredDy, float step) {
+        Vector2D pos = self.getPosition();
+        if (tryMove(self, env, pos, desiredDx, desiredDy, step)) {
+            return;
+        }
+
+        for (int i = 0; i < AVOIDANCE_ATTEMPTS; i++) {
+            float angle = randomAvoidanceAngle(i);
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
+            float altDx = desiredDx * cos - desiredDy * sin;
+            float altDy = desiredDx * sin + desiredDy * cos;
+
+            if (tryMove(self, env, pos, altDx, altDy, step)) {
+                return;
+            }
+        }
+
+        wander(self, env);
+    }
+
+    private boolean tryMove(Animal self, Environment env, Vector2D pos,
+                            float dx, float dy, float step) {
         Vector2D next = new Vector2D(
                 pos.getX() + dx * step,
                 pos.getY() + dy * step
         );
-        if (env.isPositionPassable(next, self)) {
-            self.setPosition(next);
-        } else {
-            wander(self, env);
+        if (!env.isPositionPassable(next, self)) {
+            return false;
         }
+        self.setPosition(next);
+        return true;
+    }
+
+    private float randomAvoidanceAngle(int attempt) {
+        float side = RNG.nextBoolean() ? 1f : -1f;
+        float minTurn = (attempt < 4) ? 0.25f : 0.5f;
+        float turn = minTurn + RNG.nextFloat() * (1f - minTurn);
+        return side * MAX_AVOIDANCE_ANGLE * turn;
     }
 
     /**

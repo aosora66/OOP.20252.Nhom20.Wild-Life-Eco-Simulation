@@ -4,7 +4,6 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
-import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 import wildlife.util.AppConfig;
 
@@ -133,20 +132,15 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     }
 
     /**
-     * Tìm con mồi trong tầm nhìn trước; nếu không có thì tìm con mồi gần nhất trong toàn
-     * môi trường (tương tự cách PassiveStrategy tìm food items toàn cục).
+     * Tìm con mồi trong tầm nhìn. Không fallback toàn môi trường: predator không được
+     * "biết" con mồi ở bên kia map hoặc bên kia hồ.
      */
     private Optional<? extends Animal> findNearestPrey(Animal self, Environment env) {
-        Optional<? extends Animal> inSight = preySpecies.stream()
-                .flatMap(species -> findNearestBySpecies(self, env, species).stream())
-                .filter(a -> isValidPrey(self, env, a))
-                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
-        if (inSight.isPresent()) return inSight;
-
         return preySpecies.stream()
-                .flatMap(species -> env.getRegistry().getAllAlive(species).stream())
+                .flatMap(species -> env.getRegistry().findNear(self.getPosition(), sightRadius, species).stream())
                 .filter(a -> isValidPrey(self, env, a))
-                .min(Comparator.comparingDouble(a -> a.getPosition().distanceTo(self.getPosition())));
+                .filter(a -> detectability(a, self, env) > 0)
+                .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
     }
 
     private Optional<? extends Animal> findNearestAttackablePreyInRange(Animal self, Environment env) {
@@ -159,7 +153,30 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     private boolean isValidPrey(Animal self, Environment env, Animal prey) {
         return !prey.isApexPredator()
                 && !prey.getSpeciesName().equals(self.getSpeciesName())
-                && env.getTerrain().getTerrainAt(prey.getPosition()) != TerrainType.DEEP_WATER;
+                && env.getTerrain().getTerrainAt(prey.getPosition()) != TerrainType.DEEP_WATER
+                && hasClearHuntingPath(self, env, prey);
+    }
+
+    private boolean hasClearHuntingPath(Animal self, Environment env, Animal prey) {
+        float distance = self.getPosition().distanceTo(prey.getPosition());
+        if (distance < 0.001f) return true;
+
+        float tileSize = AppConfig.getFloat("environment.terrain.tileSize");
+        int samples = Math.max(1, (int) Math.ceil(distance / (tileSize / 2f)));
+        float startX = self.getPosition().getX();
+        float startY = self.getPosition().getY();
+        float dx = prey.getPosition().getX() - startX;
+        float dy = prey.getPosition().getY() - startY;
+
+        for (int i = 1; i < samples; i++) {
+            float ratio = (float) i / samples;
+            var probe = new wildlife.util.Vector2D(startX + dx * ratio, startY + dy * ratio);
+            TerrainType terrain = env.getTerrain().getTerrainAt(probe);
+            if (terrain == TerrainType.DEEP_WATER || terrain == TerrainType.MOUNTAIN) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void attackAndEatIfKilled(Animal self, Environment env, Animal target) {
