@@ -25,6 +25,8 @@ public class Renderer {
 
     private static final float DEFAULT_SPRITE_WIDTH  = 32f;
     private static final float DEFAULT_SPRITE_HEIGHT = 32f;
+    private static final float ELEPHANT_SPRITE_WIDTH = 52f;
+    private static final float ELEPHANT_SPRITE_HEIGHT = 52f;
     private static final float TILE_SIZE = AppConfig.getFloat("environment.terrain.tileSize");
     private static final float   MAP_COLS  = AppConfig.getFloat("environment.terrain.map_cols");;
     private static final float   MAP_ROWS  = AppConfig.getFloat("environment.terrain.map_rows");;
@@ -33,6 +35,7 @@ public class Renderer {
     private static final Set<String> HERBIVORES    = Set.of("Deer", "Elephant", "Fish", "Rabbit");
     private static final Set<String> RESOURCE_NAMES = Set.of("MEAT", "APPLE", "ALGAE", "WATER", "ROCK", "BUSH");
     private static final float RESOURCE_SIZE = 16f;
+    private static final float BUSH_RENDER_SIZE = 28f;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
@@ -191,17 +194,21 @@ public class Renderer {
             if (mode == 1 && spriteAtlas != null && spriteAtlas.hasSprite(group.speciesName)) {
                 // Sprite mode — creatures / plants
                 float[] uvs = spriteAtlas.getIdleUVs(group.speciesName);
+                float width = getSpriteRenderWidth(group.speciesName);
+                float height = getSpriteRenderHeight(group.speciesName);
                 while (buf.hasRemaining()) {
                     spriteBatch.draw(spriteAtlas, buf.get(), buf.get(), buf.get(),
-                                     DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT,
+                                     width, height,
                                      uvs[0], uvs[1], uvs[2], uvs[3]);
                 }
             } else if (mode == 1 && resAtlas != null && resAtlas.has(group.speciesName)) {
                 // Sprite mode — resources atlas: food items and obstacles
                 float[] uvs = resAtlas.getUVs(group.speciesName);
+                float width = getSpriteRenderWidth(group.speciesName);
+                float height = getSpriteRenderHeight(group.speciesName);
                 while (buf.hasRemaining()) {
                     spriteBatch.draw(resAtlas, buf.get(), buf.get(), buf.get(),
-                            RESOURCE_SIZE, RESOURCE_SIZE,
+                            width, height,
                             uvs[0], uvs[1], uvs[2], uvs[3]);
                 }
             } else {
@@ -233,6 +240,20 @@ public class Renderer {
             buf.clear(); // reset renderBuffer so it's ready for the next swapForRead() cycle
         }
 
+    }
+
+    private float getSpriteRenderWidth(String name) {
+        if ("Elephant".equals(name)) return ELEPHANT_SPRITE_WIDTH;
+        if ("BUSH".equals(name)) return BUSH_RENDER_SIZE;
+        if (RESOURCE_NAMES.contains(name)) return RESOURCE_SIZE;
+        return DEFAULT_SPRITE_WIDTH;
+    }
+
+    private float getSpriteRenderHeight(String name) {
+        if ("Elephant".equals(name)) return ELEPHANT_SPRITE_HEIGHT;
+        if ("BUSH".equals(name)) return BUSH_RENDER_SIZE;
+        if (RESOURCE_NAMES.contains(name)) return RESOURCE_SIZE;
+        return DEFAULT_SPRITE_HEIGHT;
     }
 
     public void renderAll(){
