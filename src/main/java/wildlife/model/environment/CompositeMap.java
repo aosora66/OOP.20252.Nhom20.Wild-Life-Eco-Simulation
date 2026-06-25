@@ -6,7 +6,9 @@ import wildlife.model.environment.component.ResourceManager;
 import wildlife.model.environment.component.TerrainComponent;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.environment.enums.TerrainType;
+import wildlife.model.organism.animal.Animal;
 import wildlife.util.RegionBoundary;
+import wildlife.util.Vector2D;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +40,7 @@ public class CompositeMap extends Environment {
     public void addSubEnvironment(Environment env) {
         if (env == null) throw new IllegalArgumentException("Không thể thêm môi trường null");
         if (env == this) throw new IllegalArgumentException("Không thể thêm CompositeMap vào chính nó");
+        env.bindParentMap(this);
         subEnvironments.add(env);
     }
 
@@ -53,6 +56,36 @@ public class CompositeMap extends Environment {
         // Ủy quyền xuống từng môi trường con (Sub-environments) tự xử lý sinh vật, thời tiết của chúng
         for (Environment sub : subEnvironments) {
             sub.updateEnvironment(currentTick);
+        }
+        transferAnimalsAcrossSubEnvironments();
+    }
+
+    boolean isPositionPassableFrom(Environment source, Vector2D pos, Animal self) {
+        Environment target = findSubEnvironmentFor(pos);
+        if (target == null || target == source) return false;
+        return target.isPositionPassable(pos, self);
+    }
+
+    private Environment findSubEnvironmentFor(Vector2D pos) {
+        for (Environment sub : subEnvironments) {
+            if (sub.getTerrain().containsPosition(pos)) {
+                return sub;
+            }
+        }
+        return null;
+    }
+
+    private void transferAnimalsAcrossSubEnvironments() {
+        for (Environment source : subEnvironments) {
+            for (Animal animal : new ArrayList<>(source.getRegistry().getAllAlive(Animal.class))) {
+                Environment target = findSubEnvironmentFor(animal.getPosition());
+                if (target == null || target == source) continue;
+                if (!target.isPositionPassable(animal.getPosition(), animal)) continue;
+
+                source.getRegistry().remove(animal.getId());
+                target.addOrganism(animal);
+                animal.setCurrentTerrain(target.getTerrain().getTerrainAt(animal.getPosition()));
+            }
         }
     }
 

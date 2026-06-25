@@ -92,6 +92,9 @@ public abstract class Environment {
     /** Component quản lý tài nguyên (thức ăn, nước, vật cản) */
     protected final ResourceManager resources;
 
+    /** CompositeMap cha, dùng khi động vật bước qua ranh giới giữa các môi trường con. */
+    private CompositeMap parentMap;
+
     /** Thống kê tử vong tích lũy: species → [killed, oldAge, starvation, dehydration, other] */
     private final Map<String, int[]> deathTally = new HashMap<>();
     /** Thống kê sinh nở tích lũy: species → số con sinh ra */
@@ -325,6 +328,11 @@ public abstract class Environment {
      */
     public boolean isPositionPassable(Vector2D pos, Animal self) {
         if (self == null) return false;
+
+        if (!terrain.containsPosition(pos)) {
+            return parentMap != null && parentMap.isPositionPassableFrom(this, pos, self);
+        }
+
         // 1. Kiểm tra địa hình
         if (!terrain.isPassable(pos, self)) return false;
 
@@ -441,6 +449,10 @@ public abstract class Environment {
     public void addOrganism(Organism organism) {
         registry.add(organism);
         organism.bindEnvironment(this);
+    }
+
+    void bindParentMap(CompositeMap parentMap) {
+        this.parentMap = parentMap;
     }
 
     // ----------------------------------------------------------------
