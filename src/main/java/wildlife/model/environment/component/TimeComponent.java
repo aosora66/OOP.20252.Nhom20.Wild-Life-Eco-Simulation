@@ -155,29 +155,14 @@ public class TimeComponent {
         return (currentTick % ticksPerDayCycle) < (ticksPerDayCycle / 2);
     }
     /**
-     * Trả về hệ số nhân tổng hợp của mùa + thời tiết.
-     * Quy ước: > 1.0 = khắc nghiệt hơn, < 1.0 = dễ chịu hơn.
-     *
-     * @return hệ số nhân môi trường
+     * Trả về hệ số nhân tổng hợp của mùa
      */
     public float getSeasonMultiplier() {
-        float multiplier = 1.0f;
-
-        // Điều chỉnh theo mùa
-        multiplier *= switch (currentSeason) {
+        return  switch (currentSeason) {
             case BREEDING -> AppConfig.getFloat("environment.multiplier.season.breeding");
             case DROUGHT  -> AppConfig.getFloat("environment.multiplier.season.drought");
             default       -> 1.0f;
         };
-
-        // Điều chỉnh thêm theo thời tiết
-        multiplier *= switch (currentWeather) {
-            case RAIN    -> AppConfig.getFloat("environment.multiplier.weather.rain");
-            case DROUGHT -> AppConfig.getFloat("environment.multiplier.weather.drought");
-            default      -> 1.0f;
-        };
-
-        return multiplier;
     }
 
     // ----------------------------------------------------------------

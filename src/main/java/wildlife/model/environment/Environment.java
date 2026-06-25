@@ -299,6 +299,23 @@ public abstract class Environment {
     }
 
     /**
+     * Trả về hệ số nhân tổng hợp của mùa + thời tiết.
+     * Quy ước: > 1.0 = khắc nghiệt hơn, < 1.0 = dễ chịu hơn.
+     *
+     * @return hệ số nhân môi trường
+     */
+    public float getEnvironmentMultiplier() {
+        float tempFactor     = 1f + Math.abs(currentTemp - 25f) / 25f;
+        float humidityFactor = 1f + (1f - currentHumidity / 100f) * 0.5f;
+        float lightFactor    = 1f + (1f - currentLight) * 0.3f;
+
+        // Nhân thêm hệ số mùa để đảm bảo khác biệt rõ ràng
+        float seasonFactor = time.getSeasonMultiplier();
+
+        return Math.min(3f, tempFactor * humidityFactor * lightFactor * seasonFactor);
+    }
+
+    /**
      * Kiểm tra một vị trí có hợp lệ để động vật di chuyển đến không.
      * Kết hợp kiểm tra địa hình và vật cản.
      *

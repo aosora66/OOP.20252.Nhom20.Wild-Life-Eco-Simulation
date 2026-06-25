@@ -140,7 +140,9 @@ public class Lake extends Environment {
         int interval = AppConfig.getInt("plant.algae.spawnInterval");
         if (currentTick % interval != 0) return;
 
-        int spawnCount   = AppConfig.getInt("plant.algae.spawnCount");
+        // Tảo ít đi khi nước cạn
+        float waterRatio = currentWaterLevel / maxWaterLevel;
+        int spawnCount = Math.max(1, (int)(AppConfig.getInt("plant.algae.spawnCount") * waterRatio));
         float nutrition  = AppConfig.getFloat("food.algae.nutritionalValue");
         int expiryTicks  = AppConfig.getInt("food.algae.expiryTicks");
 

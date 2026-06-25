@@ -148,6 +148,9 @@ public abstract class Animal extends Organism {
                 "reproduce.cooldownTicks", "animal.reproduce.cooldownTicks");
         float chance = getSpeciesFloatOrDefault(species,
                 "reproduce.chance", "animal.reproduce.chance");
+        if (environment != null) {
+            chance /= environment.getEnvironmentMultiplier();
+        }
         boolean cooldownReady = lastReproduceTick == 0
                 || (currentTick - lastReproduceTick) >= cooldown;
 

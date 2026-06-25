@@ -135,7 +135,7 @@ public abstract class Organism {
     protected void processSurvivalMetabolism() {
         if (environment == null) return;
 
-        float seasonMultiplier = environment.getTime().getSeasonMultiplier();
+        float seasonMultiplier = environment.getEnvironmentMultiplier();
         float humidityFactor   = environment.getHumidity() / 100f;
         float thirstMultiplier = seasonMultiplier
                 * (1f + (1f - humidityFactor)
