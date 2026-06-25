@@ -40,14 +40,16 @@ public class Wolf extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
         int huntSprintSteps = AppConfig.getInt("animal.wolf.hunt.sprintSteps");
 
-        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
+        // 1. Gặp Hunter khi chưa đói thì né; khi đói đủ ngưỡng săn thì lao vào cắn lại.
         addStrategy(new wildlife.model.brain.ScaredStrategy(
                 this.speed * 1.3f,
                 this.vision,
                 2,
                 this.interactionRadius,
                 0.4f,
-                0.4f
+                0.4f,
+                huntHungerThreshold,
+                Hunter.class
         ));
 
         // 2. Săn mồi khi đói (Ưu tiên trung bình: 20)

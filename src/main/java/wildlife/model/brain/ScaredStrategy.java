@@ -22,6 +22,7 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
     private final int          sprintSteps;
     private final float        counterHpThreshold;
     private final float        counterAttackChance;
+    private final float        fleeOnlyBelowHungerThreshold;
     private final int          cooldownTicks;
     private int                counterAttackCooldown = 0;
 
@@ -37,16 +38,32 @@ public class ScaredStrategy extends AbstractSurvivalStrategy {
     public ScaredStrategy(float stepSize, float fearRadius, int sprintSteps,
                           float counterAttackRange, float counterHpThreshold,
                           float counterAttackChance, Class<? extends Animal>... predatorSpecies) {
+        this(stepSize, fearRadius, sprintSteps, counterAttackRange, counterHpThreshold,
+                counterAttackChance, Float.POSITIVE_INFINITY, predatorSpecies);
+    }
+
+    /**
+     * Variant dùng cho predator: chỉ chạy khi chưa đói tới ngưỡng săn. Khi đói đủ ngưỡng,
+     * ScaredStrategy tắt để HunterStrategy có thể lao vào cắn lại.
+     */
+    public ScaredStrategy(float stepSize, float fearRadius, int sprintSteps,
+                          float counterAttackRange, float counterHpThreshold,
+                          float counterAttackChance, float fleeOnlyBelowHungerThreshold,
+                          Class<? extends Animal>... predatorSpecies) {
         super(stepSize, fearRadius, counterAttackRange);
         this.predatorSpecies     = List.of(predatorSpecies);
         this.sprintSteps         = Math.max(1, sprintSteps);
         this.counterHpThreshold  = counterHpThreshold;
         this.counterAttackChance = counterAttackChance;
+        this.fleeOnlyBelowHungerThreshold = fleeOnlyBelowHungerThreshold;
         this.cooldownTicks       = AppConfig.getInt("organism.scared.counterAttackCooldown");
     }
 
     @Override
     public boolean isApplicable(Animal self, Environment env) {
+        if (self.getStats().getHungerLevel() >= fleeOnlyBelowHungerThreshold) {
+            return false;
+        }
         return findNearestThreat(self, env).isPresent();
     }
 
