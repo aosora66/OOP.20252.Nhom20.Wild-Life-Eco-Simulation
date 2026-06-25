@@ -32,7 +32,7 @@ public class Renderer {
     private static final Set<String> PREDATORS     = Set.of("Hunter", "Tiger", "Wolf");
     private static final Set<String> HERBIVORES    = Set.of("Deer", "Elephant", "Fish", "Rabbit");
     private static final Set<String> RESOURCE_NAMES = Set.of("MEAT", "APPLE", "ALGAE", "WATER", "ROCK", "BUSH");
-    private static final float RESOURCE_SIZE = 2f;
+    private static final float RESOURCE_SIZE = 16f;
 
     private final SpriteBatch spriteBatch;
     private final TextureRegistry textureRegistry;
@@ -201,8 +201,8 @@ public class Renderer {
                 float[] uvs = resAtlas.getUVs(group.speciesName);
                 while (buf.hasRemaining()) {
                     spriteBatch.draw(resAtlas, buf.get(), buf.get(), buf.get(),
-                                     DEFAULT_SPRITE_WIDTH, DEFAULT_SPRITE_HEIGHT,
-                                     uvs[0], uvs[1], uvs[2], uvs[3]);
+                            RESOURCE_SIZE, RESOURCE_SIZE,
+                            uvs[0], uvs[1], uvs[2], uvs[3]);
                 }
             } else {
                 // Basic mode: draw with solid-color texture + shape

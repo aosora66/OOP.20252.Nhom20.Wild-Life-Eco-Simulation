@@ -20,6 +20,7 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.model.organism.plant.TreeForest;
 import wildlife.model.organism.plant.AppleTree;
 import wildlife.util.Boundary;
+import wildlife.util.Vector2D;
 
 import java.util.Random;
 
@@ -55,14 +56,9 @@ public class Forest extends Environment {
     @Override
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
-        // 30 Cây cổ thụ (Rất dày đặc)
-        for (int i = 0; i < 30; i++) {
-            registry.add(TreeForest.create(terrain.getRandomValidPosition(), this));
-        }
-        // 25 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (nguồn thức ăn chính cho herbivore)
-        for (int i = 0; i < 25; i++) {
-            float startAge = random.nextFloat() * 1200f;
-            registry.add(AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
+        // 60 Cây cổ thụ (Rất dày đặc)
+        for (Vector2D pos : getEvenlySpacedPositions(200)) {
+            registry.add(TreeForest.create(pos, this));
         }
 
         // --- 2. VẬT CẢN (OBSTACLES) ---

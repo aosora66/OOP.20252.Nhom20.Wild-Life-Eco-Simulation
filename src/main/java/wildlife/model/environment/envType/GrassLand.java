@@ -17,6 +17,7 @@ import wildlife.model.organism.animal.hebivores.Rabbit;
 import wildlife.model.organism.plant.Grass;
 import wildlife.util.AppConfig;
 import wildlife.util.Boundary;
+import wildlife.util.Vector2D;
 
 import java.util.Random;
 
@@ -55,11 +56,11 @@ public class GrassLand extends Environment {
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
         // 100 Bụi cỏ (Nguồn thức ăn dồi dào, phủ khắp nơi)
-        for (int i = 0; i < 100; i++) {
-            registry.add(Grass.create(terrain.getRandomValidPosition(), this));
+        for (Vector2D pos : getEvenlySpacedPositions(200)) {
+            registry.add(Grass.create(pos, this));
         }
-        // 20 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
-        for (int i = 0; i < 20; i++) {
+        // 30 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
+        for (int i = 0; i < 40; i++) {
             float startAge = random.nextFloat() * 1200f;
             registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
         }

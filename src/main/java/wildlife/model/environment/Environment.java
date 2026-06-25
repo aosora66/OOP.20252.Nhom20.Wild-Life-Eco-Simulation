@@ -207,6 +207,27 @@ public abstract class Environment {
     //  Phương thức tiện ích dùng chung (Concrete)
     // ----------------------------------------------------------------
 
+    /** dải đều */
+    protected List<Vector2D> getEvenlySpacedPositions(int count) {
+        if (!(terrain.getBoundary() instanceof wildlife.util.RegionBoundary rb)) {
+            // fallback: random nếu không phải RegionBoundary
+            List<Vector2D> result = new ArrayList<>();
+            for (int i = 0; i < count; i++) result.add(terrain.getRandomValidPosition());
+            return result;
+        }
+        List<Vector2D> tiles = rb.getTileOrigins();
+        List<Vector2D> result = new ArrayList<>();
+        if (tiles.isEmpty()) return result;
+
+        float tileSize = AppConfig.getFloat("environment.terrain.tileSize");
+        int step = Math.max(1, tiles.size() / count);
+        for (int i = 0; i < tiles.size() && result.size() < count; i += step) {
+            Vector2D t = tiles.get(i);
+            result.add(new Vector2D(t.getX() + tileSize / 2f, t.getY() + tileSize / 2f));
+        }
+        return result;
+    }
+
     /**
      * Hàm Generic khởi tạo động vật
      * @param animalClass Lớp của động vật (VD: Rabbit.class, Wolf.class)
