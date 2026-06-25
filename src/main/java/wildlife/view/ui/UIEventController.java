@@ -1003,7 +1003,7 @@ public class UIEventController {
         uiGroup.setPickOnBounds(false);
         if (simulationSpeed != null) {
             simulationSpeed.setMin(1);
-            simulationSpeed.setMax(10);
+            simulationSpeed.setMax(15);
             simulationSpeed.setValue(tickRate);
             simulationSpeed.setBlockIncrement(0.25);
             simulationSpeed.valueProperty().addListener((obs, oldVal, newVal) ->

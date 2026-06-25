@@ -56,14 +56,19 @@ public class Forest extends Environment {
     @Override
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
-        // 60 Cây cổ thụ (Rất dày đặc)
-        for (Vector2D pos : getEvenlySpacedPositions(300)) {
+        // 250 Cây cổ thụ (Rất dày đặc)
+        for (Vector2D pos : getEvenlySpacedPositions(250)) {
             registry.add(TreeForest.create(pos, this));
         }
 
+        for (int i = 0; i < 50; i++) {
+            float startAge = random.nextFloat() * 1200f;
+            registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
+        }
+
         // --- 2. VẬT CẢN (OBSTACLES) ---
-        // 25 Bụi rậm, gom thành cụm 3-4 bụi để tạo chỗ nấp tự nhiên hơn.
-        placeObstacleClusters(ObstacleType.BUSH, 25, 3, 4,
+        // 150 Bụi rậm, gom thành cụm 30 bụi để tạo chỗ nấp tự nhiên hơn.
+        placeObstacleClusters(ObstacleType.BUSH, 150, 3, 5,
                 wildlife.util.AppConfig.getFloat("environment.terrain.tileSize") * 1.5f);
         // 15 Tảng đá
         for (int i = 0; i < 15; i++) {

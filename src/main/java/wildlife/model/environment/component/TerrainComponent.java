@@ -129,7 +129,7 @@ public class TerrainComponent {
         boolean isAquatic = self instanceof Fish;
         // --- NHÁNH DÀNH CHO CÁ ---
         if (isAquatic) {
-            // Cá chỉ bơi được ở nước sâu và nước nông
+            // Cá chỉ bơi được ở nước sâu
             return terrain == TerrainType.DEEP_WATER;
         }
 
