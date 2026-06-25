@@ -51,7 +51,7 @@ public class Camera {
             center[1] = 800;
         } else if(center[1] - height/2 < 0){
             center[1] = height/2;
-        }else if(center[1] + height/2 > 800) {
+        }else if(center[1] + height/2 > 1600){
             center[1] = 1600 - height / 2;
         }
         setBounds();

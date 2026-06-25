@@ -4,8 +4,8 @@ import java.util.Random;
 
 public class MapGenerator {
     public static void main(String[] args) {
-        int width = 100;
-        int height = 100;
+        int width = (int)AppConfig.getFloat("environment.terrain.map_cols");
+        int height = (int)AppConfig.getFloat("environment.terrain.map_rows");
         int[][] map = new int[height][width];
         Random rng = new Random(42);
 
@@ -16,8 +16,7 @@ public class MapGenerator {
             }
         }
 
-        // Bước 2: Vẽ vùng RỪNG RẬM — các khoảng loang lổ rải đều (không phải khối nửa dưới),
-        // ngưỡng 0.6 giúp diện tích rừng chỉ còn ~30% map (đồng cỏ chiếm phần lớn hơn).
+        // Bước 2: Vẽ vùng RỪNG RẬM
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 double nx = x / (double) width;
@@ -33,7 +32,7 @@ public class MapGenerator {
             }
         }
 
-        // Bước 3: Vẽ HỒ NƯỚC — cụm lớn loang lổ giữa-trái + vài hồ nhỏ rải rác
+        // Bước 3: Vẽ HỒ NƯỚC
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 double nx = x / (double) width;
@@ -52,15 +51,14 @@ public class MapGenerator {
             }
         }
 
-        // Các hồ nhỏ riêng lẻ (tọa độ tỉ lệ 0..1, bán kính riêng từng hồ)
+        // Các hồ nhỏ riêng lẻ
         double[][] smallLakes = {
-                // {centerX, centerY, radiusX, radiusY}
-                {0.18, 0.13, 0.10, 0.07},  // hồ trên-trái
-                {0.62, 0.22, 0.07, 0.06},  // hồ trên-giữa (cạnh núi)
-                {0.93, 0.10, 0.05, 0.05},  // hồ nhỏ góc trên-phải
-                {0.70, 0.33, 0.05, 0.045}, // hồ nhỏ giữa-phải trên
-                {0.74, 0.55, 0.10, 0.08},  // hồ giữa-phải
-                {0.83, 0.72, 0.07, 0.06}   // hồ dưới-phải
+                {0.18, 0.13, 0.10, 0.07},
+                {0.62, 0.22, 0.07, 0.06},
+                {0.93, 0.10, 0.05, 0.05},
+                {0.70, 0.33, 0.05, 0.045},
+                {0.74, 0.55, 0.10, 0.08},
+                {0.83, 0.72, 0.07, 0.06}
         };
         for (double[] lake : smallLakes) {
             double cx = lake[0], cy = lake[1], rx = lake[2], ry = lake[3];
@@ -78,24 +76,20 @@ public class MapGenerator {
             }
         }
 
-        // Bước 4: Vẽ VÁCH NÚI — dải chéo lớn từ trên xuống giữa-phải + mảng nhỏ trên-giữa & giữa-trái
+        // Bước 4: Vẽ VÁCH NÚI
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 double nx = x / (double) width;
                 double ny = y / (double) height;
 
-                // Dải núi chính: đường chéo răng cưa bên phải, từ (0.62, 0.0) tới (1.0, 0.65)
                 double mainRidge = nx - (0.62 + ny * 0.55);
                 double ridgeJagged = Math.sin(ny * 30.0) * 0.04 + Math.sin(ny * 11.0) * 0.025;
                 boolean onMainRidge = (mainRidge + ridgeJagged) > 0 && ny < 0.78;
 
-                // Mảng núi nhỏ trên-giữa
                 double dxTop = nx - 0.45;
                 double dyTop = ny - 0.06;
-                boolean onTopPatch = (dxTop * dxTop * 3.0 + dyTop * dyTop * 8.0) < 0.012
-                        && ny < 0.20;
+                boolean onTopPatch = (dxTop * dxTop * 3.0 + dyTop * dyTop * 8.0) < 0.012 && ny < 0.20;
 
-                // Mảng núi nhỏ giữa-trái
                 double dxLeft = nx - 0.04;
                 double dyLeft = ny - 0.40;
                 boolean onLeftPatch = (dxLeft * dxLeft * 6.0 + dyLeft * dyLeft * 10.0) < 0.010;
@@ -106,18 +100,24 @@ public class MapGenerator {
             }
         }
 
-        // Bước 5: Rải BÙN (MUD) — các đốm nhỏ lẻ tẻ trong vùng đồng cỏ, gần khu hồ
-        int mudSpots = 8;
+        // Bước 5: Rải BÙN (MUD) — rải toàn phần đồng cỏ (5-6 vũng)
+        int mudSpots = 5 + rng.nextInt(2); // Ra ngẫu nhiên 5 hoặc 6 vũng bùn
         for (int i = 0; i < mudSpots; i++) {
-            int cx = 8 + rng.nextInt(18);   // tập trung khu giữa-trái (gần hồ)
-            int cy = 18 + rng.nextInt(20);
-            int spotSize = 1 + rng.nextInt(2);
+            int cx, cy;
+            // Đảm bảo tâm của vũng bùn phải nằm trên khu vực đồng cỏ
+            do {
+                cx = rng.nextInt(width);
+                cy = rng.nextInt(height);
+            } while (map[cy][cx] != 1);
+
+            int spotSize = 1 + rng.nextInt(2); // Bán kính vũng bùn
             for (int oy = -spotSize; oy <= spotSize; oy++) {
                 for (int ox = -spotSize; ox <= spotSize; ox++) {
                     int tx = cx + ox, ty = cy + oy;
                     if (tx < 0 || tx >= width || ty < 0 || ty >= height) continue;
+                    // Bùn sẽ chỉ ghi đè lên các ô có sẵn là GRASSLAND (1)
                     if (ox * ox + oy * oy <= spotSize * spotSize && map[ty][tx] == 1) {
-                        map[ty][tx] = 4; // MUD — chỉ đè lên GRASSLAND
+                        map[ty][tx] = 4; // MUD
                     }
                 }
             }
