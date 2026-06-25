@@ -15,6 +15,14 @@ public class Camera {
         this.height = (int)(width/16*9);
         setBounds();
     }
+    public Camera(int width){
+        this.width = (int) (width/16) * 16;
+        //lam tron thanh boi so cua 16
+        this.height = (int)(width/16*9);
+        center[0] = width/2;
+        center[1] = height/2;
+        setBounds();
+    }
 
     private void setBounds(){
         this.top_left_x = center[0] - width / 2;
@@ -28,8 +36,8 @@ public class Camera {
         if(targetWidth < 200) {
             return;
         }
-        if(targetWidth > 2500) {
-            targetWidth = 2500;
+        if(targetWidth > 16*100) {
+            targetWidth = 16*100;
         }
 
         this.width = targetWidth;

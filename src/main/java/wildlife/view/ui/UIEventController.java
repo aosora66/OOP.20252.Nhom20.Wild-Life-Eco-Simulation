@@ -478,7 +478,7 @@ public class UIEventController {
     private int tickCount = 0;
 
 
-    private final Camera camera = new Camera(800, 800, 2500);
+    private final Camera camera = new Camera(16*100);
     private volatile Organism selectedOrganism = null;
     private SimulationInteractionController interactionController;
     private void setupCameraEvents() {
