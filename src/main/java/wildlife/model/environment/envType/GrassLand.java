@@ -119,7 +119,7 @@ public class GrassLand extends Environment {
             if (random.nextFloat() < AppConfig.getFloat("environment.weather.rain.mudChance")) {
                 terrain.addCustomTerrain(terrain.getRandomValidPosition(), TerrainType.MUD);
             }
-        } else if (weather == WeatherType.DROUGHT) {
+        } else if (weather == WeatherType.DRY) {
             this.currentHumidity = Math.max(0.0f, this.currentHumidity - 10.0f);
             this.currentTemp = this.currentTemp + 3.0f;
         }

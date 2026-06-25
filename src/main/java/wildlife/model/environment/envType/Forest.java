@@ -57,7 +57,7 @@ public class Forest extends Environment {
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
         // 60 Cây cổ thụ (Rất dày đặc)
-        for (Vector2D pos : getEvenlySpacedPositions(200)) {
+        for (Vector2D pos : getEvenlySpacedPositions(300)) {
             registry.add(TreeForest.create(pos, this));
         }
 

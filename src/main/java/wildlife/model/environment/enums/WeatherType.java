@@ -6,5 +6,5 @@ package wildlife.model.environment.enums;
 public enum WeatherType {
     NORMAL,
     RAIN,
-    DROUGHT
+    DRY
 }

@@ -121,7 +121,7 @@ public class Lake extends Environment {
 
         if (weather == WeatherType.RAIN) {
             currentWaterLevel = Math.min(maxWaterLevel, currentWaterLevel + 0.5f);
-        } else if (weather == WeatherType.DROUGHT) {
+        } else if (weather == WeatherType.DRY) {
             currentWaterLevel = Math.max(0, currentWaterLevel - 0.2f);
         }
     }

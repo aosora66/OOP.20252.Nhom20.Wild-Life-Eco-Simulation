@@ -1,6 +1,7 @@
 package wildlife.view.ui;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
@@ -866,10 +867,10 @@ public class UIEventController {
     public SVGPath PrevSeason;
     public Label SeasonLabel;
     public SVGPath NextSeason;
-    public void prevSeasonClick() {
+    public void prevSeasonClick(ActionEvent event) {
         changeSeason(false);
     }
-    public void nextSeasonClick() {
+    public void nextSeasonClick(ActionEvent event) {
         changeSeason(true);
     }
     private void changeSeason(boolean next) {
@@ -880,6 +881,7 @@ public class UIEventController {
             int ticksPerSeason = timeComp.getTicksPerSeason();
             int cycleLength = ticksPerSeason * 3;
             int currentTick = timeComp.getCurrentTick();
+            int rawTick = currentTick - TimeComponent.getSeasonOffset();
             Season currentSeason = timeComp.getCurrentSeason();
             int currentSeasonIdx = switch (currentSeason) {
                 case NORMAL -> 0;
@@ -899,7 +901,7 @@ public class UIEventController {
                 delta += cycleLength;
             }
             TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
-            int newTick = currentTick + delta;
+            int newTick = rawTick;
             timeComp.advance(newTick);
             for (Environment sub : world.getSubEnvironments()) {
                 sub.getTime().advance(newTick);
@@ -967,6 +969,7 @@ public class UIEventController {
             TimeComponent timeComp = world.getTime();
             int ticksPerDayCycle = timeComp.getTicksPerDayCycle();
             int currentTick = timeComp.getCurrentTick();
+            int rawTick = currentTick - TimeComponent.getSeasonOffset();
             int posInCycle = currentTick % ticksPerDayCycle;
 
             // Day → jump to night start (half-cycle mark); Night → jump to next day start
@@ -975,7 +978,7 @@ public class UIEventController {
                     : ticksPerDayCycle - posInCycle;
 
             TimeComponent.setSeasonOffset(TimeComponent.getSeasonOffset() + delta);
-            int newTick = currentTick + delta;
+            int newTick = rawTick;
             timeComp.advance(newTick);
             for (Environment sub : world.getSubEnvironments()) {
                 sub.getTime().advance(newTick);

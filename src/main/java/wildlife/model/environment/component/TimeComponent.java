@@ -127,7 +127,7 @@ public class TimeComponent {
                 else                                       currentWeather = WeatherType.NORMAL;
             }
             case DROUGHT -> {
-                if (roll < DROUGHT_DROUGHT_CHANCE)         currentWeather = WeatherType.DROUGHT;
+                if (roll < DROUGHT_DROUGHT_CHANCE)         currentWeather = WeatherType.DRY;
                 else if (roll < DROUGHT_DROUGHT_CHANCE + DROUGHT_RAIN_CHANCE)
                                                            currentWeather = WeatherType.RAIN;
                 else                                       currentWeather = WeatherType.NORMAL;
@@ -135,7 +135,7 @@ public class TimeComponent {
             default -> { // NORMAL
                 if (roll < NORMAL_RAIN_CHANCE)             currentWeather = WeatherType.RAIN;
                 else if (roll < NORMAL_RAIN_CHANCE + NORMAL_DROUGHT_CHANCE)
-                    currentWeather = WeatherType.DROUGHT;
+                    currentWeather = WeatherType.DRY;
                 else                                       currentWeather = WeatherType.NORMAL;
             }
         }
