@@ -3,13 +3,10 @@ package wildlife.view.ui;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -24,29 +21,11 @@ import wildlife.model.environment.CompositeMap;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.WeatherType;
-import wildlife.model.environment.enums.ObstacleType;
-import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.component.TimeComponent;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
-import wildlife.model.organism.animal.canivores.Tiger;
-import wildlife.model.organism.animal.canivores.Wolf;
-import wildlife.model.organism.animal.canivores.Hunter;
-import wildlife.model.organism.animal.hebivores.Deer;
-import wildlife.model.organism.animal.hebivores.Elephant;
-import wildlife.model.organism.animal.hebivores.Fish;
-import wildlife.model.organism.animal.hebivores.Rabbit;
-import wildlife.model.organism.plant.AppleTree;
-import wildlife.model.organism.plant.Grass;
-import wildlife.model.organism.plant.TreeForest;
-import wildlife.model.organism.component.GrowthComponent;
-import wildlife.model.organism.component.SurvivalStatsComponent;
-import wildlife.model.organism.component.AdaptabilityComponent;
-import wildlife.model.environment.enums.TerrainType;
-import wildlife.util.AppConfig;
 import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
-import wildlife.util.ValueRange;
 import wildlife.model.organism.plant.Plant;
 import wildlife.view.renderer.AtlasTexture;
 import wildlife.view.renderer.Renderer;
@@ -54,6 +33,7 @@ import wildlife.view.renderer.SpriteBatch;
 import wildlife.view.renderer.SimpleTexture;
 import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
+import wildlife.view.ui.control.SimulationInteractionController;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -105,7 +85,6 @@ public class UIEventController {
     //UI panel
     @FXML
     public Group uiGroup;
-    private ContextMenu activeContextMenu;
 
     //view button
     public static boolean sceneModeIsBasic = true;
@@ -493,321 +472,36 @@ public class UIEventController {
 
 
     private final Camera camera = new Camera(800, 800, 2500);
-    private boolean isSpacePressed = false;
-    private boolean isCtrlPressed = false;
-    private double lastMouseX;
-    private double lastMouseY;
     private volatile Organism selectedOrganism = null;
+    private SimulationInteractionController interactionController;
     private void setupCameraEvents() {
-        sceneCanvas.setFocusTraversable(true);
-        sceneCanvas.focusedProperty().addListener((obs, oldVal, newVal) -> {
-            if(!newVal){
-                sceneCanvas.setCursor(Cursor.DEFAULT);
-            }
-        });
-        sceneCanvas.setOnKeyPressed(event -> {
-            if(event.getCode() == KeyCode.ESCAPE) {
-                activeSpawningClass = null;
-                activeSpawningObstacle = null;
-                activeSpawningFood = null;
-                isInKillMode = false;
-                sceneCanvas.setCursor(Cursor.DEFAULT);
-            }
-            if(event.getCode() == KeyCode.SPACE) {
-                isSpacePressed = true;
-                sceneCanvas.setCursor(Cursor.OPEN_HAND);
-            }
-            if(event.getCode() == KeyCode.CONTROL) {
-                isCtrlPressed = true;
-                sceneCanvas.setCursor(Cursor.V_RESIZE);
-            }
-            if(event.getCode() == KeyCode.V) {
-                ViewButtonClicked();
-            }
-            if(event.getCode() == KeyCode.P){
-                pauseStatusChange();
-            }
-        });
-        sceneCanvas.setOnKeyReleased(event -> {
-            if(event.getCode() == KeyCode.SPACE) {
-                isSpacePressed = false;
-            }
-            if(event.getCode() == KeyCode.CONTROL) {
-                isCtrlPressed = false;
-            }
-            sceneCanvas.setCursor(Cursor.DEFAULT);
-        });
-
-        sceneCanvas.setOnScroll(event -> {
-            if(isCtrlPressed){
-                double currentX_OnScreen = event.getX();
-                double currentY_OnScreen = event.getY();
-                double currentX_OnMap = camera.getTopLeftX() + (currentX_OnScreen / canvasWidth) * (camera.getBotRightX()-camera.getTopLeftX());
-                double currentY_OnMap = camera.getTopLeftY() + (currentY_OnScreen / canvasHeight) * (camera.getBotRightY()-camera.getTopLeftY());
-                double deltaY = event.getDeltaY();
-                int zoomFactor = (int) (deltaY * 2);
-                camera.zoom(-zoomFactor);
-                double newX_OnMap = camera.getTopLeftX() + (currentX_OnScreen / canvasWidth) * (camera.getBotRightX()-camera.getTopLeftX());
-                double newY_OnMap = camera.getTopLeftY() + (currentY_OnScreen / canvasHeight) * (camera.getBotRightY()-camera.getTopLeftY());
-                camera.pan((int)(currentX_OnMap-newX_OnMap), (int)(currentY_OnMap-newY_OnMap));
-            }else{
-                double deltaY =  event.getDeltaY();
-                camera.pan(0, -(int)deltaY);
-            }
-        });
-
-        sceneCanvas.setOnMousePressed(event -> {
-            if(isSpacePressed){
-                sceneCanvas.requestFocus();
-                sceneCanvas.setCursor(Cursor.CLOSED_HAND);
-                lastMouseX = event.getX();
-                lastMouseY = event.getY();
-            }
-        });
-
-        sceneCanvas.setOnMouseDragged(event -> {
-            if(isSpacePressed){
-                double currentX = event.getX();
-                double currentY = event.getY();
-                double deltaX = currentX - lastMouseX;
-                double deltaY = currentY - lastMouseY;
-
-                double scale = (double) (camera.getBotRightY() - camera.getTopLeftY()) / canvasHeight;
-                camera.pan((int) (-deltaX * scale), (int) (-deltaY * scale));
-
-                lastMouseX = currentX;
-                lastMouseY = currentY;
-            }
-        });
-
-        sceneCanvas.setOnMouseClicked(event -> {
-            sceneCanvas.requestFocus();
-            if(activeContextMenu != null && activeContextMenu.isShowing()) {
-                activeContextMenu.hide();
-            }
-            if (activeSpawningClass != null) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    double clickX = event.getX();
-                    double clickY = event.getY();
-
-                    // Convert screen space to world space coordinates
-                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
-                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
-
-                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
-
-                    // Find target sub-environment containing this position
-                    Environment targetEnv = null;
-                    if (world != null) {
-                        for (Environment sub : world.getSubEnvironments()) {
-                            if (sub.getTerrain().containsPosition(spawnPos)) {
-                                targetEnv = sub;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (targetEnv != null) {
-                        try {
-                            Organism newOrg = createOrganism(activeSpawningClass, spawnPos, targetEnv);
-                            targetEnv.addOrganism(newOrg);
-                            System.out.println("Spawned " + activeSpawningClass.getSimpleName() + " at " + spawnPos + " in environment " + targetEnv.getName());
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    activeSpawningClass = null;
-                    sceneCanvas.setCursor(Cursor.DEFAULT);
-                }
-            } else if (activeSpawningObstacle != null) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    double clickX = event.getX();
-                    double clickY = event.getY();
-
-                    // Convert screen space to world space coordinates
-                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
-                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
-
-                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
-
-                    // Find target sub-environment containing this position
-                    Environment targetEnv = null;
-                    if (world != null) {
-                        for (Environment sub : world.getSubEnvironments()) {
-                            if (sub.getTerrain().containsPosition(spawnPos)) {
-                                targetEnv = sub;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (targetEnv != null) {
-                        try {
-                            targetEnv.getResources().placeObstacle(spawnPos, activeSpawningObstacle);
-                            System.out.println("Placed obstacle " + activeSpawningObstacle.name() + " at " + spawnPos + " in environment " + targetEnv.getName());
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    activeSpawningObstacle = null;
-                    sceneCanvas.setCursor(Cursor.DEFAULT);
-                }
-            } else if (activeSpawningFood != null) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    double clickX = event.getX();
-                    double clickY = event.getY();
-
-                    // Convert screen space to world space coordinates
-                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
-                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
-
-                    Vector2D spawnPos = new Vector2D((float) worldX, (float) worldY);
-
-                    // Find target sub-environment containing this position
-                    Environment targetEnv = null;
-                    if (world != null) {
-                        for (Environment sub : world.getSubEnvironments()) {
-                            if (sub.getTerrain().containsPosition(spawnPos)) {
-                                targetEnv = sub;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (targetEnv != null) {
-                        try {
-                            float nutrition = 0f;
-                            int expiry = 100;
-                            if (activeSpawningFood == FoodType.MEAT) {
-                                nutrition = AppConfig.getFloat("food.meat.nutritionalValue");
-                                String expStr = AppConfig.get("food.meat.expiryTicks");
-                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 120;
-                            } else if (activeSpawningFood == FoodType.APPLE) {
-                                nutrition = AppConfig.getFloat("food.apple.nutritionalValue");
-                                String expStr = AppConfig.get("food.apple.expiryTicks");
-                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 100;
-                            } else if (activeSpawningFood == FoodType.ALGAE) {
-                                nutrition = AppConfig.getFloat("food.algae.nutritionalValue");
-                                String expStr = AppConfig.get("food.algae.expiryTicks");
-                                expiry = expStr != null ? Integer.parseInt(expStr.trim()) : 90;
-                            }
-                            targetEnv.getResources().spawnFood(spawnPos, nutrition, activeSpawningFood, expiry);
-                            System.out.println("Spawned food " + activeSpawningFood.name() + " at " + spawnPos + " in environment " + targetEnv.getName());
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    activeSpawningFood = null;
-                    sceneCanvas.setCursor(Cursor.DEFAULT);
-                }
-            } else if (isInKillMode) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    double clickX = event.getX();
-                    double clickY = event.getY();
-
-                    // Convert screen space to world space coordinates
-                    double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
-                    double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
-
-                    ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
-                    if (selected != null) {
-                        if (selected.size() == 1) {
-                            selected.get(0).decreaseHp(Float.MAX_VALUE);
-                        } else {
-                            activeContextMenu = new ContextMenu();
-                            for (Organism organism : selected) {
-                                MenuItem item = new MenuItem("Kill " + organism.getSpeciesName() + ": " + organism.getId());
-                                item.setOnAction(e -> {
-                                    organism.decreaseHp(Float.MAX_VALUE);
-                                    activeContextMenu.hide();
-                                });
-                                activeContextMenu.getItems().add(item);
-                            }
-                            activeContextMenu.show(sceneCanvas, clickX, clickY);
-                        }
-                    }
-                    isInKillMode = false;
-                    sceneCanvas.setCursor(Cursor.DEFAULT);
-                }
-            } else if (event.getButton() == MouseButton.PRIMARY && !isSpacePressed) {
-
-                double clickX = event.getX();
-                double clickY = event.getY();
-
-                // Convert screen space to world space coordinates
-                double worldX = camera.getTopLeftX() + (clickX / canvasWidth) * (camera.getBotRightX() - camera.getTopLeftX());
-                double worldY = camera.getTopLeftY() + (clickY / canvasHeight) * (camera.getBotRightY() - camera.getTopLeftY());
-
-                ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
-                if (selected != null) {
-                    if(selected.size() == 1){
-                        selectedOrganism = selected.get(0);
-                        updateSoundFocus(selectedOrganism, worldX, worldY);
-                    }else{
-                        activeContextMenu = new ContextMenu();
-                        for(Organism organism : selected){
-                            MenuItem item = new MenuItem(organism.getSpeciesName() + ": " + organism.getId());
-                            item.setOnAction(e ->{
-                                selectedOrganism = organism;
-                                updateSoundFocus(selectedOrganism, worldX, worldY);
-                                activeContextMenu.hide();
-                                showEntityPanel(selectedOrganism);
-                            });
-                            activeContextMenu.getItems().add(item);
-                        }
-                        activeContextMenu.show(sceneCanvas, clickX, clickY);
-                    }
-                } else {
-                    selectedOrganism = null;
-                    updateSoundFocus(null, worldX, worldY);
-                }
-                showEntityPanel(selectedOrganism);
-            }
-        });
+        interactionController = new SimulationInteractionController(
+                sceneCanvas,
+                camera,
+                () -> canvasWidth,
+                () -> canvasHeight,
+                () -> world,
+                () -> spatialGrid,
+                CELL_SIZE,
+                (selected, position) -> {
+                    selectedOrganism = selected;
+                    updateSoundFocus(selected, position);
+                    showEntityPanel(selectedOrganism);
+                },
+                this::ViewButtonClicked,
+                this::pauseStatusChange
+        );
+        interactionController.installCanvasHandlers();
     }
 
-    private void updateSoundFocus(Organism selected, double worldX, double worldY) {
+    private void updateSoundFocus(Organism selected, Vector2D position) {
         if (selected instanceof Animal) {
             SoundManager.setFocusedAnimalId(selected.getId());
             SoundManager.setFocusPosition(selected.getPosition());
         } else {
             SoundManager.setFocusedAnimalId(null);
-            SoundManager.setFocusPosition(new Vector2D((float) worldX, (float) worldY));
+            SoundManager.setFocusPosition(position);
         }
-    }
-
-    private ArrayList<Organism> findOrganismAt(double x, double y) {
-        if(spatialGrid == null || spatialGrid.isEmpty()) return null;
-
-        ArrayList<Organism> result = null;
-
-        int centerCellX = (int) Math.floor(x / CELL_SIZE);
-        int centerCellY = (int) Math.floor(y / CELL_SIZE);
-        for(int dx = -1; dx <= 1; dx++){
-            for(int dy = -1; dy <= 1; dy++){
-                String key = (centerCellX + dx) + "," + (centerCellY + dy);
-                List<Organism> cellOrganisms = spatialGrid.get(key);
-
-                if(cellOrganisms != null){
-                    for(Organism organism : cellOrganisms){
-                        if(organism.isAlive()){
-                            double ox = organism.getPosition().getX();
-                            double oy = organism.getPosition().getY();
-                            if(x >= ox - 16 && x <= ox + 16 && y >= oy - 16 && y <= oy + 16){
-                                if(result == null){
-                                    result = new ArrayList<>();
-                                }
-                                result.add(organism);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return result;
     }
 
 
@@ -1028,148 +722,32 @@ public class UIEventController {
         }
     }
 
-    private Class<? extends Organism> activeSpawningClass = null;
-    private ObstacleType activeSpawningObstacle = null;
-    private FoodType activeSpawningFood = null;
-
     @FXML
     public void handleOrganismSelection(javafx.event.ActionEvent event) {
-        activeSpawningObstacle = null;
-        activeSpawningFood = null;
-        isInKillMode = false;
         Button btn = (Button) event.getSource();
-        String speciesName = btn.getText();
-        switch (speciesName) {
-            case "Tiger" -> activeSpawningClass = Tiger.class;
-            case "Wolf" -> activeSpawningClass = Wolf.class;
-            case "Hunter" -> activeSpawningClass = Hunter.class;
-            case "Deer" -> activeSpawningClass = Deer.class;
-            case "Elephant" -> activeSpawningClass = Elephant.class;
-            case "Fish" -> activeSpawningClass = Fish.class;
-            case "Rabbit" -> activeSpawningClass = Rabbit.class;
-            case "AppleTree" -> activeSpawningClass = AppleTree.class;
-            case "Grass" -> activeSpawningClass = Grass.class;
-            case "TreeForest" -> activeSpawningClass = TreeForest.class;
-            default -> activeSpawningClass = null;
-        }
-        if (activeSpawningClass != null) {
-            sceneCanvas.setCursor(Cursor.CROSSHAIR);
-        } else {
-            sceneCanvas.setCursor(Cursor.DEFAULT);
-        }
+        interactionController.activateOrganismSpawn(btn.getText());
     }
 
     @FXML
     public void handleObstacleSelection(javafx.event.ActionEvent event) {
-        activeSpawningClass = null;
-        activeSpawningFood = null;
-        isInKillMode = false;
         Button btn = (Button) event.getSource();
-        String obstacleName = btn.getText();
-        switch (obstacleName) {
-            case "Rock" -> activeSpawningObstacle = ObstacleType.ROCK;
-            case "Bush" -> activeSpawningObstacle = ObstacleType.BUSH;
-            default -> activeSpawningObstacle = null;
-        }
-        if (activeSpawningObstacle != null) {
-            sceneCanvas.setCursor(Cursor.CROSSHAIR);
-        } else {
-            sceneCanvas.setCursor(Cursor.DEFAULT);
-        }
+        interactionController.activateObstacleSpawn(btn.getText());
     }
 
     @FXML
     public void handleFoodsSelection(javafx.event.ActionEvent event) {
-        activeSpawningClass = null;
-        activeSpawningObstacle = null;
-        isInKillMode = false;
         Button btn = (Button) event.getSource();
-        String foodName = btn.getText();
-        switch (foodName) {
-            case "Meat" -> activeSpawningFood = FoodType.MEAT;
-            case "Apple" -> activeSpawningFood = FoodType.APPLE;
-            case "Algae" -> activeSpawningFood = FoodType.ALGAE;
-            default -> activeSpawningFood = null;
-        }
-        if (activeSpawningFood != null) {
-            sceneCanvas.setCursor(Cursor.CROSSHAIR);
-        } else {
-            sceneCanvas.setCursor(Cursor.DEFAULT);
-        }
+        interactionController.activateFoodSpawn(btn.getText());
     }
-
-    private boolean isInKillMode = false;
 
     @FXML
     public void handleKillButton(javafx.event.ActionEvent event) {
-        activeSpawningClass = null;
-        activeSpawningObstacle = null;
-        activeSpawningFood = null;
-        isInKillMode = true;
-        sceneCanvas.setCursor(Cursor.CROSSHAIR);
+        interactionController.activateKillMode();
     }
 
     @FXML
     public void handleDestroyButton(javafx.event.ActionEvent event) {
-        if (world != null) {
-            for (Environment sub : world.getSubEnvironments()) {
-                List<Organism> allAlive = new ArrayList<>(sub.getRegistry().getAllAlive(Organism.class));
-                for (Organism o : allAlive) {
-                    o.decreaseHp(Float.MAX_VALUE);
-                }
-            }
-            System.out.println("Destroyed all organisms in the system.");
-        }
-    }
-
-    private Organism createOrganism(Class<?> clazz, Vector2D pos, Environment env) throws Exception {
-        if (clazz == AppleTree.class) {
-            return AppleTree.create(pos, env);
-        } else if (clazz == Grass.class) {
-            return Grass.create(pos, env);
-        } else if (clazz == TreeForest.class) {
-            return TreeForest.create(pos, env);
-        } else {
-            String species = clazz.getSimpleName().toLowerCase();
-            Random random = new Random();
-            float baseHp = AppConfig.getFloat("animal." + species + ".maxHp");
-            float baseNutrition = AppConfig.getFloat("animal." + species + ".nutrition");
-            float hungerDecay = AppConfig.getFloat("animal." + species + ".hungerDecay");
-            float thirstDecay = AppConfig.getFloat("animal." + species + ".thirstDecay");
-
-            float baseAge = AppConfig.getFloat("animal." + species + ".maxAge");
-            float baseSize = AppConfig.getFloat("animal." + species + ".maxSize");
-
-            float randomFactorHp = 0.85f + (random.nextFloat() * 0.3f);
-            float randomFactorAge = 0.85f + (random.nextFloat() * 0.3f);
-            float randomFactorSize = 0.85f + (random.nextFloat() * 0.3f);
-
-            float finalHp = baseHp * randomFactorHp;
-            float finalMaxAge = baseAge * randomFactorAge;
-            float finalMaxSize = baseSize * randomFactorSize;
-
-            float startAge = finalMaxAge * 0.4f;
-            GrowthComponent growth = new GrowthComponent(finalMaxAge, finalMaxSize, 0.2f, 0.7f, startAge);
-            SurvivalStatsComponent stats = new SurvivalStatsComponent(finalHp, baseNutrition, hungerDecay, thirstDecay);
-
-            List<TerrainType> survivableTerrains = species.equals("fish")
-                    ? List.of(TerrainType.DEEP_WATER)
-                    : List.of(TerrainType.GRASSLAND, TerrainType.FOREST, TerrainType.MUD);
-
-            AdaptabilityComponent adapt = new AdaptabilityComponent(
-                    survivableTerrains,
-                    new ValueRange(15f, 35f),
-                    new ValueRange(0f, 45f),
-                    new ValueRange(-60f, -10f)
-            );
-
-            String id = clazz.getSimpleName().toUpperCase() + "_" + System.nanoTime();
-
-            return (Organism) clazz.getDeclaredConstructor(
-                    String.class, String.class, Vector2D.class, Environment.class,
-                    GrowthComponent.class, SurvivalStatsComponent.class, AdaptabilityComponent.class
-            ).newInstance(id, clazz.getSimpleName(), pos, env, growth, stats, adapt);
-        }
+        interactionController.destroyAllOrganisms();
     }
 
 }
