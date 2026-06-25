@@ -44,6 +44,7 @@ import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.util.AppConfig;
+import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
 import wildlife.util.ValueRange;
 import wildlife.model.organism.plant.Plant;
@@ -714,7 +715,7 @@ public class UIEventController {
                     ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                     if (selected != null) {
                         if (selected.size() == 1) {
-                            selected.getFirst().decreaseHp(Float.MAX_VALUE);
+                            selected.get(0).decreaseHp(Float.MAX_VALUE);
                         } else {
                             activeContextMenu = new ContextMenu();
                             for (Organism organism : selected) {
@@ -743,13 +744,15 @@ public class UIEventController {
                 ArrayList<Organism> selected = findOrganismAt(worldX, worldY);
                 if (selected != null) {
                     if(selected.size() == 1){
-                        selectedOrganism = selected.getFirst();
+                        selectedOrganism = selected.get(0);
+                        updateSoundFocus(selectedOrganism, worldX, worldY);
                     }else{
                         activeContextMenu = new ContextMenu();
                         for(Organism organism : selected){
                             MenuItem item = new MenuItem(organism.getSpeciesName() + ": " + organism.getId());
                             item.setOnAction(e ->{
                                 selectedOrganism = organism;
+                                updateSoundFocus(selectedOrganism, worldX, worldY);
                                 activeContextMenu.hide();
                                 showEntityPanel(selectedOrganism);
                             });
@@ -759,10 +762,21 @@ public class UIEventController {
                     }
                 } else {
                     selectedOrganism = null;
+                    updateSoundFocus(null, worldX, worldY);
                 }
                 showEntityPanel(selectedOrganism);
             }
         });
+    }
+
+    private void updateSoundFocus(Organism selected, double worldX, double worldY) {
+        if (selected instanceof Animal) {
+            SoundManager.setFocusedAnimalId(selected.getId());
+            SoundManager.setFocusPosition(selected.getPosition());
+        } else {
+            SoundManager.setFocusedAnimalId(null);
+            SoundManager.setFocusPosition(new Vector2D((float) worldX, (float) worldY));
+        }
     }
 
     private ArrayList<Organism> findOrganismAt(double x, double y) {
@@ -1009,8 +1023,8 @@ public class UIEventController {
             simulationSpeed.valueProperty().addListener((obs, oldVal, newVal) ->
                     tickRate = newVal.intValue());
         }
-        if(uiGroup.getChildren().getFirst() instanceof AnchorPane) {
-            ((AnchorPane)uiGroup.getChildren().getFirst()).setPickOnBounds(false);
+        if(uiGroup.getChildren().get(0) instanceof AnchorPane) {
+            ((AnchorPane)uiGroup.getChildren().get(0)).setPickOnBounds(false);
         }
     }
 

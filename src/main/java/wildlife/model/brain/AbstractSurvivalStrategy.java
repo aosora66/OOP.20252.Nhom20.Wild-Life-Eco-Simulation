@@ -132,6 +132,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
             return false;
         }
         self.setPosition(next);
+        triggerFootstep(self, env, next);
         return true;
     }
 
