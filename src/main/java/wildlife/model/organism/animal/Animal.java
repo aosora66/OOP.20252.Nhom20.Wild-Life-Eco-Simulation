@@ -4,6 +4,7 @@ import wildlife.model.brain.SurvivalStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.environment.enums.Season;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
@@ -15,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+
+import static wildlife.model.environment.enums.Season.BREEDING;
+import static wildlife.model.environment.enums.Season.DROUGHT;
 
 /**
         * Lớp abstract đại diện chức năng sinh học, thuộc tính vật lý chung của động vật
@@ -144,15 +148,23 @@ public abstract class Animal extends Organism {
                 "reproduce.hungerThreshold", "animal.reproduce.hungerThreshold");
         float thirstThreshold = getSpeciesFloatOrDefault(species,
                 "reproduce.thirstThreshold", "animal.reproduce.thirstThreshold");
-        int cooldown = getSpeciesIntOrDefault(species,
+        int baseCooldown = getSpeciesIntOrDefault(species,
                 "reproduce.cooldownTicks", "animal.reproduce.cooldownTicks");
         float chance = getSpeciesFloatOrDefault(species,
                 "reproduce.chance", "animal.reproduce.chance");
+
+        Season currentSeason = Season.NORMAL;
         if (environment != null) {
-            chance /= environment.getEnvironmentMultiplier();
+            float envMultiplier = environment.getEnvironmentMultiplier();
+            currentSeason = environment.getTime().getCurrentSeason();
+
+            // Hệ số mùa làm thay đổi nhẹ xác suất và thời gian hồi (không quá sốc)
+            chance /= envMultiplier;
+            baseCooldown = (int) (baseCooldown * environment.getTime().getSeasonMultiplier());
         }
+
         boolean cooldownReady = lastReproduceTick == 0
-                || (currentTick - lastReproduceTick) >= cooldown;
+                || (currentTick - lastReproduceTick) >= baseCooldown;
 
         if (!growth.isAdult()
                 || stats.getHungerLevel() >= hungerThreshold
@@ -161,15 +173,26 @@ public abstract class Animal extends Organism {
             return false;
         }
 
-        // Population cap: dừng hoàn toàn khi đạt max; giảm dần từ 70% max
+        // --- CƠ CHẾ ĐIỀU HOÀ QUẦN THỂ BỀN VỮNG (SOFT-CAP) ---
         String maxPopStr = AppConfig.get("animal." + species + ".maxPopulation");
         if (maxPopStr != null && environment != null) {
             int maxPop = Integer.parseInt(maxPopStr.trim());
             int currentPop = environment.getRegistry().getAllAlive(getClass()).size();
+
             if (currentPop >= maxPop) return false;
+
             float ratio = (float) currentPop / maxPop;
-            if (ratio > 0.7f) {
-                chance *= (1f - (ratio - 0.7f) / 0.3f);
+
+            // Điểm bắt đầu kìm hãm (Tạo ra các điểm cân bằng tự nhiên khác nhau cho từng mùa)
+            float softCapStart = switch (currentSeason) {
+                case BREEDING -> 0.85f; // Mùa sinh sản: Cho phép đàn đông đúc lên tới 85% sức chứa
+                case DROUGHT  -> 0.45f; // Hạn hán: Tự động hãm đẻ từ lúc 45% để tránh chết đói cả đàn
+                default       -> 0.65f;
+            };
+
+            if (ratio > softCapStart) {
+                // Tỷ lệ sinh giảm từ từ về 0 khi tiến gần đến maxPop (tránh giật cục)
+                chance *= (1f - (ratio - softCapStart) / (1f - softCapStart));
             }
         }
 

@@ -1,6 +1,7 @@
 package wildlife.model.organism.plant;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.environment.enums.Season;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.component.AdaptabilityComponent;
@@ -10,6 +11,9 @@ import wildlife.util.AppConfig;
 import wildlife.util.Vector2D;
 
 import java.util.List;
+
+import static wildlife.model.environment.enums.Season.BREEDING;
+import static wildlife.model.environment.enums.Season.DROUGHT;
 
 public abstract class Plant extends Organism {
 
@@ -121,52 +125,53 @@ public abstract class Plant extends Organism {
     public void reproduce() {
         if (environment == null || !growth.isAdult()) return;
 
-        // Cooldown: mỗi cây có thể sinh nhiều lần, nhưng cần đủ thời gian giữa các lần
         int currentTick = environment.getTime().getCurrentTick();
+
+        // --- 1. Kiểm tra Cooldown ---
         String species = getClass().getSimpleName().toLowerCase();
-        String cooldownStr = AppConfig.get("plant." + species + ".reproduce.cooldownTicks");
-        int cooldown = cooldownStr != null ? Integer.parseInt(cooldownStr.trim())
-                : AppConfig.getInt("plant.reproduce.cooldownTicks");
+        int cooldown = AppConfig.getInt("plant." + species + ".reproduce.cooldownTicks");
         if (currentTick - lastReproduceTick < cooldown) return;
 
-        // Cây không đói — chỉ dùng ngưỡng khát để quyết định sinh sản
+        // --- 2. Kiểm tra Khát ---
         float thirstThreshold = AppConfig.getFloat("plant.reproduce.thirstThreshold");
         if (stats.getThirstLevel() > thirstThreshold) return;
 
-        // Xác suất sinh sản mỗi lần cooldown hết
+        // --- 3. Tính toán Chance theo Mùa (Cân bằng sinh thái) ---
         float chance = AppConfig.getFloat("plant.reproduce.chance");
+        float envMultiplier = environment.getEnvironmentMultiplier();
+        chance /= envMultiplier;
 
-        // Population cap: kiểm tra giới hạn quần thể của loài này
-        String maxPopStr = AppConfig.get("plant." + species + ".maxPopulation");
-        if (maxPopStr != null) {
-            int maxPop = Integer.parseInt(maxPopStr.trim());
-            int currentPop = environment.getRegistry().getAllAlive(getClass()).size();
-            if (currentPop >= maxPop) return;
-            // Soft cap: giảm tỉ lệ sinh tuyến tính khi vượt 70% mức tối đa
-            float ratio = (float) currentPop / maxPop;
-            if (ratio > 0.7f) {
-                chance *= (1f - (ratio - 0.7f) / 0.3f);
-            }
+        // --- 4. Cân bằng động (Soft-cap theo mùa) ---
+        int maxPop = AppConfig.getInt("plant." + species + ".maxPopulation");
+        int currentPop = environment.getRegistry().getAllAlive(getClass()).size();
+        if (currentPop >= maxPop) return;
+
+        float ratio = (float) currentPop / maxPop;
+        Season season = environment.getTime().getCurrentSeason();
+
+        // Mùa sinh sản (Breeding): Dễ mọc (95%), Mùa hạn (Drought): Khó mọc (30%)
+        float softCapStart = (season == Season.BREEDING) ? 0.95f :
+                (season == Season.DROUGHT) ? 0.30f : 0.75f;
+
+        if (ratio > softCapStart) {
+            chance *= (1f - (ratio - softCapStart) / (1f - softCapStart));
         }
 
-        if (Math.random() >= chance) return;
+        // --- 5. Thực hiện sinh sản ---
+        if (Math.random() < chance) {
+            lastReproduceTick = currentTick;
+            int offspringCount = AppConfig.getInt("plant.reproduce.offspringCount");
+            float spawnRadius = AppConfig.getFloat("plant.reproduce.spawnRadius");
 
-        // Đặt cooldown ngay khi chance pass — kể cả khi terrain không hợp lệ,
-        // tránh vòng lặp thử lại mỗi tick (gây chậm simulation).
-        lastReproduceTick = currentTick;
+            for (int i = 0; i < offspringCount; i++) {
+                float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
+                float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
+                Vector2D childPos = new Vector2D(position.getX() + offsetX, position.getY() + offsetY);
 
-        int offspringCount = AppConfig.getInt("plant.reproduce.offspringCount");
-        float spawnRadius = AppConfig.getFloat("plant.reproduce.spawnRadius");
-
-        for (int i = 0; i < offspringCount; i++) {
-            float offsetX = (float) (Math.random() * 2 - 1) * spawnRadius;
-            float offsetY = (float) (Math.random() * 2 - 1) * spawnRadius;
-            Vector2D childPos = new Vector2D(
-                    position.getX() + offsetX,
-                    position.getY() + offsetY
-            );
-            if (environment.getTerrain().isPassable(childPos, this)) {
-                addOffspring(childPos);
+                // Hàm này sẽ gọi addOffspring của chính lớp con (Grass, AppleTree...)
+                if (environment.getTerrain().isPassable(childPos, this)) {
+                    addOffspring(childPos);
+                }
             }
         }
     }
