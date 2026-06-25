@@ -57,11 +57,11 @@ public class Forest extends Environment {
     protected void initialize() {
         // --- 1. THỰC VẬT (PLANTS) ---
         // 250 Cây cổ thụ (Rất dày đặc)
-        for (Vector2D pos : getEvenlySpacedPositions(250)) {
+        for (Vector2D pos : getEvenlySpacedPositions(300)) {
             registry.add(TreeForest.create(pos, this));
         }
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 10; i++) {
             float startAge = random.nextFloat() * 1200f;
             registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
         }
@@ -79,13 +79,13 @@ public class Forest extends Environment {
         // Tỉ lệ: Nhiều Thú ăn thịt, Ít Thú ăn cỏ, Có động vật đầu bảng (Voi)
 
         // Sinh Sói (Bầy sói rừng)
-        spawnAnimals(Wolf.class, 4);
+        spawnAnimals(Wolf.class, 6);
 
         // Sinh Hổ (Chúa sơn lâm)
-        spawnAnimals(Tiger.class, 3);
+        spawnAnimals(Tiger.class, 4);
 
         // Sinh Thợ săn (Rừng rậm — ít hơn đồng cỏ)
-        spawnAnimals(Hunter.class, 3);
+        spawnAnimals(Hunter.class, 5);
 
         // Sinh Voi (Động vật đầu bảng)
         spawnAnimals(Elephant.class, 2);

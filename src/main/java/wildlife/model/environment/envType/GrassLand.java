@@ -59,7 +59,7 @@ public class GrassLand extends Environment {
         for (Vector2D pos : getEvenlySpacedPositions(200)) {
             registry.add(Grass.create(pos, this));
         }
-        // 30 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
+        // 40 Cây táo — rải tuổi ngẫu nhiên để một số đã trưởng thành sẵn (tránh tuyệt chủng sớm)
         for (int i = 0; i < 40; i++) {
             float startAge = random.nextFloat() * 1200f;
             registry.add(wildlife.model.organism.plant.AppleTree.create(terrain.getRandomValidPosition(), this, startAge));
@@ -79,9 +79,9 @@ public class GrassLand extends Environment {
         spawnAnimals(Deer.class, 15);
         spawnAnimals(Elephant.class, 5);
 
-        spawnAnimals(Wolf.class, 6);
-        spawnAnimals(Tiger.class, 4);
-        spawnAnimals(Hunter.class, 6);
+        spawnAnimals(Wolf.class, 4);
+        spawnAnimals(Tiger.class, 2);
+        spawnAnimals(Hunter.class, 3);
     }
 
     @Override
