@@ -185,6 +185,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
         target.decreaseHp(attackDamage);
         if (!target.isAlive()) {
             self.getStats().consume(target.getStats().getNutritionalValue(), false);
+            self.pauseAfterEating();
             env.getRegistry().remove(target.getId());
         }
     }

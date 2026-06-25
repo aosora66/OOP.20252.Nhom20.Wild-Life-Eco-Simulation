@@ -27,6 +27,7 @@ import static wildlife.model.environment.enums.Season.DROUGHT;
  */
 public abstract class Animal extends Organism {
     private static final Random REPRODUCTION_RANDOM = new Random();
+    private static final Random FEEDING_RANDOM = new Random();
 
     protected String animalType;
     protected float vision;
@@ -42,6 +43,7 @@ public abstract class Animal extends Organism {
     protected final List<SurvivalStrategy> strategies = new ArrayList<>();
     // Chế độ ăn uống: danh sách các loại thức ăn có thể ăn
     protected final List<FoodType> diet = new ArrayList<>();
+    private int eatingPauseUntilTick = 0;
 
     protected Animal(String id,
                      String speciesName,
@@ -86,6 +88,8 @@ public abstract class Animal extends Organism {
      */
     protected void executeStrategy(int currentTick) {
         if (environment == null || strategies.isEmpty()) return;
+        if (isPausedForEating(currentTick)) return;
+
         float xBefore = position.getX();
         strategies.stream()
                 .sorted(Comparator.comparingInt(SurvivalStrategy::getPriority).reversed())
@@ -106,6 +110,7 @@ public abstract class Animal extends Organism {
         if (!food.isWater()) {
             environment.getResources().consume(food);
         }
+        pauseAfterEating();
     }
 
     public boolean canEat(FoodType type) {
@@ -140,6 +145,25 @@ public abstract class Animal extends Organism {
         if (plant == null || !plant.isAlive()) return;
         plant.decreaseHp(AppConfig.getFloat("animal.graze.biomassPerBite"));
         stats.consume(AppConfig.getFloat("animal.graze.nutritionPerBite"), false);
+        pauseAfterEating();
+    }
+
+    public void pauseAfterEating() {
+        if (environment == null) return;
+
+        int minTicks = AppConfig.getInt("animal.eating.pauseTicksMin");
+        int maxTicks = AppConfig.getInt("animal.eating.pauseTicksMax");
+        int low = Math.max(0, Math.min(minTicks, maxTicks));
+        int high = Math.max(low, Math.max(minTicks, maxTicks));
+        int pauseTicks = low + FEEDING_RANDOM.nextInt(high - low + 1);
+        eatingPauseUntilTick = Math.max(
+                eatingPauseUntilTick,
+                environment.getTime().getCurrentTick() + pauseTicks
+        );
+    }
+
+    public boolean isPausedForEating(int currentTick) {
+        return currentTick < eatingPauseUntilTick;
     }
 
     /** Kiểm tra xem động vật có thể sinh sản không (trưởng thành, no, khát, cooldown, may rủi, giới hạn quần thể). */
