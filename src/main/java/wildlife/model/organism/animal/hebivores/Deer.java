@@ -6,6 +6,7 @@ import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Hunter;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.component.AdaptabilityComponent;
@@ -48,7 +49,7 @@ public class Deer extends Animal {
         float fleeSpeedMult = AppConfig.getFloat("animal.deer.flee.speedMultiplier");
         int fleeSprintSteps = AppConfig.getInt("animal.deer.flee.sprintSteps");
 
-        // 1. Chạy trốn khi thấy Tiger hoặc Wolf (Ưu tiên cao nhất: 30)
+        // 1. Chạy trốn khi thấy Tiger, Wolf hoặc Hunter (Ưu tiên cao nhất: 30)
         // phản kháng khi HP <= 25% với 20% xác suất
         addStrategy(new ScaredStrategy(
                 this.speed * fleeSpeedMult,
@@ -57,7 +58,7 @@ public class Deer extends Animal {
                 this.interactionRadius,
                 0.25f,
                 0.2f,
-                Tiger.class, Wolf.class
+                Tiger.class, Wolf.class, Hunter.class
         ));
 
         // 2. Tìm thức ăn/nước uống mặc định (Ưu tiên thấp: 10)

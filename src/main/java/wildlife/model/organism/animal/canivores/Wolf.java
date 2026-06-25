@@ -58,7 +58,7 @@ public class Wolf extends Animal {
                 this.combatPower,
                 huntHungerThreshold,
                 huntSprintSteps,
-                Rabbit.class, Deer.class
+                Rabbit.class, Deer.class, Hunter.class
         ));
 
         // 2. Tìm nước hoặc đi dạo khi không săn (Ưu tiên thấp: 10)

@@ -5,6 +5,7 @@ import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
 import wildlife.model.organism.animal.Animal;
+import wildlife.model.organism.animal.canivores.Hunter;
 import wildlife.model.organism.animal.canivores.Tiger;
 import wildlife.model.organism.animal.canivores.Wolf;
 import wildlife.model.organism.component.AdaptabilityComponent;
@@ -36,7 +37,7 @@ public class Rabbit extends Animal {
         float fleeSpeedMult = AppConfig.getFloat("animal.rabbit.flee.speedMultiplier");
         int   fleeSprintSteps = AppConfig.getInt("animal.rabbit.flee.sprintSteps");
 
-        // Chạy trốn khi thấy Tiger hoặc Wolf, phản kháng khi HP <= 25% với 30% xác suất
+        // Chạy trốn khi thấy Tiger, Wolf hoặc Hunter; phản kháng khi HP <= 25% với 30% xác suất
         addStrategy(new ScaredStrategy(
                 this.speed * fleeSpeedMult,
                 this.vision,
@@ -44,7 +45,7 @@ public class Rabbit extends Animal {
                 this.interactionRadius,
                 0.25f,
                 0.3f,
-                Tiger.class, Wolf.class
+                Tiger.class, Wolf.class, Hunter.class
         ));
 
         // Tìm thức ăn/nước uống khi không có kẻ thù

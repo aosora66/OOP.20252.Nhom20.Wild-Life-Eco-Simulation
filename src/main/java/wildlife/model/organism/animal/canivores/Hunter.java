@@ -14,7 +14,7 @@ import wildlife.util.Vector2D;
 /**
  * Thợ săn — săn được MỌI loài động vật (Animal.class) trừ apex predator, sát thương rất cao.
  * Đánh đổi: máu thấp (50 HP) và chịu khát kém (thirstDecayRate cao trong config).
- * Vẫn phải tránh xa Voi (apex predator) như mọi sinh vật khác — không săn được, không miễn nhiễm.
+ * Không sợ loài nào: nếu gặp thú săn mồi thì lao vào combat. Không săn được apex predator.
  */
 public class Hunter extends Animal {
 
@@ -40,17 +40,7 @@ public class Hunter extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.hunter.hunt.hungerThreshold");
         int huntSprintSteps       = AppConfig.getInt("animal.hunter.hunt.sprintSteps");
 
-        // 1. Không có named predator; Voi là vật cản, không phải nguồn sợ hãi.
-        addStrategy(new wildlife.model.brain.ScaredStrategy(
-                this.speed * 1.3f,
-                this.vision,
-                2,
-                this.interactionRadius,
-                0.4f,
-                0.4f
-        ));
-
-        // 2. Săn mọi loài động vật — Animal.class bắt tất cả subclass trong registry
+        // 1. Săn mọi loài động vật — Animal.class bắt tất cả subclass trong registry
         //    (HunterStrategy tự loại apex predator khỏi danh sách con mồi)
         addStrategy(new HunterStrategy(
                 this.speed * huntSpeedMult,
@@ -62,7 +52,7 @@ public class Hunter extends Animal {
                 Animal.class
         ));
 
-        // Tìm thịt sẵn / nước khi không săn
+        // 2. Tìm thịt sẵn / nước khi không săn
         addStrategy(new PassiveStrategy(
                 this.speed,
                 this.vision,
