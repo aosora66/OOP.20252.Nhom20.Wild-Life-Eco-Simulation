@@ -62,10 +62,9 @@ public class Forest extends Environment {
         }
 
         // --- 2. VẬT CẢN (OBSTACLES) ---
-        // 25 Bụi rậm (Đặc trưng của rừng, rất nhiều chỗ ẩn nấp)
-        for (int i = 0; i < 25; i++) {
-            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.BUSH);
-        }
+        // 25 Bụi rậm, gom thành cụm 3-4 bụi để tạo chỗ nấp tự nhiên hơn.
+        placeObstacleClusters(ObstacleType.BUSH, 25, 3, 4,
+                wildlife.util.AppConfig.getFloat("environment.terrain.tileSize") * 1.5f);
         // 15 Tảng đá
         for (int i = 0; i < 15; i++) {
             resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.ROCK);

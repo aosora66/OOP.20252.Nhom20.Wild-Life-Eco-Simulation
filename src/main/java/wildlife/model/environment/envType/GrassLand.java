@@ -66,9 +66,10 @@ public class GrassLand extends Environment {
         }
 
         // --- 2. VẬT CẢN (OBSTACLES) ---
-        // 5 Bụi rậm & 5 Tảng đá (Rất thưa thớt, khó trốn)
+        // 6 Bụi rậm gom thành 2 cụm nhỏ & 5 Tảng đá (vẫn thưa, nhưng có chỗ nấp rõ hơn)
+        placeObstacleClusters(ObstacleType.BUSH, 6, 3, 4,
+                AppConfig.getFloat("environment.terrain.tileSize") * 1.5f);
         for (int i = 0; i < 5; i++) {
-            resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.BUSH);
             resources.placeObstacle(terrain.getRandomValidPosition(), ObstacleType.ROCK);
         }
 

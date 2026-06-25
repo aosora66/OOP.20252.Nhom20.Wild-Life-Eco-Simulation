@@ -231,6 +231,41 @@ public abstract class Environment {
         return result;
     }
 
+    /** Đặt vật cản theo cụm nhỏ để tạo vùng ẩn nấp/chặn đường tự nhiên hơn rải đơn lẻ. */
+    protected void placeObstacleClusters(ObstacleType type, int totalCount,
+                                         int minPerCluster, int maxPerCluster,
+                                         float clusterRadius) {
+        if (totalCount <= 0) return;
+
+        Random random = new Random();
+        int remaining = totalCount;
+        while (remaining > 0) {
+            Vector2D center = terrain.getRandomValidPosition();
+            int clusterSize = Math.min(remaining,
+                    minPerCluster + random.nextInt(Math.max(1, maxPerCluster - minPerCluster + 1)));
+
+            for (int i = 0; i < clusterSize; i++) {
+                resources.placeObstacle(findClusteredObstaclePosition(center, clusterRadius, random), type);
+            }
+            remaining -= clusterSize;
+        }
+    }
+
+    private Vector2D findClusteredObstaclePosition(Vector2D center, float radius, Random random) {
+        for (int attempt = 0; attempt < 8; attempt++) {
+            float angle = random.nextFloat() * 2f * (float) Math.PI;
+            float distance = random.nextFloat() * radius;
+            Vector2D candidate = new Vector2D(
+                    center.getX() + (float) Math.cos(angle) * distance,
+                    center.getY() + (float) Math.sin(angle) * distance
+            );
+            if (terrain.containsPosition(candidate)) {
+                return candidate;
+            }
+        }
+        return center;
+    }
+
     /**
      * Hàm Generic khởi tạo động vật
      * @param animalClass Lớp của động vật (VD: Rabbit.class, Wolf.class)
