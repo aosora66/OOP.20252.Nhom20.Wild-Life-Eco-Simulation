@@ -79,20 +79,20 @@ public class Forest extends Environment {
         // Tỉ lệ: Nhiều Thú ăn thịt, Ít Thú ăn cỏ, Có động vật đầu bảng (Voi)
 
         // Sinh Sói (Bầy sói rừng)
-        spawnAnimals(Wolf.class, 8);
+        spawnAnimals(Wolf.class, 4);
 
         // Sinh Hổ (Chúa sơn lâm)
-        spawnAnimals(Tiger.class, 6);
+        spawnAnimals(Tiger.class, 3);
 
         // Sinh Thợ săn (Rừng rậm — ít hơn đồng cỏ)
         spawnAnimals(Hunter.class, 3);
 
         // Sinh Voi (Động vật đầu bảng)
-        spawnAnimals(Elephant.class, 4);
+        spawnAnimals(Elephant.class, 2);
 
         // Sinh Hươu và Thỏ
-        spawnAnimals(Rabbit.class, 15);
-        spawnAnimals(Deer.class, 12);
+        spawnAnimals(Rabbit.class, 10);
+        spawnAnimals(Deer.class, 8);
     }
 
     @Override
