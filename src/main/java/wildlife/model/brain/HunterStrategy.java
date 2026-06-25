@@ -24,6 +24,7 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
 
     // Mức đói tối thiểu để bắt đầu săn (0–100)
     private final float  hungerSearchThreshold;
+    private final boolean attackNearbyPreyWhenNotHungry;
 
     public HunterStrategy(float stepSize, float sightRadius, float attackRange,
                           float attackDamage, float hungerSearchThreshold,
@@ -35,19 +36,35 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                           float attackDamage, float hungerSearchThreshold,
                           int chaseSteps,
                           Class<? extends Animal>... preySpecies) {
+        this(stepSize, sightRadius, attackRange, attackDamage, hungerSearchThreshold,
+                chaseSteps, false, preySpecies);
+    }
+
+    public HunterStrategy(float stepSize, float sightRadius, float attackRange,
+                          float attackDamage, float hungerSearchThreshold,
+                          int chaseSteps,
+                          boolean attackNearbyPreyWhenNotHungry,
+                          Class<? extends Animal>... preySpecies) {
         super(stepSize, sightRadius, attackRange);
         this.attackDamage          = attackDamage;
         this.hungerSearchThreshold = hungerSearchThreshold;
         this.chaseSteps            = Math.max(1, chaseSteps);
+        this.attackNearbyPreyWhenNotHungry = attackNearbyPreyWhenNotHungry;
         this.preySpecies           = List.of(preySpecies);
     }
 
-    /** Chỉ săn khi đói đủ ngưỡng — khi no, nhường cho PassiveStrategy xử lý. */
+    /** Chỉ săn khi đói đủ ngưỡng; predator có thể cắn mồi đã lọt sát tầm đánh. */
     @Override
     public boolean isApplicable(Animal self, Environment env) {
-        return self.getGrowth().isAdult()
-                && self.getStats().getThirstLevel() < AppConfig.getFloat("organism.stats.thirstHpThreshold")
-                && self.getStats().getHungerLevel() >= hungerSearchThreshold;
+        if (!self.getGrowth().isAdult()
+                || self.getStats().getThirstLevel() >= AppConfig.getFloat("organism.stats.thirstHpThreshold")) {
+            return false;
+        }
+        if (self.getStats().getHungerLevel() >= hungerSearchThreshold) {
+            return true;
+        }
+        return attackNearbyPreyWhenNotHungry
+                && findNearestAttackablePreyInRange(self, env).isPresent();
     }
 
     @Override
@@ -68,6 +85,13 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
      */
     @Override
     public void execute(Animal self, Environment env) {
+        boolean hungryEnoughToHunt = self.getStats().getHungerLevel() >= hungerSearchThreshold;
+        if (!hungryEnoughToHunt && attackNearbyPreyWhenNotHungry) {
+            findNearestAttackablePreyInRange(self, env)
+                    .ifPresent(target -> attackAndEatIfKilled(self, env, target));
+            return;
+        }
+
         // =================================================================
         // ƯU TIÊN 1: Quét tìm thịt rớt xung quanh (trong phạm vi attackRange)
         // =================================================================
@@ -115,18 +139,27 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
     private Optional<? extends Animal> findNearestPrey(Animal self, Environment env) {
         Optional<? extends Animal> inSight = preySpecies.stream()
                 .flatMap(species -> findNearestBySpecies(self, env, species).stream())
-                .filter(a -> !a.isApexPredator())
-                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
-                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
+                .filter(a -> isValidPrey(self, env, a))
                 .max(Comparator.comparingDouble(o -> detectability(o, self, env)));
         if (inSight.isPresent()) return inSight;
 
         return preySpecies.stream()
                 .flatMap(species -> env.getRegistry().getAllAlive(species).stream())
-                .filter(a -> !a.isApexPredator())
-                .filter(a -> !a.getSpeciesName().equals(self.getSpeciesName()))
-                .filter(a -> env.getTerrain().getTerrainAt(a.getPosition()) != TerrainType.DEEP_WATER)
+                .filter(a -> isValidPrey(self, env, a))
                 .min(Comparator.comparingDouble(a -> a.getPosition().distanceTo(self.getPosition())));
+    }
+
+    private Optional<? extends Animal> findNearestAttackablePreyInRange(Animal self, Environment env) {
+        return preySpecies.stream()
+                .flatMap(species -> env.getRegistry().findNear(self.getPosition(), attackRange, species).stream())
+                .filter(a -> isValidPrey(self, env, a))
+                .min(Comparator.comparingDouble(a -> a.getPosition().distanceTo(self.getPosition())));
+    }
+
+    private boolean isValidPrey(Animal self, Environment env, Animal prey) {
+        return !prey.isApexPredator()
+                && !prey.getSpeciesName().equals(self.getSpeciesName())
+                && env.getTerrain().getTerrainAt(prey.getPosition()) != TerrainType.DEEP_WATER;
     }
 
     private void attackAndEatIfKilled(Animal self, Environment env, Animal target) {

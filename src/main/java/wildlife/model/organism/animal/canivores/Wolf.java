@@ -40,7 +40,7 @@ public class Wolf extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.wolf.hunt.hungerThreshold");
         int huntSprintSteps = AppConfig.getInt("animal.wolf.hunt.sprintSteps");
 
-        // 1. Predator chủ động đánh mồi khi gặp; Wolf không né Hunter.
+        // 1. Khi đói thì săn đuổi; khi no vẫn cắn con mồi đã lọt sát tầm đánh.
         addStrategy(new wildlife.model.brain.HunterStrategy(
                 this.speed * huntSpeedMult,
                 this.vision,
@@ -48,6 +48,7 @@ public class Wolf extends Animal {
                 this.combatPower,
                 huntHungerThreshold,
                 huntSprintSteps,
+                true,
                 Rabbit.class, Deer.class, Hunter.class
         ));
 

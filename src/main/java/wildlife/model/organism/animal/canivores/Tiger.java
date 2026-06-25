@@ -39,7 +39,7 @@ public class Tiger extends Animal {
         float huntHungerThreshold = AppConfig.getFloat("animal.tiger.hunt.hungerThreshold");
         int huntSprintSteps = AppConfig.getInt("animal.tiger.hunt.sprintSteps");
 
-        // 1. Predator chủ động đánh mồi khi gặp; Tiger không né Hunter.
+        // 1. Khi đói thì săn đuổi; khi no vẫn cắn con mồi đã lọt sát tầm đánh.
         addStrategy(new wildlife.model.brain.HunterStrategy(
                 this.speed * huntSpeedMult,
                 this.vision,
@@ -47,6 +47,7 @@ public class Tiger extends Animal {
                 this.combatPower,
                 huntHungerThreshold,
                 huntSprintSteps,
+                true,
                 Rabbit.class, Deer.class, Hunter.class
         ));
 
