@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<StackPane fx:id="rootStackPane" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.ui.UIEventController">
+<StackPane fx:id="rootStackPane" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wildlife.view.renderer.UIEventController">
    <!-- LWJGL Render Layer (Background Layer) -->
    <AnchorPane fx:id="sceneCanvas" />
 

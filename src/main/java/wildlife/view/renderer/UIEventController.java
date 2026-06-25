@@ -1,4 +1,4 @@
-package wildlife.view.ui;
+package wildlife.view.renderer;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -27,11 +27,6 @@ import wildlife.model.organism.animal.Animal;
 import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
 import wildlife.model.organism.plant.Plant;
-import wildlife.view.renderer.AtlasTexture;
-import wildlife.view.renderer.Renderer;
-import wildlife.view.renderer.SpriteBatch;
-import wildlife.view.renderer.SimpleTexture;
-import wildlife.view.renderer.SimpleTextureRegistry;
 import wildlife.view.renderer.utils.Camera;
 import wildlife.view.ui.control.SimulationInteractionController;
 

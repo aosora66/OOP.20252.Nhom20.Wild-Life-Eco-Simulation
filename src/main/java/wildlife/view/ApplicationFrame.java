@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import wildlife.view.renderer.Renderer;
-import wildlife.view.ui.UIEventController;
+import wildlife.view.renderer.UIEventController;
 
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;

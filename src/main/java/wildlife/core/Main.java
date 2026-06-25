@@ -8,7 +8,7 @@ import java.util.List;
 
 import wildlife.model.organism.Organism;
 import wildlife.view.renderer.Renderer;
-import wildlife.view.ui.UIEventController;
+import wildlife.view.renderer.UIEventController;
 
 import java.util.stream.Collectors;
 
