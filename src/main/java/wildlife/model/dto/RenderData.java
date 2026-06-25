@@ -50,8 +50,7 @@ public class RenderData {
         if (currentTick >= 0
                 && organism instanceof Animal animal
                 && organism.isAlive()
-                && animal.isPausedForEating(currentTick)
-                && ("Elephant".equals(speciesName) || "Rabbit".equals(speciesName))) {
+                && animal.isPausedForEating(currentTick)) {
             return speciesName + "Eating";
         }
         return speciesName;

@@ -265,13 +265,18 @@ public class UIEventController {
         SimpleTextureRegistry registry = new SimpleTextureRegistry();
         // Predators — warm tones
         registry.register("Hunter",   new SimpleTexture(16, 16, (byte) 230, (byte)  60, (byte)  30, (byte) 255)); // deep red-orange
+        registry.register("HunterEating", new SimpleTexture(16, 16, (byte) 230, (byte)  60, (byte)  30, (byte) 255));
         registry.register("Tiger",    new SimpleTexture(16, 16, (byte) 240, (byte) 140, (byte)  20, (byte) 255)); // amber
+        registry.register("TigerEating", new SimpleTexture(16, 16, (byte) 240, (byte) 140, (byte)  20, (byte) 255));
         registry.register("Wolf",     new SimpleTexture(16, 16, (byte) 210, (byte)  40, (byte)  70, (byte) 255)); // crimson
+        registry.register("WolfEating", new SimpleTexture(16, 16, (byte) 210, (byte)  40, (byte)  70, (byte) 255));
         // Herbivores — cool tones
         registry.register("Deer",     new SimpleTexture(16, 16, (byte)  60, (byte) 160, (byte) 140, (byte) 255)); // teal
+        registry.register("DeerEating", new SimpleTexture(16, 16, (byte)  60, (byte) 160, (byte) 140, (byte) 255));
         registry.register("Elephant", new SimpleTexture(16, 16, (byte)  70, (byte) 110, (byte) 190, (byte) 255)); // steel blue
         registry.register("ElephantEating", new SimpleTexture(16, 16, (byte)  70, (byte) 110, (byte) 190, (byte) 255));
         registry.register("Fish",     new SimpleTexture(16, 16, (byte)  30, (byte) 170, (byte) 230, (byte) 255)); // cyan
+        registry.register("FishEating", new SimpleTexture(16, 16, (byte)  30, (byte) 170, (byte) 230, (byte) 255));
         registry.register("Rabbit",   new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255)); // lavender
         registry.register("RabbitEating", new SimpleTexture(16, 16, (byte) 130, (byte) 100, (byte) 210, (byte) 255));
         // Plants

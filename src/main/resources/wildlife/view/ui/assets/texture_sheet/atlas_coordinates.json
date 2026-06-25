@@ -3,7 +3,7 @@
     "sheet": "atlas.png",
     "size": {
       "w": 64,
-      "h": 384
+      "h": 544
     }
   },
   "creature": {
@@ -47,11 +47,26 @@
       "idle": {"x":  0, "y":  288, "w":  32, "h": 32},
       "dead": {"x":  32, "y":  288, "w":  32, "h": 32}
     },
-    "ElephantEating": {
+    "HunterEating": {
       "idle": {"x":  0, "y":  320, "w":  32, "h": 32}
     },
-    "RabbitEating": {
+    "TigerEating": {
       "idle": {"x":  0, "y":  352, "w":  32, "h": 32}
+    },
+    "WolfEating": {
+      "idle": {"x":  0, "y":  384, "w":  32, "h": 32}
+    },
+    "DeerEating": {
+      "idle": {"x":  0, "y":  416, "w":  32, "h": 32}
+    },
+    "ElephantEating": {
+      "idle": {"x":  0, "y":  448, "w":  32, "h": 32}
+    },
+    "FishEating": {
+      "idle": {"x":  0, "y":  480, "w":  32, "h": 32}
+    },
+    "RabbitEating": {
+      "idle": {"x":  0, "y":  512, "w":  32, "h": 32}
     }
   }
 }
