@@ -5,11 +5,13 @@ import wildlife.model.brain.PassiveStrategy;
 import wildlife.model.brain.ScaredStrategy;
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
 
 /**
@@ -83,5 +85,11 @@ public class Hunter extends Animal {
     @Override
     public void reproduce() {
         reproduceSameSpecies();
+    }
+
+    @Override
+    public void performAttack(Organism target, float damage) {
+        SoundManager.playSequentialSoundEffects("GunLoad.wav", "GunFire.wav");
+        super.performAttack(target, damage);
     }
 }

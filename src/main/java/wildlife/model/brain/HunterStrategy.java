@@ -113,12 +113,14 @@ public class HunterStrategy extends AbstractSurvivalStrategy {
                     if (dist <= attackRange) {
                         // Mồi trong tầm -> Cắn
                         attackAndEatIfKilled(self, env, target);
+                        self.performAttack(target, attackDamage);
                     } else {
                         // Mồi ngoài tầm -> Đuổi theo
                         for (int i = 0; i < chaseSteps; i++) {
                             moveToward(self, target.getPosition(), env);
                             if (self.getPosition().distanceTo(target.getPosition()) <= attackRange) {
                                 attackAndEatIfKilled(self, env, target);
+                                self.performAttack(target, attackDamage);
                                 break;
                             }
                         }

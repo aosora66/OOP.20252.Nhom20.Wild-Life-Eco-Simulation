@@ -1,7 +1,9 @@
 package wildlife.model.organism.animal.canivores;
 
 import wildlife.model.environment.Environment;
+import wildlife.model.environment.dto.FoodItem;
 import wildlife.model.environment.enums.FoodType;
+import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.animal.hebivores.Deer;
 import wildlife.model.organism.animal.hebivores.Rabbit;
@@ -9,6 +11,7 @@ import wildlife.model.organism.component.AdaptabilityComponent;
 import wildlife.model.organism.component.GrowthComponent;
 import wildlife.model.organism.component.SurvivalStatsComponent;
 import wildlife.util.AppConfig;
+import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
 
 public class Tiger extends Animal {
@@ -64,5 +67,16 @@ public class Tiger extends Animal {
     @Override
     public void reproduce() {
         reproduceSameSpecies();
+    }
+
+    @Override
+    protected void preEatAction(FoodItem food) {
+        SoundManager.playSoundEffectWithCooldown("Snarl.wav", 1500, 1.0f);
+    }
+
+    @Override
+    public void performAttack(Organism target, float damage) {
+        SoundManager.playSoundEffectWithCooldown("TigerRoar.wav", 2000, 1.0f);
+        super.performAttack(target, damage);
     }
 }

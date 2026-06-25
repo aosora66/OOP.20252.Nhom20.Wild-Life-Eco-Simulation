@@ -9,8 +9,13 @@ target/
 
 # Bỏ qua file log và OS rác
 *.log
-.DS_Store
+DS_Store
 
 .cursor
 .junie
-GEMINI.md
+
+# Thư mục output biên dịch thủ công
+bin/
+
+# File tạm danh sách source khi biên dịch thủ công
+sources.txt

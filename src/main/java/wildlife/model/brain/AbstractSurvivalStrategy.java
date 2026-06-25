@@ -2,12 +2,17 @@ package wildlife.model.brain;
 
 import wildlife.model.environment.Environment;
 import wildlife.model.environment.dto.FoodItem;
+import wildlife.model.environment.dto.ObstacleItem;
+import wildlife.model.environment.enums.ObstacleType;
+import wildlife.model.environment.enums.TerrainType;
 import wildlife.model.organism.Organism;
 import wildlife.model.organism.animal.Animal;
 import wildlife.model.organism.plant.Grass;
+import wildlife.util.SoundManager;
 import wildlife.util.Vector2D;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -58,6 +63,7 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
         );
         if (env.isPositionPassable(next, self)) {
             self.setPosition(next);
+            triggerFootstep(self, env, next);
         }
     }
 
@@ -197,5 +203,29 @@ public abstract class AbstractSurvivalStrategy implements SurvivalStrategy {
                 .filter(f -> f.isWater() == wantWater && self.canEat(f.type()))
                 .min(Comparator.comparingDouble(
                         f -> f.position().distanceTo(self.getPosition())));
+    }
+
+    /** Gọi âm thanh bước chân khi di chuyển với rate limiting */
+    private void triggerFootstep(Animal self, Environment env, Vector2D nextPos) {
+        // Chỉ phát tiếng bước chân của con vật "gần nhất/đang được focus"
+        if (!SoundManager.isFocused(self, env)) {
+            return;
+        }
+
+        // Ưu tiên tiếng xạc xào của bụi cỏ
+        List<ObstacleItem> obstacles = env.getResources().getObstaclesNear(nextPos, 0.5f);
+        boolean inBush = obstacles.stream().anyMatch(o -> o.type() == ObstacleType.BUSH);
+
+        if (inBush) {
+            SoundManager.playSoundEffectWithCooldown("BushRustling.wav", 600, 0.7f);
+            return;
+        }
+
+        TerrainType terrain = env.getTerrain().getTerrainAt(nextPos);
+        if (terrain == TerrainType.MUD || terrain == TerrainType.DEEP_WATER) {
+            SoundManager.playSoundEffectWithCooldown("SludgeFootstep.wav", 500, 0.7f);
+        } else {
+            SoundManager.playSoundEffectWithCooldown("GrassFootstep.wav", 500, 0.7f);
+        }
     }
 }

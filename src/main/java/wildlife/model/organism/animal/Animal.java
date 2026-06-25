@@ -101,6 +101,7 @@ public abstract class Animal extends Organism {
      */
     public void eating(FoodItem food) {
         if (food == null || environment == null) return;
+        preEatAction(food);
         stats.consume(food.nutritionalValue(), food.isWater());
         if (!food.isWater()) {
             environment.getResources().consume(food);
@@ -271,6 +272,16 @@ public abstract class Animal extends Organism {
             );
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Không thể sinh con cho loài: " + getClass().getSimpleName(), e);
+        }
+    }
+
+    /** Hook để các loài động vật thực hiện hành động trước khi ăn (ví dụ phát tiếng gầm). */
+    protected void preEatAction(FoodItem food) {}
+
+    /** Hook để động vật thực hiện đòn tấn công (có thể override để phát âm thanh). */
+    public void performAttack(Organism target, float damage) {
+        if (target != null) {
+            target.decreaseHp(damage);
         }
     }
 }

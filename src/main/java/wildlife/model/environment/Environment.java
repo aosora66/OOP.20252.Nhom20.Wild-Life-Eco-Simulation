@@ -26,6 +26,7 @@ import wildlife.model.organism.plant.AppleTree;
 import wildlife.model.organism.plant.Plant;
 import wildlife.model.organism.plant.TreeForest;
 import wildlife.util.AppConfig;
+import wildlife.util.SoundManager;
 import wildlife.util.ValueRange;
 import wildlife.util.Vector2D;
 
@@ -181,6 +182,22 @@ public abstract class Environment {
 
         // 7. Dọn dẹp tài nguyên hết hạn
         resources.removeExpiredFood(currentTick);
+
+        // Cập nhật âm thanh ngày/đêm
+        if (time.isDaytime()) {
+            SoundManager.playAmbiance("TIME", "Ambiance.wav");
+        } else {
+            SoundManager.playAmbiance("TIME", "NightAmbiance.wav");
+        }
+
+        // Cập nhật âm thanh mùa/thời tiết
+        if (time.getCurrentSeason() == wildlife.model.environment.enums.Season.DROUGHT) {
+            SoundManager.playAmbiance("SEASON", "DryAmbiance.wav");
+        } else if (time.getCurrentWeather() == wildlife.model.environment.enums.WeatherType.RAIN) {
+            SoundManager.playAmbiance("SEASON", "RainingAmbiance.wav");
+        } else {
+            SoundManager.stopAmbiance("SEASON");
+        }
     }
 
     // ----------------------------------------------------------------
