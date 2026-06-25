@@ -533,10 +533,11 @@ public abstract class Environment {
 
     public Collection<? extends RenderData> getRenderSnapshot() {
         List<RenderData> list = new ArrayList<>();
+        int currentTick = time.getCurrentTick();
         //Sinh vat
         for(Organism o: registry.getAll(Organism.class)) {
             int layer = (o instanceof Plant)? 3 : (o instanceof Fish)? 3 : 4;
-            list.add(new RenderData(o, layer));
+            list.add(new RenderData(o, layer, currentTick));
         }
         //Thuc an
         for(FoodItem f: resources.getAllFood()){
