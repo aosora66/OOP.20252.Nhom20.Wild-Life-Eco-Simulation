@@ -187,7 +187,6 @@ public class PassiveStrategy extends AbstractSurvivalStrategy {
             );
             wanderStepsLeft = WANDER_PERSIST_TICKS;
         }
-
         if (self.getPosition().distanceTo(wanderTarget) <= stepSize) {
             wanderStepsLeft = 0;
         } else {
