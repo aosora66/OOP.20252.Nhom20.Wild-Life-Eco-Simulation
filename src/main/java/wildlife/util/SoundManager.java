@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SoundManager {
 
+    // Đặt false để tắt toàn bộ âm thanh
+    private static final boolean ENABLED = true;
+
     // Cache các kênh nhạc nền (Ví dụ: "TIME_AMBIANCE" -> Clip, "SEASON_AMBIANCE" -> Clip)
     private static final Map<String, Clip> ambianceChannels = new HashMap<>();
 
@@ -108,6 +111,7 @@ public class SoundManager {
      * @param fileName Tên file trong resources/sounds/
      */
     public static void playAmbiance(String channel, String fileName) {
+        if (!ENABLED) return;
         // Tránh phát lại nếu file đang chạy trên kênh này
         if (fileName.equals(currentAmbianceFiles.get(channel))) {
             return;
@@ -134,6 +138,7 @@ public class SoundManager {
      * Dừng âm nền trên một kênh cụ thể.
      */
     public static void stopAmbiance(String channel) {
+        if (!ENABLED) return;
         Clip clip = ambianceChannels.get(channel);
         if (clip != null && clip.isRunning()) {
             clip.stop();
@@ -155,6 +160,7 @@ public class SoundManager {
      * Phát một âm thanh hiệu ứng với âm lượng tùy chỉnh.
      */
     public static void playSoundEffect(String fileName, float volume) {
+        if (!ENABLED) return;
         try {
             AudioInputStream audioStream = getAudioStream(fileName);
             Clip clip = AudioSystem.getClip();
@@ -190,6 +196,7 @@ public class SoundManager {
      * Dùng cho tiếng bước chân của hàng trăm con vật.
      */
     public static void playSoundEffectWithCooldown(String fileName, long cooldownMs, float volume) {
+        if (!ENABLED) return;
         long now = System.currentTimeMillis();
         long lastTime = lastPlayedTime.getOrDefault(fileName, 0L);
         if (now - lastTime >= cooldownMs) {
@@ -203,6 +210,7 @@ public class SoundManager {
      * Sẽ block một Thread tạm thời để chờ (do đây là hiệu ứng tick, nên dùng Thread tách biệt).
      */
     public static void playSequentialSoundEffects(String firstFile, String secondFile) {
+        if (!ENABLED) return;
         new Thread(() -> {
             try {
                 AudioInputStream audioStream1 = getAudioStream(firstFile);
